@@ -11,13 +11,14 @@ from Channel import *
 
 class EEGData:
 
-    def __init__(self, s, chM, u, f, add):
-        sampleData = s
-        amUnits = u
+    def __init__(self, freq, time, chM, f, add, labels):
+        frequency = freq
+        duration = time
         filterHz = f
-        additionalData = add
         channelMatrix = chM
-        channels = self.fillChannels()
+        amUnits = [self.channelMatrix.min, self.channelMatrix.max]
+        additionalData = add
+        channels = self.fillChannels(labels)
         windows = []
 
     #adds a WindowEEG object to the list
@@ -40,12 +41,11 @@ class EEGData:
             new = self.concatenateWindows()
         return new
 
-    def copyChannel(self, ch):
-        #TODO get channel tag and coordinates
-        channel = Channel(ch)
+    def copyChannel(self, ch, label):
+        channel = Channel(label, ch)
         self.channels.append(channel)
 
-    def fillChannels(self):
+    def fillChannels(self, labels):
         self.channels = []
         #iterate channel matrix
-        #np.apply_along_axis(self.copyChannel, axis=0, arr=self.channelMatrix)
+        np.apply_along_axis(self.copyChannel, 0, self.channelMatrix, labels)

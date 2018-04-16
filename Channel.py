@@ -1,5 +1,5 @@
 class Channel:
-    def __init__(self, r):
-        tag = None
+    def __init__(self, l, r):
+        label = l
         coordinates = None
         readings = r
