@@ -10,6 +10,7 @@ It returns a EEGData object.
 '''
 #lib imports
 import os
+import bioread
 import h5py
 import numpy as np
 import pyedflib
@@ -111,8 +112,12 @@ class FileReader:
 
         return None
 
-    def readACQ(self, eegFile):
-
+    def readACQ(self, fileAddress):
+        try:
+            acq = bioread.read_file(fileAddress)
+        except:
+            self.setError(2)
+            return None
         return None
 
     def readEEG(self, eegFile):
