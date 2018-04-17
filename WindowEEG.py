@@ -1,6 +1,6 @@
 class WindowEEG:
     def __init__(self, s, e, t, m):
-        start = s
-        end = e
-        mark = m
-        tag = t
+        self.start = s
+        self.end = e
+        self.mark = m
+        self.tag = t

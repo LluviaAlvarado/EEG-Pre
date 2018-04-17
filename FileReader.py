@@ -11,6 +11,7 @@ It returns a EEGData object.
 #lib imports
 import os
 import h5py
+import numpy as np
 import pyedflib
 import scipy.io as sio
 
@@ -100,7 +101,6 @@ class FileReader:
             filtr = _dfFile.getPrefilter()
         except:
             filtr = None
-
         return EEGData(frecuency, _dfFile.datarecord_duration, signals, filtr, None, labels)
 
     def readREC(self, eegFile):
