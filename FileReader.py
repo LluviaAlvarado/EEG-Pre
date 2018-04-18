@@ -12,12 +12,24 @@ It returns a EEGData object.
 import os
 import bioread
 import h5py
-import numpy as np
 import pyedflib
 import scipy.io as sio
 
+
+
 #local imports
 from EEGData import *
+# lib imports
+import os
+
+import bioread
+import h5py
+import pyedflib
+import scipy.io as sio
+
+# local imports
+from EEGData import *
+
 
 class FileReader:
     __error = False
@@ -113,12 +125,29 @@ class FileReader:
         return None
 
     def readACQ(self, fileAddress):
+        '''
+        1 Because the length of the channels is different  EEG() fails to make the channel matrix with a good example file will work OK
+        2 Didn't find the filter var ????
+        '''
         try:
             acq = bioread.read_file(fileAddress)
+            channels = acq.channels
+            labels = []
+            signals = []
+            for i in range(len(channels)):
+                labels.append(channels[i].name + "")
+                signals.append(np.zeros(channels[i].data.size))
+                signals[i] = channels[i].data
         except:
             self.setError(2)
             return None
-        return None
+        frequency = channels[0].samples_per_second
+        time = np.amax(acq.time_index)
+        try:
+            filtr = None
+        except:
+            filtr = None
+        return EEGData(frequency, time, signals, filtr, None, labels)
 
     def readEEG(self, eegFile):
 
