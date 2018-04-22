@@ -1,5 +1,4 @@
 #Imports
-import wx
 #local imports
 from FileReader import *
 from WindowEditor import *
@@ -8,6 +7,7 @@ class MainWindow(wx.Frame):
     """
     mainWindow for EEG processing
     """
+
 
     def __init__(self, *args, **kw):
         # ensure the parent's __init__ is called
@@ -35,6 +35,8 @@ class MainWindow(wx.Frame):
         self.CreateStatusBar()
         self.SetStatusText("Waiting for EEG file...")
 
+
+
     def makeMenuBar(self):
         """
         A menu bar is composed of menus, which are composed of menu items.
@@ -48,7 +50,10 @@ class MainWindow(wx.Frame):
         # the same event
         loadFileItem = fileMenu.Append(-1, "&Load EEG...\tCtrl-L",
                 "Select EEG file to load.")
+        newWin = fileMenu.Append(-1, "New Frame")
         fileMenu.AppendSeparator()
+
+
         # When using a stock ID we don't need to specify the menu item's
         # label
         exitItem = fileMenu.Append(wx.ID_EXIT)
@@ -56,6 +61,7 @@ class MainWindow(wx.Frame):
         # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(wx.ID_ABOUT)
+
 
         # Make the menu bar and add the two menus to it. The '&' defines
         # that the next letter is the "mnemonic" for the menu item. On the
@@ -65,6 +71,7 @@ class MainWindow(wx.Frame):
         menuBar.Append(fileMenu, "&File")
         menuBar.Append(helpMenu, "&Help")
 
+
         # Give the menu bar to the frame
         self.SetMenuBar(menuBar)
 
@@ -72,12 +79,16 @@ class MainWindow(wx.Frame):
         # each of the menu items. That means that when that menu item is
         # activated then the associated handler function will be called.
         self.Bind(wx.EVT_MENU, self.OnLoad, loadFileItem)
+        self.Bind(wx.EVT_MENU, self.OnPush, newWin)
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def OnExit(self, event):
         """Close the frame, terminating the application."""
         self.Close(True)
+
+    def OnPush(self, event):
+        self.newFrame()
 
 
     def OnLoad(self, event):
@@ -91,6 +102,10 @@ class MainWindow(wx.Frame):
         wx.MessageBox("Load files in File->Load File or with Ctrl-L",
                       "How to use EEG Processing application.",
                       wx.OK|wx.ICON_INFORMATION)
+
+    def newFrame(self):
+        frame2 = wx.Frame(None, -1)
+        frame2.Show()
 
     def loadFiles(self, filePaths):
         reader = FileReader()
@@ -109,6 +124,8 @@ class MainWindow(wx.Frame):
         #TODO finish the window editor
         windowEditor = WindowEditor(path)
         windowEditor.Show()
+
+
 
 if __name__ == '__main__':
     # When this module is run (not imported) then create the app, the

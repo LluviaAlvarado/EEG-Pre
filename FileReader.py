@@ -8,22 +8,12 @@ FileReader can read the next EEG formats:
 .eeg
 It returns a EEGData object.
 '''
-#lib imports
-import os
-import bioread
-import h5py
-import pyedflib
-import scipy.io as sio
-
-
-
-#local imports
-from EEGData import *
 # lib imports
 import os
 
 import bioread
 import h5py
+import mne.io as mne
 import pyedflib
 import scipy.io as sio
 
@@ -60,8 +50,10 @@ class FileReader:
         #reading the important data depending on the extension
         if fileExt == ".mat":
             eeg = self.readMAT(fileAddress)
-        elif fileExt[2:] == "df":
-            eeg = self.read_DF(fileAddress)
+        elif fileExt == ".edf":
+            eeg = self.read_EDF(fileAddress)
+        elif fileExt == ".gdf":
+            eeg = self.read_GDF(fileAddress)
         elif fileExt == ".rec":
             eeg = self.readREC(eegFile)
         elif fileExt == ".bci2000":
@@ -96,7 +88,7 @@ class FileReader:
         return None
         #return EEGData(sData, channels, units, filtr, add)
 
-    def read_DF(self, fileAddress):
+    def read_EDF(self, fileAddress):
         try:
             _dfFile = pyedflib.EdfReader(fileAddress)
             n = _dfFile.signals_in_file
@@ -109,6 +101,28 @@ class FileReader:
             return None
         #getting how many samples per second
         frecuency = signals.shape[1]/_dfFile.datarecord_duration
+        #getting if the signals where prefiltered
+        try:
+            filtr = _dfFile.getPrefilter()
+        except:
+            filtr = None
+        return EEGData(frecuency, _dfFile.datarecord_duration, signals, filtr, None, labels)
+
+    def read_GDF(self, fileAddress):
+        try:
+            _dfFile=mne.read_raw_edf(fileAddress)
+
+            n = len(_dfFile.ch_names)
+            labels = _dfFile.ch_names
+            c =int(_dfFile._cals[0])
+            signals = np.zeros((n, c))
+            for i in np.arange(n):
+                signals[i, :] = _dfFile.time[i]
+        except:
+            self.setError(2)
+            return None
+        #getting how many samples per second
+        frecuency = _dfFile.n_times/_dfFile.time
         #getting if the signals where prefiltered
         try:
             filtr = _dfFile.getPrefilter()
