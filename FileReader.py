@@ -111,24 +111,24 @@ class FileReader:
     def read_GDF(self, fileAddress):
         try:
             _dfFile=mne.read_raw_edf(fileAddress)
-
             n = len(_dfFile.ch_names)
             labels = _dfFile.ch_names
-            c =int(_dfFile._cals[0])
+            d = _dfFile.get_data()
+            c = d[0].size
             signals = np.zeros((n, c))
             for i in np.arange(n):
-                signals[i, :] = _dfFile.time[i]
+                signals[i] = d[i]
         except:
             self.setError(2)
             return None
         #getting how many samples per second
-        frecuency = _dfFile.n_times/_dfFile.time
+        frecuency = _dfFile.info['sfreq']
         #getting if the signals where prefiltered
         try:
             filtr = _dfFile.getPrefilter()
         except:
             filtr = None
-        return EEGData(frecuency, _dfFile.datarecord_duration, signals, filtr, None, labels)
+        return EEGData(frecuency, np.amax(_dfFile.times), signals, filtr, None, labels)
 
     def readREC(self, eegFile):
 
