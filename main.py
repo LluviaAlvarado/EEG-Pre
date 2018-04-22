@@ -1,4 +1,5 @@
 #Imports
+import wx.lib.agw.aquabutton as AB
 #local imports
 from FileReader import *
 from WindowEditor import *
@@ -12,9 +13,10 @@ class MainWindow(wx.Frame):
     def __init__(self, *args, **kw):
         # ensure the parent's __init__ is called
         super(MainWindow, self).__init__(*args, **kw)
-
+        self.SetSize(800, 600)
+        self.Centre()
         # create base panel in the frame
-        self.pnl = wx.Panel(self, size=(800, 600),
+        self.pnl = wx.Panel(self,
                    style=wx.TAB_TRAVERSAL|wx.VSCROLL|wx.HSCROLL|wx.BORDER_SUNKEN)
         #vbox to place buttons
         self.buttonContainer = wx.BoxSizer(wx.VERTICAL)
@@ -26,7 +28,7 @@ class MainWindow(wx.Frame):
         #fileLabel = wx.Label
         self.filePicker = wx.FileDialog(self.pnl, message="Choose the EEG files",
            defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
-           wildcard="EEG files (*.gdf)|*.gdf|(*.edf)|*.edf|(*.acq)|*.acq", style= wx.FD_OPEN | wx.FD_MULTIPLE)
+           wildcard="EEG files (*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq", style= wx.FD_OPEN | wx.FD_MULTIPLE)
 
         # create the menu bar that we don't need yet
         self.makeMenuBar()
@@ -50,7 +52,6 @@ class MainWindow(wx.Frame):
         # the same event
         loadFileItem = fileMenu.Append(-1, "&Load EEG...\tCtrl-L",
                 "Select EEG file to load.")
-        newWin = fileMenu.Append(-1, "New Frame")
         fileMenu.AppendSeparator()
 
 
@@ -79,17 +80,12 @@ class MainWindow(wx.Frame):
         # each of the menu items. That means that when that menu item is
         # activated then the associated handler function will be called.
         self.Bind(wx.EVT_MENU, self.OnLoad, loadFileItem)
-        self.Bind(wx.EVT_MENU, self.OnPush, newWin)
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def OnExit(self, event):
         """Close the frame, terminating the application."""
         self.Close(True)
-
-    def OnPush(self, event):
-        self.newFrame()
-
 
     def OnLoad(self, event):
         """Load other files"""
@@ -103,10 +99,6 @@ class MainWindow(wx.Frame):
                       "How to use EEG Processing application.",
                       wx.OK|wx.ICON_INFORMATION)
 
-    def newFrame(self):
-        frame2 = wx.Frame(None, -1)
-        frame2.Show()
-
     def loadFiles(self, filePaths):
         reader = FileReader()
         for path in filePaths:
@@ -116,12 +108,14 @@ class MainWindow(wx.Frame):
             if not reader.hasError():
                 print("File Read Successfully!")
                 #adding a button for this file just because
-                btn = wx.Button(self.pnl, label=name)
-                btn.Bind(wx.EVT_BUTTON, self.openWindowEditor(path))
-                self.buttonContainer.Add(btn, 0, wx.EXPAND | wx.ALIGN_CENTER)
+                btn = AB.AquaButton(self.pnl, label=name)
+                btn.SetForegroundColour("black")
+                btn.SetPulseOnFocus(True)
+                self.Bind(wx.EVT_BUTTON, lambda event: self.openWindowEditor(event, path), btn)
+                self.buttonContainer.Add(btn, 0, wx.CENTER|wx.ALL, 5)
+                self.buttonContainer.RecalcSizes()
 
-    def openWindowEditor(self, path):
-        #TODO finish the window editor
+    def openWindowEditor(self, event, path):
         windowEditor = WindowEditor(path)
         windowEditor.Show()
 
