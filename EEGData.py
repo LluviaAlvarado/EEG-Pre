@@ -18,6 +18,7 @@ class EEGData:
         self.channelMatrix = chM
         self.amUnits = [np.amax(self.channelMatrix), np.amin(self.channelMatrix)]
         self.additionalData = add
+        self.channels = []
         self.fillChannels(labels)
         self. windows = []
 
@@ -47,7 +48,6 @@ class EEGData:
         self.channels.append(channel)
 
     def fillChannels(self, labels):
-        self.channels = []
         #iterate channel matrix
         i = 0
         np.apply_along_axis(self.copyChannel, 1, self.channelMatrix, i, labels)

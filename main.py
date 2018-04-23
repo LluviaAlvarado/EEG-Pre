@@ -111,12 +111,12 @@ class MainWindow(wx.Frame):
                 btn = AB.AquaButton(self.pnl, label=name)
                 btn.SetForegroundColour("black")
                 btn.SetPulseOnFocus(True)
-                self.Bind(wx.EVT_BUTTON, lambda event: self.openWindowEditor(event, path), btn)
+                self.Bind(wx.EVT_BUTTON, lambda event: self.openWindowEditor(event, eeg), btn)
                 self.buttonContainer.Add(btn, 0, wx.CENTER|wx.ALL, 5)
                 self.buttonContainer.RecalcSizes()
 
-    def openWindowEditor(self, event, path):
-        windowEditor = WindowEditor(path)
+    def openWindowEditor(self, event, eeg):
+        windowEditor = WindowEditor(eeg)
         windowEditor.Show()
 
 

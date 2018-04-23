@@ -1,13 +1,21 @@
 #Import
 import wx
 import wx.lib.agw.aquabutton as AB
+import wx.lib.scrolledpanel
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+mpl.use('WXAgg')
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from matplotlib.figure import Figure
 
 class WindowEditor (wx.Frame):
     title = "Window Editor"
-    def __init__(self, p):
+    def __init__(self, e):
         wx.Frame.__init__(self, None, -1, "Window Editor",)
         self.Maximize(True)
-        self.SetMinSize((1000, 600))
+        self.SetMinSize((1000, 700))
         # create base panel in the frame
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
         #number of windows
@@ -17,6 +25,7 @@ class WindowEditor (wx.Frame):
         self.start = None
         self.end = None
         self.length = None
+        self.eeg = e
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         #container of window information
         leftPnl = wx.Panel(self.pnl)
@@ -31,9 +40,11 @@ class WindowEditor (wx.Frame):
         zoomSizer.Add(zoomLabel, 0, wx.CENTER | wx.ALL, 5)
         zoom_plus = AB.AquaButton(zoomPanel, label="+", size=(30, 30))
         zoom_plus.SetForegroundColour("black")
+        self.Bind(wx.EVT_BUTTON, self.zoomIn, zoom_plus)
         zoomSizer.Add(zoom_plus, 0, wx.CENTER | wx.ALL, 5)
         zoom_minus = AB.AquaButton(zoomPanel, label="-", size=(30, 30))
         zoom_minus.SetForegroundColour("black")
+        self.Bind(wx.EVT_BUTTON, self.zoomOut, zoom_minus)
         zoomSizer.Add(zoom_minus, 0, wx.CENTER | wx.ALL, 5)
         zoomPanel.SetSizer(zoomSizer)
         leftSizer.Add(zoomPanel, 0, wx.EXPAND | wx.ALL, 5)
@@ -41,19 +52,17 @@ class WindowEditor (wx.Frame):
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 20)
 
         #eeg grafic information right side
+
         rightPnl = wx.Panel(self.pnl)
-        graphContainer = wx.BoxSizer(wx.HORIZONTAL)
+        graphContainer = wx.BoxSizer(wx.VERTICAL)
         #panel for eeg graph
-        self.eegGraph = wx.Panel(rightPnl, size=(self.GetSize()[0]/3*2, self.GetSize()[1]-100),
-                            style=wx.TAB_TRAVERSAL|wx.VSCROLL|wx.HSCROLL|wx.BORDER_SUNKEN)
+        self.eegGraph = CanvasPanel(rightPnl, self)
         graphContainer.Add(self.eegGraph, 0, wx.EXPAND | wx.ALL, 20)
         rightPnl.SetSizer(graphContainer)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 20)
-
         self.pnl.SetSizer(baseContainer)
         self.Centre()
         self.Show()
-        self.path = p
 
     def addWindow(self):
         page = wx.Panel(self.tabWindows)
@@ -94,3 +103,52 @@ class WindowEditor (wx.Frame):
 
     def changeMarker(self, event):
         self.marker.SetValue(str(self.slider.GetValue()) + "s")
+
+    def zoomIn(self, event):
+        aw, ah = self.eegGraph.figure.get_figwidth(), self.eegGraph.figure.get_figheight()
+        aw *= 1.2
+        ah *= 1.2
+        self.eegGraph.figure.set_figheight(ah)
+        self.eegGraph.figure.set_figwidth(aw)
+        self.eegGraph.canvas.resize(wx.Size(aw, ah))
+        self.eegGraph.canvas.draw()
+        self.eegGraph.Fit()
+
+    def zoomOut(self, event):
+        aw, ah = self.eegGraph.figure.get_figwidth(), self.eegGraph.figure.get_figheight()
+        if (aw !=0) and (ah != 0):
+            aw /= 1.2
+            ah /= 1.2
+            self.eegGraph.figure.set_figheight(ah)
+            self.eegGraph.figure.set_figwidth(aw)
+            self.eegGraph.canvas.resize(aw, ah)
+            self.eegGraph.canvas.draw()
+
+class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
+    def __init__(self, parent, win):
+        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, size=(win.GetSize()[0], win.GetSize()[1] - 50),
+                          style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.SetupScrolling()
+        self.eeg = win.eeg
+        self.figure = None
+        self.axes = None
+        self.draw()
+        self.canvas = FigureCanvas(self, 0, self.figure)
+        self.canvas.SetInitialSize(size=wx.Size(self.canvas.Size[0], self.GetSize()[1]-100))
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.canvas, 0, wx.EXPAND)
+        self.Fit()
+        self.SetSizer(self.sizer)
+
+    def draw(self):
+        #get amount of columns
+        n = len(self.eeg.channels)
+        self.axes = [None] * n
+        self.figure, (self.axes) = plt.subplots(n, sharex=True, sharey=True)
+        i = 0
+        for ax in self.axes:
+            channel = self.eeg.channels[i]
+            x = np.arange(len(channel.readings))
+            ax.plot(x, channel.readings)
+            ax.set_title(channel.label, x=0)
+            i += 1
