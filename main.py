@@ -1,8 +1,10 @@
 #Imports
 import wx.lib.agw.aquabutton as AB
+
 #local imports
 from FileReader import *
 from WindowEditor import *
+
 
 class MainWindow(wx.Frame):
     """
@@ -28,7 +30,7 @@ class MainWindow(wx.Frame):
         #fileLabel = wx.Label
         self.filePicker = wx.FileDialog(self.pnl, message="Choose the EEG files",
            defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
-           wildcard="EEG files (*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq", style= wx.FD_OPEN | wx.FD_MULTIPLE)
+           wildcard="All Files (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq", style= wx.FD_OPEN | wx.FD_MULTIPLE)
 
         # create the menu bar that we don't need yet
         self.makeMenuBar()

@@ -2,9 +2,13 @@
 import wx
 import wx.lib.agw.aquabutton as AB
 import wx.lib.scrolledpanel
+import wx.html2
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import bokeh.plotting as bk
+from bokeh.resources import CDN
+from bokeh.embed import file_html
 mpl.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
@@ -108,43 +112,51 @@ class WindowEditor (wx.Frame):
         aw, ah = self.eegGraph.figure.get_figwidth(), self.eegGraph.figure.get_figheight()
         aw *= 1.2
         ah *= 1.2
-        self.eegGraph.figure.set_figheight(ah)
-        self.eegGraph.figure.set_figwidth(aw)
-        self.eegGraph.canvas.resize(wx.Size(aw, ah))
+        self.eegGraph.figure.set_size_inches(aw, ah, forward=True)
+        pix_w = aw * self.eegGraph.figure._dpi
+        pix_h = ah * self.eegGraph.figure._dpi
         self.eegGraph.canvas.draw()
-        self.eegGraph.Fit()
+        self.eegGraph.canvas.SetSize(pix_w, pix_h)
+        self.eegGraph.canvas.SetMinSize(size=(pix_w, pix_h))
+        self.eegGraph.sizer.Layout()
+        self.eegGraph.FitInside()
 
     def zoomOut(self, event):
         aw, ah = self.eegGraph.figure.get_figwidth(), self.eegGraph.figure.get_figheight()
         if (aw !=0) and (ah != 0):
             aw /= 1.2
             ah /= 1.2
-            self.eegGraph.figure.set_figheight(ah)
-            self.eegGraph.figure.set_figwidth(aw)
-            self.eegGraph.canvas.resize(aw, ah)
+            self.eegGraph.figure.set_size_inches(aw, ah, forward=True)
+            pix_w = aw * self.eegGraph.figure._dpi
+            pix_h = ah * self.eegGraph.figure._dpi
             self.eegGraph.canvas.draw()
+            self.eegGraph.canvas.SetSize(pix_w, pix_h)
+            self.eegGraph.canvas.SetMinSize(size=(pix_w, pix_h))
+            self.eegGraph.sizer.Layout()
+            self.eegGraph.FitInside()
 
 class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, win):
-        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, size=(win.GetSize()[0], win.GetSize()[1] - 50),
-                          style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, size=(win.GetSize()[0], win.GetSize()[1]),
+                          style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN | wx.HSCROLL | wx.VSCROLL | wx.ALWAYS_SHOW_SB)
         self.SetupScrolling()
         self.eeg = win.eeg
         self.figure = None
         self.axes = None
         self.draw()
         self.canvas = FigureCanvas(self, 0, self.figure)
-        self.canvas.SetInitialSize(size=wx.Size(self.canvas.Size[0], self.GetSize()[1]-100))
+        self.canvas.SetInitialSize(size=(self.GetSize()[0], self.GetSize()[1]))
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.canvas, 0, wx.EXPAND)
-        self.Fit()
+        self.sizer.Add(self.canvas, 1, wx.EXPAND | wx.ALL)
         self.SetSizer(self.sizer)
+        self.SetAutoLayout(1)
 
     def draw(self):
         #get amount of columns
         n = len(self.eeg.channels)
         self.axes = [None] * n
-        self.figure, (self.axes) = plt.subplots(n, sharex=True, sharey=True)
+        self.figure, (self.axes) = plt.subplots(n, sharex=True, sharey=False)
+        plt.subplots_adjust(hspace=0)
         i = 0
         for ax in self.axes:
             channel = self.eeg.channels[i]
