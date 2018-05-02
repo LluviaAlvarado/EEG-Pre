@@ -6,13 +6,11 @@ import wx.html2
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import bokeh.plotting as bk
-from bokeh.resources import CDN
-from bokeh.embed import file_html
+import wx.lib.agw.buttonpanel
 mpl.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
-from matplotlib.figure import Figure
+
 
 class WindowEditor (wx.Frame):
     title = "Window Editor"
@@ -37,31 +35,32 @@ class WindowEditor (wx.Frame):
         self.addWindow()
         leftSizer = wx.BoxSizer(wx.VERTICAL)
         leftSizer.Add(self.tabWindows, 0, wx.EXPAND | wx.ALL, 5)
-        # panel for zoom buttons
-        zoomPanel = wx.Panel(leftPnl)
-        zoomSizer = wx.BoxSizer(wx.VERTICAL)
-        zoomLabel = wx.StaticText(zoomPanel, label="Zoom:")
-        zoomSizer.Add(zoomLabel, 0, wx.CENTER | wx.ALL, 5)
-        zoom_plus = AB.AquaButton(zoomPanel, label="+", size=(30, 30))
-        zoom_plus.SetForegroundColour("black")
-        self.Bind(wx.EVT_BUTTON, self.zoomIn, zoom_plus)
-        zoomSizer.Add(zoom_plus, 0, wx.CENTER | wx.ALL, 5)
-        zoom_minus = AB.AquaButton(zoomPanel, label="-", size=(30, 30))
-        zoom_minus.SetForegroundColour("black")
-        self.Bind(wx.EVT_BUTTON, self.zoomOut, zoom_minus)
-        zoomSizer.Add(zoom_minus, 0, wx.CENTER | wx.ALL, 5)
-        zoomPanel.SetSizer(zoomSizer)
-        leftSizer.Add(zoomPanel, 0, wx.EXPAND | wx.ALL, 5)
+        # panel for electrode selector
+        electrodePanel = wx.Panel(leftPnl)
+        elecSizer = wx.BoxSizer(wx.VERTICAL)
+        elecLabel = wx.StaticText(electrodePanel, label="Electrodes to view:")
+        elecSizer.Add(elecLabel, 0, wx.EXPAND | wx.ALL, 5)
+
+        electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
+        #select all items
+        for i in range(len(electrodeList.GetItems())):
+            electrodeList.Check(i, check=True)
+        elecSizer.Add(electrodeList, 1, wx.EXPAND | wx.ALL, 5)
+        electrodePanel.SetSizer(elecSizer)
+        leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
         leftPnl.SetSizer(leftSizer)
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 20)
-
         #eeg grafic information right side
-
         rightPnl = wx.Panel(self.pnl)
         graphContainer = wx.BoxSizer(wx.VERTICAL)
         #panel for eeg graph
         self.eegGraph = CanvasPanel(rightPnl, self)
-        graphContainer.Add(self.eegGraph, 0, wx.EXPAND | wx.ALL, 20)
+        self.toolbar = NavigationToolbar2Wx(self.eegGraph.canvas)
+        self.toolbar.Realize()
+        self.toolbar.Hide()
+        self.customTools = customToolbar(rightPnl, self.toolbar)
+        graphContainer.Add(self.customTools, 0, wx.EXPAND | wx.LEFT, 0)
+        graphContainer.Add(self.eegGraph, 1, wx.EXPAND | wx.ALL, 0)
         rightPnl.SetSizer(graphContainer)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 20)
         self.pnl.SetSizer(baseContainer)
@@ -145,9 +144,11 @@ class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.axes = None
         self.draw()
         self.canvas = FigureCanvas(self, 0, self.figure)
-        self.canvas.SetInitialSize(size=(self.GetSize()[0], self.GetSize()[1]))
+        n = 100*len(self.eeg.channels)
+        self.canvas.SetInitialSize(size=(self.GetSize()[0], n))
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.EXPAND | wx.ALL)
+
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
 
@@ -156,7 +157,7 @@ class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
         n = len(self.eeg.channels)
         self.axes = [None] * n
         self.figure, (self.axes) = plt.subplots(n, sharex=True, sharey=False)
-        plt.subplots_adjust(hspace=0)
+        plt.subplots_adjust(left=0.04, bottom=0.01, right=0.99, top=0.99, hspace=0.5)
         i = 0
         for ax in self.axes:
             channel = self.eeg.channels[i]
@@ -164,3 +165,59 @@ class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
             ax.plot(x, channel.readings)
             ax.set_title(channel.label, x=0)
             i += 1
+
+class customToolbar(wx.lib.agw.buttonpanel.ButtonPanel):
+    """
+       Create small toolbar which is added to the main panel
+       par:  parent
+       """
+
+    def __init__(self, par, tlb):
+        wx.lib.agw.buttonpanel.ButtonPanel.__init__(self, par)
+        self.toolbar = tlb
+        self.ID_FIT = wx.NewId()
+        self.ID_ZOOM = wx.NewId()
+        self.ID_BACK = wx.NewId()
+        self.ID_FWD = wx.NewId()
+
+        self.AddSpacer()
+
+        self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
+                             shortHelp='Restart Zoom')
+        self.AddButton(self.btnRestart)
+        self.Bind(wx.EVT_BUTTON, self.ZoomFit, self.btnRestart)
+
+        self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM, wx.Bitmap("src/zoom.png", wx.BITMAP_TYPE_PNG),
+                             shortHelp='Zoom in/out')
+        self.AddButton(self.btnZoom)
+        self.Bind(wx.EVT_BUTTON, self.Zoom, self.btnZoom)
+
+        self.btnBack = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_BACK, wx.Bitmap("src/back.png", wx.BITMAP_TYPE_PNG),
+                             shortHelp='Undo Action')
+        self.AddButton(self.btnBack)
+        self.Bind(wx.EVT_BUTTON, self.Back, self.btnBack)
+
+        self.btnFwd = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FWD, wx.Bitmap("src/forward.png", wx.BITMAP_TYPE_PNG),
+                             shortHelp='Redo Action')
+        self.AddButton(self.btnFwd)
+        self.Bind(wx.EVT_BUTTON, self.FWD, self.btnFwd)
+
+        self.AddSpacer()
+
+        self.DoLayout()
+
+    def ZoomFit(self, event):
+        self.toolbar.home()
+        event.Skip()
+
+    def Zoom(self, event):
+        self.toolbar.zoom()
+        event.Skip()
+
+    def Back(self, event):
+        self.toolbar.back()
+        event.Skip()
+
+    def FWD(self, event):
+        self.toolbar.forward()
+        event.Skip()

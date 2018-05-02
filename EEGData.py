@@ -51,3 +51,9 @@ class EEGData:
         #iterate channel matrix
         i = 0
         np.apply_along_axis(self.copyChannel, 1, self.channelMatrix, i, labels)
+
+    def getLabels(self):
+        lbls = []
+        for ch in self.channels:
+            lbls.append(ch.label)
+        return  lbls
