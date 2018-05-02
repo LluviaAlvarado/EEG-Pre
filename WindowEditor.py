@@ -41,11 +41,11 @@ class WindowEditor (wx.Frame):
         elecLabel = wx.StaticText(electrodePanel, label="Electrodes to view:")
         elecSizer.Add(elecLabel, 0, wx.EXPAND | wx.ALL, 5)
 
-        electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
+        self.electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
         #select all items
-        for i in range(len(electrodeList.GetItems())):
-            electrodeList.Check(i, check=True)
-        elecSizer.Add(electrodeList, 1, wx.EXPAND | wx.ALL, 5)
+        for i in range(len(self.electrodeList.GetItems())):
+            self.electrodeList.Check(i, check=True)
+        elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
         electrodePanel.SetSizer(elecSizer)
         leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
         leftPnl.SetSizer(leftSizer)
@@ -159,6 +159,7 @@ class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.figure, (self.axes) = plt.subplots(n, sharex=True, sharey=False)
         plt.subplots_adjust(left=0.04, bottom=0.01, right=0.99, top=0.99, hspace=0.5)
         i = 0
+        #TODO check if electrode is checked to plot
         for ax in self.axes:
             channel = self.eeg.channels[i]
             x = np.arange(len(channel.readings))
