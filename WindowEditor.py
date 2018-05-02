@@ -11,7 +11,6 @@ mpl.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 
-
 class WindowEditor (wx.Frame):
     title = "Window Editor"
     def __init__(self, e):
@@ -46,6 +45,10 @@ class WindowEditor (wx.Frame):
         for i in range(len(self.electrodeList.GetItems())):
             self.electrodeList.Check(i, check=True)
         elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
+        #button to apply changes from electrode selector
+        applyChanges = wx.Button(electrodePanel, label="Apply")
+
+        elecSizer.Add(applyChanges, 0, wx.CENTER | wx.ALL, 5)
         electrodePanel.SetSizer(elecSizer)
         leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
         leftPnl.SetSizer(leftSizer)
@@ -54,7 +57,7 @@ class WindowEditor (wx.Frame):
         rightPnl = wx.Panel(self.pnl)
         graphContainer = wx.BoxSizer(wx.VERTICAL)
         #panel for eeg graph
-        self.eegGraph = CanvasPanel(rightPnl, self)
+        self.eegGraph = CanvasPanel(rightPnl, self, self.electrodeList)
         self.toolbar = NavigationToolbar2Wx(self.eegGraph.canvas)
         self.toolbar.Realize()
         self.toolbar.Hide()
@@ -64,6 +67,7 @@ class WindowEditor (wx.Frame):
         rightPnl.SetSizer(graphContainer)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 20)
         self.pnl.SetSizer(baseContainer)
+        self.Bind(wx.EVT_BUTTON, self.redrawEEG, applyChanges)
         self.Centre()
         self.Show()
 
@@ -103,65 +107,58 @@ class WindowEditor (wx.Frame):
         page.SetSizer(pageSizer)
         self.tabWindows.AddPage(page, str(self.n))
         self.n += 1
-
+    #changes de marker of a window
     def changeMarker(self, event):
         self.marker.SetValue(str(self.slider.GetValue()) + "s")
 
-    def zoomIn(self, event):
-        aw, ah = self.eegGraph.figure.get_figwidth(), self.eegGraph.figure.get_figheight()
-        aw *= 1.2
-        ah *= 1.2
-        self.eegGraph.figure.set_size_inches(aw, ah, forward=True)
-        pix_w = aw * self.eegGraph.figure._dpi
-        pix_h = ah * self.eegGraph.figure._dpi
-        self.eegGraph.canvas.draw()
-        self.eegGraph.canvas.SetSize(pix_w, pix_h)
-        self.eegGraph.canvas.SetMinSize(size=(pix_w, pix_h))
-        self.eegGraph.sizer.Layout()
-        self.eegGraph.FitInside()
+    #redraws the eeg with the selected electrodes
+    def redrawEEG(self, event):
+        self.eegGraph.figure.clear()
+        self.eegGraph.draw()
+        self.eegGraph.setCanvas()
 
-    def zoomOut(self, event):
-        aw, ah = self.eegGraph.figure.get_figwidth(), self.eegGraph.figure.get_figheight()
-        if (aw !=0) and (ah != 0):
-            aw /= 1.2
-            ah /= 1.2
-            self.eegGraph.figure.set_size_inches(aw, ah, forward=True)
-            pix_w = aw * self.eegGraph.figure._dpi
-            pix_h = ah * self.eegGraph.figure._dpi
-            self.eegGraph.canvas.draw()
-            self.eegGraph.canvas.SetSize(pix_w, pix_h)
-            self.eegGraph.canvas.SetMinSize(size=(pix_w, pix_h))
-            self.eegGraph.sizer.Layout()
-            self.eegGraph.FitInside()
 
 class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, win):
+    def __init__(self, parent, win, eList):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, size=(win.GetSize()[0], win.GetSize()[1]),
                           style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN | wx.HSCROLL | wx.VSCROLL | wx.ALWAYS_SHOW_SB)
         self.SetupScrolling()
         self.eeg = win.eeg
+        self.electrodeList = eList
         self.figure = None
         self.axes = None
         self.draw()
+        self.sizer = None
+        self.canvas = None
+        self.setCanvas()
+        self.SetAutoLayout(1)
+
+    def setCanvas(self):
         self.canvas = FigureCanvas(self, 0, self.figure)
-        n = 100*len(self.eeg.channels)
+        n = 100 * len(self.eeg.channels)
         self.canvas.SetInitialSize(size=(self.GetSize()[0], n))
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.EXPAND | wx.ALL)
-
         self.SetSizer(self.sizer)
-        self.SetAutoLayout(1)
+
+    def getChecked(self):
+        checked = self.electrodeList.GetCheckedItems()
+        channels = []
+        for ix in checked:
+            channels.append(self.eeg.channels[ix])
+        return channels
 
     def draw(self):
         #get amount of columns
-        n = len(self.eeg.channels)
+        n = len(self.electrodeList.GetCheckedItems())
         self.axes = [None] * n
         self.figure, (self.axes) = plt.subplots(n, sharex=True, sharey=False)
         plt.subplots_adjust(left=0.04, bottom=0.01, right=0.99, top=0.99, hspace=0.5)
         i = 0
-        #TODO check if electrode is checked to plot
+        #check if electrode is checked to plot
+        channelsPlot = self.getChecked()
         for ax in self.axes:
-            channel = self.eeg.channels[i]
+            channel = channelsPlot[i]
             x = np.arange(len(channel.readings))
             ax.plot(x, channel.readings)
             ax.set_title(channel.label, x=0)
