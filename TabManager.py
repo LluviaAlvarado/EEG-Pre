@@ -57,7 +57,7 @@ class windowTab(wx.Panel):
         windowThumb = wx.Panel(self, size=(200, 200))
         windowThumb.SetBackgroundColour('#FFFFFF')
         pageSizer.Add(windowThumb, 0, wx.EXPAND | wx.ALL, 5)
-        pageSizer.Add(wx.StaticText(self, label="Current Marker:",
+        pageSizer.Add(wx.StaticText(self, label="Marcador:",
                                     style=wx.ALIGN_CENTRE_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
         parameters = wx.Panel(self)
         paramSizer = wx.FlexGridSizer(4, 2, (5, 5))
@@ -71,9 +71,9 @@ class windowTab(wx.Panel):
         self.marker = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
         self.marker.SetValue(str(self.GetSliderValue()))
         self._marker = self.GetSliderValue()
-        lthLabel = wx.StaticText(parameters, label="Length (s):")
-        strLabel = wx.StaticText(parameters, label="Start (s):")
-        endLabel = wx.StaticText(parameters, label="End (s):")
+        lthLabel = wx.StaticText(parameters, label="Longitud (s):")
+        strLabel = wx.StaticText(parameters, label="Inicio (s):")
+        endLabel = wx.StaticText(parameters, label="Fin (s):")
         self.length = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER, name="length")
         self.length.SetValue(str(p.length))
         self.start = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)

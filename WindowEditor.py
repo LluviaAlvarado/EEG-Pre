@@ -14,9 +14,9 @@ from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from TabManager import *
 
 class WindowEditor (wx.Frame):
-    title = "Window Editor"
+    title = "Editor de Ventanas"
     def __init__(self, e, parent):
-        wx.Frame.__init__(self, parent, -1, "Window Editor",)
+        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas",)
         self.Maximize(True)
         self.SetMinSize((1000, 700))
         # create base panel in the frame
@@ -34,9 +34,9 @@ class WindowEditor (wx.Frame):
         #panel for tab buttons
         tabBtnPanel = wx.Panel(leftPnl)
         tbpSizer = wx.BoxSizer(wx.HORIZONTAL)
-        newTab = wx.Button(tabBtnPanel, label="New")
+        newTab = wx.Button(tabBtnPanel, label="Nueva")
         newTab.Bind(wx.EVT_BUTTON, self.createNewWindow)
-        deleteTab = wx.Button(tabBtnPanel, label="Delete")
+        deleteTab = wx.Button(tabBtnPanel, label="Eliminar")
         deleteTab.Bind(wx.EVT_BUTTON, self.deleteWindow)
         tbpSizer.Add(newTab, 0, wx.EXPAND | wx.ALL, 5)
         tbpSizer.Add(deleteTab, 0, wx.EXPAND | wx.ALL, 5)
@@ -45,7 +45,7 @@ class WindowEditor (wx.Frame):
         # panel for electrode selector
         electrodePanel = wx.Panel(leftPnl)
         elecSizer = wx.BoxSizer(wx.VERTICAL)
-        elecLabel = wx.StaticText(electrodePanel, label="Electrodes to view:")
+        elecLabel = wx.StaticText(electrodePanel, label="Selección de Electrodos:")
         elecSizer.Add(elecLabel, 0, wx.EXPAND | wx.ALL, 5)
 
         self.electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
@@ -54,7 +54,7 @@ class WindowEditor (wx.Frame):
             self.electrodeList.Check(i, check=True)
         elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
         #button to apply changes from electrode selector
-        applyChanges = wx.Button(electrodePanel, label="Apply")
+        applyChanges = wx.Button(electrodePanel, label="Aplicar")
 
         elecSizer.Add(applyChanges, 0, wx.CENTER | wx.ALL, 5)
         electrodePanel.SetSizer(elecSizer)
@@ -160,22 +160,22 @@ class customToolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.AddSpacer()
 
         self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Restart Zoom')
+                             shortHelp='Reiniciar Zoom')
         self.AddButton(self.btnRestart)
         self.Bind(wx.EVT_BUTTON, self.ZoomFit, self.btnRestart)
 
         self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM, wx.Bitmap("src/zoom.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Zoom in/out')
+                             shortHelp='Acercar')
         self.AddButton(self.btnZoom)
         self.Bind(wx.EVT_BUTTON, self.Zoom, self.btnZoom)
 
         self.btnBack = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_BACK, wx.Bitmap("src/back.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Undo Action')
+                             shortHelp='Deshacer')
         self.AddButton(self.btnBack)
         self.Bind(wx.EVT_BUTTON, self.Back, self.btnBack)
 
         self.btnFwd = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FWD, wx.Bitmap("src/forward.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Redo Action')
+                             shortHelp='Rehacer')
         self.AddButton(self.btnFwd)
         self.Bind(wx.EVT_BUTTON, self.FWD, self.btnFwd)
 
