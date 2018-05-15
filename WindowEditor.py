@@ -1,4 +1,4 @@
-#Import
+#Imports
 import wx
 import wx.lib.agw.aquabutton as AB
 import wx.lib.scrolledpanel
@@ -10,30 +10,38 @@ import wx.lib.agw.buttonpanel
 mpl.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+#Local Imports
+from TabManager import *
 
 class WindowEditor (wx.Frame):
     title = "Window Editor"
-    def __init__(self, e):
-        wx.Frame.__init__(self, None, -1, "Window Editor",)
+    def __init__(self, e, parent):
+        wx.Frame.__init__(self, parent, -1, "Window Editor",)
         self.Maximize(True)
         self.SetMinSize((1000, 700))
         # create base panel in the frame
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
-        #number of windows
-        self.n = 1
-        self.slider = None
-        self.marker = None
-        self.start = None
-        self.end = None
-        self.length = None
         self.eeg = e
+        #updating length to max size of eeg if it has not been initialized
+        if parent.WindowLength is None:
+            self.updateLength(self.eeg.duration)
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         #container of window information
         leftPnl = wx.Panel(self.pnl)
-        self.tabWindows = wx.Notebook(leftPnl)
-        self.addWindow()
+        self.tabManager = TabManager(leftPnl, self, self.GetParent().WindowLength)
         leftSizer = wx.BoxSizer(wx.VERTICAL)
-        leftSizer.Add(self.tabWindows, 0, wx.EXPAND | wx.ALL, 5)
+        leftSizer.Add(self.tabManager, 0, wx.EXPAND | wx.ALL, 5)
+        #panel for tab buttons
+        tabBtnPanel = wx.Panel(leftPnl)
+        tbpSizer = wx.BoxSizer(wx.HORIZONTAL)
+        newTab = wx.Button(tabBtnPanel, label="New")
+        newTab.Bind(wx.EVT_BUTTON, self.createNewWindow)
+        deleteTab = wx.Button(tabBtnPanel, label="Delete")
+        deleteTab.Bind(wx.EVT_BUTTON, self.deleteWindow)
+        tbpSizer.Add(newTab, 0, wx.EXPAND | wx.ALL, 5)
+        tbpSizer.Add(deleteTab, 0, wx.EXPAND | wx.ALL, 5)
+        tabBtnPanel.SetSizer(tbpSizer)
+        leftSizer.Add(tabBtnPanel, 0, wx.EXPAND | wx.ALL, 5)
         # panel for electrode selector
         electrodePanel = wx.Panel(leftPnl)
         elecSizer = wx.BoxSizer(wx.VERTICAL)
@@ -71,45 +79,16 @@ class WindowEditor (wx.Frame):
         self.Centre()
         self.Show()
 
-    def addWindow(self):
-        page = wx.Panel(self.tabWindows)
-        page.SetBackgroundColour("#eff2f4")
-        pageSizer = wx.BoxSizer(wx.VERTICAL)
-        windowThumb = wx.Panel(page, size=(200,200))
-        windowThumb.SetBackgroundColour('#FFFFFF')
-        pageSizer.Add(windowThumb, 0, wx.EXPAND | wx.ALL, 5)
-        pageSizer.Add(wx.StaticText(page, label="Current Marker:",
-                                  style=wx.ALIGN_CENTRE_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
+    def createNewWindow(self, event):
+        self.tabManager.addWindow()
+        event.Skip()
 
-        parameters = wx.Panel(page)
-        paramSizer = wx.FlexGridSizer(4, 2, (5, 5))
-        #for testing purposes
-        self.start = 0
-        self.end = 3
-        self.slider = wx.Slider(parameters, value=self.end/2, minValue=self.start, maxValue=self.end,
-                                style=wx.SL_HORIZONTAL)
-        self.Bind(wx.EVT_SLIDER, self.changeMarker)
-        self.marker = wx.TextCtrl(parameters)
-        self.marker.SetValue(str(self.slider.GetValue()) + "s")
-        lthLabel = wx.StaticText(parameters, label="Length:")
-        strLabel = wx.StaticText(parameters, label="Start:")
-        endLabel = wx.StaticText(parameters, label="End:")
-        length = wx.TextCtrl(parameters)
-        length.SetValue(str(self.end) + "s")
-        start = wx.TextCtrl(parameters)
-        start.SetValue(str(self.start) + "s")
-        end = wx.TextCtrl(parameters)
-        end.SetValue(str(self.end) + "s")
-        paramSizer.AddMany([(self.slider, 1, wx.EXPAND), (self.marker, 1, wx.EXPAND), (lthLabel), (length, 1, wx.EXPAND),
-                            (strLabel), (start, 1, wx.EXPAND), (endLabel), (end, 1, wx.EXPAND)])
-        parameters.SetSizer(paramSizer)
-        pageSizer.Add(parameters, 0, wx.EXPAND | wx.ALL, 5)
-        page.SetSizer(pageSizer)
-        self.tabWindows.AddPage(page, str(self.n))
-        self.n += 1
-    #changes de marker of a window
-    def changeMarker(self, event):
-        self.marker.SetValue(str(self.slider.GetValue()) + "s")
+    def deleteWindow(self, event):
+        self.tabManager.deleteWindow()
+        event.Skip()
+
+    def updateLength(self, l):
+        self.GetParent().WindowLength = l
 
     #redraws the eeg with the selected electrodes
     def redrawEEG(self, event):
@@ -159,7 +138,7 @@ class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
         channelsPlot = self.getChecked()
         for ax in self.axes:
             channel = channelsPlot[i]
-            x = np.arange(len(channel.readings))
+            x = np.linspace(0, self.eeg.duration, len(channel.readings))
             ax.plot(x, channel.readings)
             ax.set_title(channel.label, x=0)
             i += 1

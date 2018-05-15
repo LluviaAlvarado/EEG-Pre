@@ -17,6 +17,8 @@ class MainWindow(wx.Frame):
         super(MainWindow, self).__init__(*args, **kw)
         self.SetSize(800, 600)
         self.Centre()
+        #global length of windows
+        self.WindowLength = None
         # create base panel in the frame
         self.pnl = wx.Panel(self,
                    style=wx.TAB_TRAVERSAL|wx.VSCROLL|wx.HSCROLL|wx.BORDER_SUNKEN)
@@ -91,12 +93,14 @@ class MainWindow(wx.Frame):
 
     def OnLoad(self, event):
         """Load other files"""
+        self.SetStatusText("Loading EEG file...")
         self.filePicker.ShowModal()
         files = self.filePicker.GetPaths()
         self.loadFiles(files)
 
     def OnAbout(self, event):
         """Display an About Dialog"""
+        self.SetStatusText("")
         wx.MessageBox("Load files in File->Load File or with Ctrl-L",
                       "How to use EEG Processing application.",
                       wx.OK|wx.ICON_INFORMATION)
@@ -118,7 +122,8 @@ class MainWindow(wx.Frame):
                 self.buttonContainer.RecalcSizes()
 
     def openWindowEditor(self, event, eeg):
-        windowEditor = WindowEditor(eeg)
+        self.SetStatusText("Opening Window Editor...")
+        windowEditor = WindowEditor(eeg, self)
         windowEditor.Show()
 
 
