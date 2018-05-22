@@ -59,4 +59,4 @@ class EEGData:
         lbls = []
         for ch in self.channels:
             lbls.append(ch.label)
-        return  lbls
+        return lbls

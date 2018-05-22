@@ -81,3 +81,4 @@ class FilesWindow(wx.Frame):
         eeg = self.EEGS[index]
         windowEditor = WindowEditor(eeg, self)
         windowEditor.Show()
+

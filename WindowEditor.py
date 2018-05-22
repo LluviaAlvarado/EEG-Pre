@@ -9,18 +9,19 @@ import matplotlib.pyplot as plt
 import wx.lib.agw.buttonpanel
 mpl.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+
 #Local Imports
 from TabManager import *
+from EEGraph import *
 
 class WindowEditor (wx.Frame):
     title = "Editor de Ventanas"
     def __init__(self, e, parent):
-        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas",)
+        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
         self.Maximize(True)
-        self.SetMinSize((1000, 700))
+        self.SetMinSize((self.Size[0], self.Size[1]))
         # create base panel in the frame
-        self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
+        self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.eeg = e
         #updating length to max size of eeg if it has not been initialized
         if parent.WindowLength is None:
@@ -65,17 +66,14 @@ class WindowEditor (wx.Frame):
         rightPnl = wx.Panel(self.pnl)
         graphContainer = wx.BoxSizer(wx.VERTICAL)
         #panel for eeg graph
-        self.eegGraph = CanvasPanel(rightPnl, self, self.electrodeList)
-        self.toolbar = NavigationToolbar2Wx(self.eegGraph.canvas)
-        self.toolbar.Realize()
-        self.toolbar.Hide()
-        self.customTools = customToolbar(rightPnl, self.toolbar)
-        graphContainer.Add(self.customTools, 0, wx.EXPAND | wx.LEFT, 0)
+        self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList)
+        self.toolbar = Toolbar(rightPnl)
+        graphContainer.Add(self.toolbar, 0, wx.EXPAND | wx.ALL, 0)
         graphContainer.Add(self.eegGraph, 1, wx.EXPAND | wx.ALL, 0)
         rightPnl.SetSizer(graphContainer)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 20)
         self.pnl.SetSizer(baseContainer)
-        self.Bind(wx.EVT_BUTTON, self.redrawEEG, applyChanges)
+        #self.Bind(wx.EVT_BUTTON, self.redrawEEG, applyChanges)
         self.Centre()
         self.Show()
 
@@ -91,10 +89,7 @@ class WindowEditor (wx.Frame):
         self.GetParent().WindowLength = l
 
     #redraws the eeg with the selected electrodes
-    def redrawEEG(self, event):
-        self.eegGraph.figure.clear()
-        self.eegGraph.draw()
-        self.eegGraph.setCanvas()
+    #def redrawEEG(self, event):
 
 
 class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
@@ -143,15 +138,14 @@ class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
             ax.set_title(channel.label, x=0)
             i += 1
 
-class customToolbar(wx.lib.agw.buttonpanel.ButtonPanel):
+class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
     """
        Create small toolbar which is added to the main panel
        par:  parent
        """
 
-    def __init__(self, par, tlb):
+    def __init__(self, par):
         wx.lib.agw.buttonpanel.ButtonPanel.__init__(self, par)
-        self.toolbar = tlb
         self.ID_FIT = wx.NewId()
         self.ID_ZOOM = wx.NewId()
         self.ID_BACK = wx.NewId()
@@ -184,17 +178,17 @@ class customToolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.DoLayout()
 
     def ZoomFit(self, event):
-        self.toolbar.home()
+
         event.Skip()
 
     def Zoom(self, event):
-        self.toolbar.zoom()
+
         event.Skip()
 
     def Back(self, event):
-        self.toolbar.back()
+
         event.Skip()
 
     def FWD(self, event):
-        self.toolbar.forward()
+
         event.Skip()
