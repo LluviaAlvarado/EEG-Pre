@@ -24,7 +24,6 @@ class EEGData:
         self.fillChannels(labels)
         self. windows = []
 
-
     #adds a WindowEEG object to the list
     def addWindow(self, w):
         self.windows.append(w)

@@ -74,8 +74,15 @@ class WindowEditor (wx.Frame):
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 20)
         self.pnl.SetSizer(baseContainer)
         #self.Bind(wx.EVT_BUTTON, self.redrawEEG, applyChanges)
+        #creating a status bar to inform user of process
+        self.CreateStatusBar()
+        self.SetStatusText("Loading EEG Readings...")
         self.Centre()
         self.Show()
+        wx.CallLater(0, lambda: self.SetStatus(""))
+
+    def SetStatus(self, st):
+        self.SetStatusText(st)
 
     def createNewWindow(self, event):
         self.tabManager.addWindow()
@@ -90,53 +97,6 @@ class WindowEditor (wx.Frame):
 
     #redraws the eeg with the selected electrodes
     #def redrawEEG(self, event):
-
-
-class CanvasPanel(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, win, eList):
-        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, size=(win.GetSize()[0], win.GetSize()[1]),
-                          style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN | wx.HSCROLL | wx.VSCROLL | wx.ALWAYS_SHOW_SB)
-        self.SetupScrolling()
-        self.eeg = win.eeg
-        self.electrodeList = eList
-        self.figure = None
-        self.axes = None
-        self.draw()
-        self.sizer = None
-        self.canvas = None
-        self.setCanvas()
-        self.SetAutoLayout(1)
-
-    def setCanvas(self):
-        self.canvas = FigureCanvas(self, 0, self.figure)
-        n = 100 * len(self.eeg.channels)
-        self.canvas.SetInitialSize(size=(self.GetSize()[0], n))
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.canvas, 1, wx.EXPAND | wx.ALL)
-        self.SetSizer(self.sizer)
-
-    def getChecked(self):
-        checked = self.electrodeList.GetCheckedItems()
-        channels = []
-        for ix in checked:
-            channels.append(self.eeg.channels[ix])
-        return channels
-
-    def draw(self):
-        #get amount of columns
-        n = len(self.electrodeList.GetCheckedItems())
-        self.axes = [None] * n
-        self.figure, (self.axes) = plt.subplots(n, sharex=True, sharey=False)
-        plt.subplots_adjust(left=0.04, bottom=0.01, right=0.99, top=0.99, hspace=0.5)
-        i = 0
-        #check if electrode is checked to plot
-        channelsPlot = self.getChecked()
-        for ax in self.axes:
-            channel = channelsPlot[i]
-            x = np.linspace(0, self.eeg.duration, len(channel.readings))
-            ax.plot(x, channel.readings)
-            ax.set_title(channel.label, x=0)
-            i += 1
 
 class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
     """
