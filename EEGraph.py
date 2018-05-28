@@ -1,16 +1,17 @@
 #imports
+
 import wx
 import wx.lib.agw.rulerctrl as RC
 import wx.lib.scrolledpanel as SP
-import math
 
 class EEGraph(wx.Panel):
     '''this is a panel that displays
     an EEG for visual examination'''
 
+
     def __init__(self, parent, eeg, selected):
         h = parent.GetParent().GetParent().Size[1]
-        h = h - 200
+        h = h - 190
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w/5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
@@ -54,11 +55,13 @@ class customRuler(wx.Panel):
         baseSizer = wx.BoxSizer(orientation)
         h = (self.Size[1]) / nCh
         i = 0
+        posy=0
         while i < nCh:
-            ruler = RC.RulerCtrl(self, -1, orient=wx.VERTICAL, size=(self.Size[0], h))
-            ruler.SetFormat(2)
-            ruler.SetRange(values[0], values[1])
-            baseSizer.Add(ruler, 0, wx.EXPAND, 0)
+            rule = wx.StaticText(self, -1, str(values[0]), (0, posy),(30, h))
+            ruler = wx.StaticText(self, -1, str(values[2]), (0, posy+9), (30, h))
+            ruler.SetFont(wx.Font(5,wx.DEFAULT,wx.NORMAL,wx.NORMAL))
+            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+            posy += h
             i += 1
 
         self.SetSizer(baseSizer)
@@ -103,6 +106,8 @@ class graphPanel(SP.ScrolledPanel):
         newV = round((((v - self.eeg.amUnits[1]) * newRange) / oldRange) + nl, 2)
         return newV
 
+
+
     def OnPaint(self, event=None):
         #buffered so it doesn't paint channel per channel
         dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
@@ -111,11 +116,17 @@ class graphPanel(SP.ScrolledPanel):
         y = 0
         channels = self.getChecked()
         hSpace = (self.Size[1]-5) / len(channels)
+        nSamp =self.nSamp
+        amUnits = self.eeg.amUnits
+        subSampling=self.subSampling
         #TODO if there is zoom hspace will change
         for channel in self.eeg.channels:
             x = 0
-            while(x < self.nSamp):
-                ny = self.ChangeRange(channel.readings[x], y+hSpace, y)
+            while x < nSamp:
+                ny = (((channel.readings[x] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
                 dc.DrawPoint(x, ny)
-                x += self.subSampling
+                x += subSampling
             y += hSpace
+
+
+

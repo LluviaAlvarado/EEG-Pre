@@ -17,7 +17,7 @@ class AddCircle:
         self.parent = parent
         self.x = parent.x + self.offset
         self.y = parent.y
-        self.imgCtrl = wx.StaticBitmap(panel, wx.ID_ANY, wx.BitmapFromImage(self.img), pos=[self.x, self.y])
+        self.imgCtrl = wx.StaticBitmap(panel, wx.ID_ANY, wx.Bitmap(self.img), pos=[self.x, self.y])
         self.imgCtrl.Bind(wx.EVT_LEFT_DOWN, self.onClick)
 
     def removeImg(self):
@@ -67,12 +67,12 @@ class Circle:
         self.x, self.y = pos
         self.mainW = mainW
         self.diameter = diameter
-        self.img = wx.EmptyImage(diameter, diameter)
+        self.img = wx.Image(diameter, diameter)
         if Circle.plus is None:
             Circle.plus = AddCircle(diameter)
 
     def addImg(self, panel):
-        self.imgCtrl = wx.StaticBitmap(panel, wx.ID_ANY, wx.BitmapFromImage(self.img), pos=[self.x, self.y])
+        self.imgCtrl = wx.StaticBitmap(panel, wx.ID_ANY, wx.Bitmap(self.img), pos=[self.x, self.y])
         self.imgCtrl.Bind(wx.EVT_LEFT_DOWN, self.onClick)
         self.imgCtrl.Bind(wx.EVT_LEFT_DCLICK, self.onDoubleClick)
 
