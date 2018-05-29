@@ -18,7 +18,7 @@ class EEGraph(wx.Panel):
         self.eeg = eeg
         self.selected = selected
         #baseSizer
-        baseSizer = wx.FlexGridSizer(2, 2, gap=(0, 0))
+        baseSizer = wx.FlexGridSizer(2, 3, gap=(0, 0))
 
         #and to the right the eeg graph
         # bottom is reserved just for the time ruler
@@ -37,12 +37,42 @@ class EEGraph(wx.Panel):
         values.append(self.eeg.amUnits[0] - half)
         values.append(self.eeg.amUnits[1])
         ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels))
-
+        channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER, self.eeg.channels)
+        baseSizer.Add(channelList, 0, wx.EXPAND, 0)
         baseSizer.Add(ampRuler, 0, wx.EXPAND, 0)
         baseSizer.Add(self.graph, 0, wx.EXPAND, 0)
+
+        baseSizer.AddSpacer(30)
         baseSizer.AddSpacer(30)
         baseSizer.Add(self.timeRuler, 0, wx.EXPAND, 0)
         self.SetSizer(baseSizer)
+
+class customList(wx.Panel):
+    def __init__(self, parent, orientation, style, channels):
+        h = parent.graph.Size[1]
+        self.eeg = parent.eeg
+        wx.Panel.__init__(self, parent, style=style, size=(30, h))
+        baseSizer = wx.BoxSizer(orientation)
+        h = (self.Size[1]) / len(channels)
+        i = 0
+        posy = 0
+        while i < len(channels):
+            rule = wx.StaticText(self, -1, channels[i].label, style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
+            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+
+            posy += h
+            i += 1
+        self.SetSizer(baseSizer)
+
+
+
+    def getChecked(self):
+        print(self.GetParent())
+        checked = self.GetParent().selected.GetCheckedItems()
+        channels = []
+        for ix in checked:
+            channels.append(self.eeg.channels[ix])
+        return channels
 
 class customRuler(wx.Panel):
     '''this is a custom ruler where you can send the values
@@ -51,15 +81,16 @@ class customRuler(wx.Panel):
     values are sent in as minAmp and maxAmp'''
     def __init__(self, parent, orientation, style, values, nCh):
         h = parent.graph.Size[1]
+
         wx.Panel.__init__(self, parent, style=style, size=(30, h))
         baseSizer = wx.BoxSizer(orientation)
         h = (self.Size[1]) / nCh
         i = 0
         posy=0
         while i < nCh:
-            rule = wx.StaticText(self, -1, str(values[0]), (0, posy),(30, h))
-            ruler = wx.StaticText(self, -1, str(values[2]), (0, posy+9), (30, h))
-            ruler.SetFont(wx.Font(5,wx.DEFAULT,wx.NORMAL,wx.NORMAL))
+            rule = wx.StaticText(self, -1, str(values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
+            ruler = wx.StaticText(self, -1, str(values[2]), style=wx.ALIGN_CENTER, pos=(0, posy+9), size=(30, h))
+            ruler.SetFont(wx.Font(5,wx.DEFAULT,wx.NORMAL, wx.NORMAL))
             rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             posy += h
             i += 1
@@ -94,6 +125,7 @@ class graphPanel(SP.ScrolledPanel):
 
     #gets the selected electrodes to graph
     def getChecked(self):
+        print(self.GetParent())
         checked = self.GetParent().selected.GetCheckedItems()
         channels = []
         for ix in checked:

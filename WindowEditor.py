@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import wx.lib.agw.buttonpanel
-mpl.use('WXAgg')
+
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
 #Local Imports
@@ -15,7 +15,7 @@ from TabManager import *
 from EEGraph import *
 
 class WindowEditor (wx.Frame):
-    title = "Editor de Ventanas"
+    title = "Edición de Ventanas"
     def __init__(self, e, parent):
         wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
         self.Maximize(True)
