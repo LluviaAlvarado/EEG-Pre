@@ -21,14 +21,10 @@ class EEGraph(wx.Panel):
         baseSizer = wx.FlexGridSizer(2, 3, gap=(0, 0))
 
         #and to the right the eeg graph
-        # bottom is reserved just for the time ruler
         self.graph = graphPanel(self)
-
-        self.timeRuler = RC.RulerCtrl(self, -1, orient=wx.HORIZONTAL, style=wx.SUNKEN_BORDER)
-        self.timeRuler.SetFormat(2)
-        # setting the range to EEG duration
-        self.timeRuler.SetRange(0, self.eeg.duration)
-        self.timeRuler.SetUnits("s")
+        # bottom is reserved just for the time ruler
+        values = [0, self.eeg.duration]
+        self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, None)
         # left amplitud ruler side
         # creating a ruler for each channel
         values = []
@@ -46,6 +42,10 @@ class EEGraph(wx.Panel):
         baseSizer.AddSpacer(30)
         baseSizer.Add(self.timeRuler, 0, wx.EXPAND, 0)
         self.SetSizer(baseSizer)
+
+    #method to redraw EEG graph after changing the selected electrodes
+    def changeElectrodes(self):
+        self.graph.Refresh()
 
 class customList(wx.Panel):
     def __init__(self, parent, orientation, style, channels):
@@ -84,19 +84,27 @@ class customRuler(wx.Panel):
 
         wx.Panel.__init__(self, parent, style=style, size=(30, h))
         baseSizer = wx.BoxSizer(orientation)
-        h = (self.Size[1]) / nCh
-        i = 0
-        posy=0
-        while i < nCh:
-            rule = wx.StaticText(self, -1, str(values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
-            ruler = wx.StaticText(self, -1, str(values[2]), style=wx.ALIGN_CENTER, pos=(0, posy+9), size=(30, h))
-            ruler.SetFont(wx.Font(5,wx.DEFAULT,wx.NORMAL, wx.NORMAL))
-            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-            posy += h
-            i += 1
+        if orientation == wx.HORIZONTAL:
+            self.makeTimeRuler(values)
+        else:
+            self.makeAmpRuler(nCh, values)
 
         self.SetSizer(baseSizer)
 
+    def makeTimeRuler(self, values):
+
+
+    def makeAmpRuler(self, nCh, values):
+        h = (self.Size[1]) / nCh
+        i = 0
+        posy = 0
+        while i < nCh:
+            rule = wx.StaticText(self, -1, str(values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
+            ruler = wx.StaticText(self, -1, str(values[2]), style=wx.ALIGN_CENTER, pos=(0, posy + 9), size=(30, h))
+            ruler.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+            posy += h
+            i += 1
 
 class graphPanel(SP.ScrolledPanel):
 
@@ -131,6 +139,7 @@ class graphPanel(SP.ScrolledPanel):
         for ix in checked:
             channels.append(self.eeg.channels[ix])
         return channels
+
     #changes the value for printable porpuses
     def ChangeRange(self, v, nu, nl):
         oldRange = self.eeg.amUnits[0] - self.eeg.amUnits[1]

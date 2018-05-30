@@ -73,7 +73,7 @@ class WindowEditor (wx.Frame):
         rightPnl.SetSizer(graphContainer)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 20)
         self.pnl.SetSizer(baseContainer)
-        #self.Bind(wx.EVT_BUTTON, self.redrawEEG, applyChanges)
+        self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
         #creating a status bar to inform user of process
         self.CreateStatusBar()
         self.SetStatusText("Loading EEG Readings...")
@@ -96,7 +96,8 @@ class WindowEditor (wx.Frame):
         self.GetParent().WindowLength = l
 
     #redraws the eeg with the selected electrodes
-    #def redrawEEG(self, event):
+    def updateElectrodes(self, event):
+        self.eegGraph.changeElectrodes()
 
 class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
     """
