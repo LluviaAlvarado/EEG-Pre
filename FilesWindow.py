@@ -54,6 +54,9 @@ class FilesWindow(wx.Frame):
         self.updateList(self.filePicker.Paths)
 
     def updateList(self, filePaths):
+        #setting cursos to wait to inform user
+        myCursor = wx.Cursor(wx.CURSOR_WAIT)
+        self.SetCursor(myCursor)
         reader = FileReader()
         files = []
         for path in filePaths:
@@ -68,6 +71,9 @@ class FilesWindow(wx.Frame):
                 files.append(name)
         #update listbox
         self.filesList.InsertItems(files, self.filesList.GetCount())
+        #returning normal cursor
+        myCursor = wx.Cursor(wx.CURSOR_ARROW)
+        self.SetCursor(myCursor)
 
     def removeFile(self, event):
         index = self.filesList.GetSelection()

@@ -152,7 +152,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.SetCursor(myCursor)
             #untoggling others
             self.unToggleOthers(self.ID_FIT)
-            self.graph.graph.zoom = False
+            self.graph.transparent.zoom = False
 
         event.Skip()
 
@@ -161,14 +161,14 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             #setting to zoom cursor in graph
             myCursor = wx.Cursor(wx.CURSOR_CROSS)
             self.graph.SetCursor(myCursor)
-            self.graph.graph.zoom = True
+            self.graph.transparent.zoom = True
             #untoggling others
             self.unToggleOthers(self.ID_ZOOM)
         else:
             # setting to zoom cursor in graph
             myCursor = wx.Cursor(wx.CURSOR_ARROW)
             self.graph.SetCursor(myCursor)
-            self.graph.graph.zoom = False
+            self.graph.transparent.zoom = False
             # untoggling others
             self.unToggleOthers(self.ID_FIT)
         event.Skip()

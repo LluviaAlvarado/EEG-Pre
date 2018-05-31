@@ -23,7 +23,7 @@ class EEGraph(wx.Panel):
 
         #and to the right the eeg graph
         self.graph = graphPanel(self)
-        self.transparent = None
+        self.transparent = transparentPanel(self, self.graph)
         # bottom is reserved just for the time ruler
         values = [0, self.eeg.duration]
         self.timeRuler = RC.RulerCtrl(self, -1, orient=wx.HORIZONTAL, style=wx.SUNKEN_BORDER)
@@ -54,9 +54,6 @@ class EEGraph(wx.Panel):
     #method to redraw EEG graph after changing the selected electrodes
     def changeElectrodes(self):
         self.graph.Refresh()
-
-    def moveZoom(self, pos):
-        self.transparent = transparentPanel(self, self.graph, pos)
 
 class customList(wx.Panel):
     def __init__(self, parent, orientation, style, channels):
@@ -116,21 +113,21 @@ class customRuler(wx.Panel):
             rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             posy += h
             i += 1
-
+'''a transparent panel over the eegraph to draw other elements
+    like the zoom rectangle'''
 class transparentPanel(wx.Panel):
 
-    def __init__(self, parent, over, pos):
+    def __init__(self, parent, over):
         wx.Panel.__init__(self, parent, size=(over.Size[0], over.Size[1]), pos=(60, 0))
         # vars for zoom
         self.zoom = False
-        self.zStart = pos[0]
-        self.zEnd = pos[1]
+        self.zStart = None
+        self.zEnd = None
         self.dc = None
         self.gc = None
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
 
-    '''def OnClickDown(self, pos):
+    def OnClickDown(self, pos):
         self.zStart = pos
 
     def MovingMouse(self, pos):
@@ -143,29 +140,34 @@ class transparentPanel(wx.Panel):
         if self.zoom:
             self.OnPaint()
             self.zStart = None
-            self.zEnd = None'''
+            self.zEnd = None
 
     def onEraseBackground(self, event):
         """
         Overridden to do nothing to prevent flicker
         """
         pass
-
-    def OnPaint(self, event):
-        dc = wx.PaintDC(self)
+    #needs to repaint the eegraph and adds the zoom rectangle
+    def OnPaint(self):
+        self.GetParent().graph.Refresh()
+        dc = wx.ClientDC(self)
         gc = wx.GraphicsContext.Create(dc)
-        dc.Clear()
-        if gc:
-            gc.SetPen(wx.RED_PEN)
-            path = gc.CreatePath()
-            if self.zEnd is None:
-                w = 0
-                h = 0
-            else:
-                w = self.zEnd[0] - self.zStart[0]
-                h = self.zEnd[1] - self.zStart[1]
-            path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
-            gc.StrokePath(path)
+        if self.zoom:
+            if gc:
+                color = wx.Colour(255, 0, 0, 60)
+                gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
+                gc.SetPen(wx.RED_PEN)
+                path = gc.CreatePath()
+                if self.zEnd is None:
+                    w = 0
+                    h = 0
+                else:
+                    w = self.zEnd[0] - self.zStart[0]
+                    h = self.zEnd[1] - self.zStart[1]
+                path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
+                gc.FillPath(path)
+                gc.StrokePath(path)
+
 
 class graphPanel(SP.ScrolledPanel):
 
@@ -177,10 +179,6 @@ class graphPanel(SP.ScrolledPanel):
         self.SetupScrolling()
         self.eeg = parent.eeg
         self.subSampling = 0
-        # vars for zoom
-        self.zoom = False
-        self.zStart = None
-        self.zEnd = None
 
         self.nSamp = self.eeg.frequency * self.eeg.duration
         if self.nSamp > 10000 and len(self.eeg.channels) > 5:
@@ -195,14 +193,13 @@ class graphPanel(SP.ScrolledPanel):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
     def OnClickDown(self, event):
-        self.zStart = event.GetPosition()
+        self.GetParent().transparent.OnClickDown(event.GetPosition())
 
     def MovingMouse(self, event):
-        if self.zoom and self.zStart is not None:
-            self.GetParent().moveZoom([self.zStart, event.GetPosition()])
+        self.GetParent().transparent.MovingMouse(event.GetPosition())
 
     def OnClickReleased(self, event):
-        self.zStart = None
+        self.GetParent().transparent.OnClickReleased(event.GetPosition())
 
 
     '''sets the how many readings will we skip
@@ -247,18 +244,5 @@ class graphPanel(SP.ScrolledPanel):
                 dc.DrawPoint(x, ny)
                 x += subSampling
             y += hSpace
-
-        '''if self.zoom:
-            gc = wx.GraphicsContext.Create(dc)
-            gc.SetPen(wx.RED_PEN)
-            path = gc.CreatePath()
-            if self.zEnd is None:
-                w = 0
-                h = 0
-            else:
-                w = self.zEnd[0] - self.zStart[0]
-                h = self.zEnd[1] - self.zStart[1]
-            path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
-            gc.StrokePath(path)'''
 
 
