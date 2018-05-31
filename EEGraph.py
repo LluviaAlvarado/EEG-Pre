@@ -72,7 +72,18 @@ class customList(wx.Panel):
             i += 1
         self.SetSizer(baseSizer)
 
-
+    def redo(self):
+        self.DestroyChildren()
+        channels = self.getChecked()
+        h = (self.Size[1]) / len(channels)
+        i = 0
+        posy = 0
+        while i < len(channels):
+            rule = wx.StaticText(self, i, channels[i].label, style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
+            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+            # baseSizer.Add(rule, 0, wx.EXPAND, 0)
+            posy += h
+            i += 1
 
     def getChecked(self):
         print(self.GetParent())
@@ -89,8 +100,9 @@ class customRuler(wx.Panel):
     values are sent in as minAmp and maxAmp'''
     def __init__(self, parent, orientation, style, values, nCh):
         h = parent.graph.Size[1]
-
+        self.values = values
         wx.Panel.__init__(self, parent, style=style, size=(30, h))
+        self.eeg = parent.eeg
         baseSizer = wx.BoxSizer(orientation)
         if orientation == wx.HORIZONTAL:
             self.makeTimeRuler(values)
@@ -113,6 +125,31 @@ class customRuler(wx.Panel):
             rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             posy += h
             i += 1
+
+    def redo(self):
+        self.DestroyChildren()
+        channels = self.getChecked()
+        h = (self.Size[1]) / len(channels)
+        i = 0
+        posy = 0
+        while i < len(channels):
+
+            rule = wx.StaticText(self, -1, str(self.values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
+            if h > 20  :
+                ruler = wx.StaticText(self, -1, str(self.values[2]), style=wx.ALIGN_CENTER, pos=(0, posy + 9), size=(30, h))
+                ruler.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+            # baseSizer.Add(rule, 0, wx.EXPAND, 0)
+            posy += h
+            i += 1
+
+    def getChecked(self):
+        checked = self.GetParent().selected.GetCheckedItems()
+        channels = []
+        for ix in checked:
+            channels.append(self.eeg.channels[ix])
+        return channels
+
 '''a transparent panel over the eegraph to draw other elements
     like the zoom rectangle'''
 class transparentPanel(wx.Panel):
