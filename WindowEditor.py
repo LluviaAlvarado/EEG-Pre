@@ -67,7 +67,10 @@ class WindowEditor (wx.Frame):
         graphContainer = wx.BoxSizer(wx.VERTICAL)
         #panel for eeg graph
         self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList)
-        self.toolbar = Toolbar(rightPnl)
+        #creation of toolbar
+        self.toolbar = Toolbar(rightPnl, self.eegGraph)
+        #sending toolbar to graph to bind
+        self.eegGraph.setToolbar(self.toolbar)
         graphContainer.Add(self.toolbar, 0, wx.EXPAND | wx.ALL, 0)
         graphContainer.Add(self.eegGraph, 1, wx.EXPAND | wx.ALL, 0)
         rightPnl.SetSizer(graphContainer)
@@ -76,13 +79,19 @@ class WindowEditor (wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
         #creating a status bar to inform user of process
         self.CreateStatusBar()
+        #setting the cursor to loading
+        myCursor = wx.Cursor(wx.CURSOR_WAIT)
+        self.SetCursor(myCursor)
         self.SetStatusText("Loading EEG Readings...")
         self.Centre()
         self.Show()
-        wx.CallLater(0, lambda: self.SetStatus(""))
+        wx.CallLater(0, lambda: self.SetStatus("", 0))
 
-    def SetStatus(self, st):
+    def SetStatus(self, st, mouse):
         self.SetStatusText(st)
+        if mouse == 0:
+            myCursor = wx.Cursor(wx.CURSOR_ARROW)
+            self.SetCursor(myCursor)
 
     def createNewWindow(self, event):
         self.tabManager.addWindow()
@@ -105,51 +114,61 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
        par:  parent
        """
 
-    def __init__(self, par):
+    def __init__(self, par, graph):
         wx.lib.agw.buttonpanel.ButtonPanel.__init__(self, par)
         self.ID_FIT = wx.NewId()
         self.ID_ZOOM = wx.NewId()
-        self.ID_BACK = wx.NewId()
-        self.ID_FWD = wx.NewId()
-
+        self.graph = graph
         self.AddSpacer()
+        self.buttons = []
 
         self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
                              shortHelp='Reiniciar Zoom')
+        self.btnRestart.SetKind(wx.ITEM_CHECK)
         self.AddButton(self.btnRestart)
+        self.buttons.append(self.btnRestart)
         self.Bind(wx.EVT_BUTTON, self.ZoomFit, self.btnRestart)
 
         self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM, wx.Bitmap("src/zoom.png", wx.BITMAP_TYPE_PNG),
                              shortHelp='Acercar')
+        self.btnZoom.SetKind(wx.ITEM_CHECK)
         self.AddButton(self.btnZoom)
+        self.buttons.append(self.btnZoom)
         self.Bind(wx.EVT_BUTTON, self.Zoom, self.btnZoom)
-
-        self.btnBack = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_BACK, wx.Bitmap("src/back.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Deshacer')
-        self.AddButton(self.btnBack)
-        self.Bind(wx.EVT_BUTTON, self.Back, self.btnBack)
-
-        self.btnFwd = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FWD, wx.Bitmap("src/forward.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Rehacer')
-        self.AddButton(self.btnFwd)
-        self.Bind(wx.EVT_BUTTON, self.FWD, self.btnFwd)
 
         self.AddSpacer()
 
         self.DoLayout()
 
+    def unToggleOthers(self, toggled):
+        for btn in self.buttons:
+            if btn.GetId() != toggled:
+                btn.SetToggled(False)
+
     def ZoomFit(self, event):
+        if event.GetEventObject().GetToggled():
+            #setting to zoom cursor in graph
+            myCursor = wx.Cursor(wx.CURSOR_ARROW)
+            self.graph.SetCursor(myCursor)
+            #untoggling others
+            self.unToggleOthers(self.ID_FIT)
+            self.graph.graph.zoom = False
 
         event.Skip()
 
     def Zoom(self, event):
-
-        event.Skip()
-
-    def Back(self, event):
-
-        event.Skip()
-
-    def FWD(self, event):
-
+        if event.GetEventObject().GetToggled():
+            #setting to zoom cursor in graph
+            myCursor = wx.Cursor(wx.CURSOR_CROSS)
+            self.graph.SetCursor(myCursor)
+            self.graph.graph.zoom = True
+            #untoggling others
+            self.unToggleOthers(self.ID_ZOOM)
+        else:
+            # setting to zoom cursor in graph
+            myCursor = wx.Cursor(wx.CURSOR_ARROW)
+            self.graph.SetCursor(myCursor)
+            self.graph.graph.zoom = False
+            # untoggling others
+            self.unToggleOthers(self.ID_FIT)
         event.Skip()

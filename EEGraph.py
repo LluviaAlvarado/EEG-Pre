@@ -11,20 +11,25 @@ class EEGraph(wx.Panel):
 
     def __init__(self, parent, eeg, selected):
         h = parent.GetParent().GetParent().Size[1]
-        h = h - 190
+        h = h - 180
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w/5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.eeg = eeg
         self.selected = selected
+        self.toolbar = None
         #baseSizer
         baseSizer = wx.FlexGridSizer(2, 3, gap=(0, 0))
 
         #and to the right the eeg graph
         self.graph = graphPanel(self)
+        self.transparent = None
         # bottom is reserved just for the time ruler
         values = [0, self.eeg.duration]
-        self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, None)
+        self.timeRuler = RC.RulerCtrl(self, -1, orient=wx.HORIZONTAL, style=wx.SUNKEN_BORDER)
+        self.timeRuler.SetFormat(2)
+        self.timeRuler.SetRange(0, self.eeg.duration)
+        self.timeRuler.SetUnits("s")
         # left amplitud ruler side
         # creating a ruler for each channel
         values = []
@@ -43,9 +48,15 @@ class EEGraph(wx.Panel):
         baseSizer.Add(self.timeRuler, 0, wx.EXPAND, 0)
         self.SetSizer(baseSizer)
 
+    def setToolbar(self, toolbar):
+        self.toolbar = toolbar
+
     #method to redraw EEG graph after changing the selected electrodes
     def changeElectrodes(self):
         self.graph.Refresh()
+
+    def moveZoom(self, pos):
+        self.transparent = transparentPanel(self, self.graph, pos)
 
 class customList(wx.Panel):
     def __init__(self, parent, orientation, style, channels):
@@ -92,7 +103,7 @@ class customRuler(wx.Panel):
         self.SetSizer(baseSizer)
 
     def makeTimeRuler(self, values):
-
+        h = 0
 
     def makeAmpRuler(self, nCh, values):
         h = (self.Size[1]) / nCh
@@ -106,6 +117,56 @@ class customRuler(wx.Panel):
             posy += h
             i += 1
 
+class transparentPanel(wx.Panel):
+
+    def __init__(self, parent, over, pos):
+        wx.Panel.__init__(self, parent, size=(over.Size[0], over.Size[1]), pos=(60, 0))
+        # vars for zoom
+        self.zoom = False
+        self.zStart = pos[0]
+        self.zEnd = pos[1]
+        self.dc = None
+        self.gc = None
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
+
+    '''def OnClickDown(self, pos):
+        self.zStart = pos
+
+    def MovingMouse(self, pos):
+        self.zEnd = pos
+        if self.zoom and self.zStart is not None:
+            self.OnPaint()
+
+    def OnClickReleased(self, pos):
+        self.zEnd = pos
+        if self.zoom:
+            self.OnPaint()
+            self.zStart = None
+            self.zEnd = None'''
+
+    def onEraseBackground(self, event):
+        """
+        Overridden to do nothing to prevent flicker
+        """
+        pass
+
+    def OnPaint(self, event):
+        dc = wx.PaintDC(self)
+        gc = wx.GraphicsContext.Create(dc)
+        dc.Clear()
+        if gc:
+            gc.SetPen(wx.RED_PEN)
+            path = gc.CreatePath()
+            if self.zEnd is None:
+                w = 0
+                h = 0
+            else:
+                w = self.zEnd[0] - self.zStart[0]
+                h = self.zEnd[1] - self.zStart[1]
+            path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
+            gc.StrokePath(path)
+
 class graphPanel(SP.ScrolledPanel):
 
     def __init__(self, parent):
@@ -116,6 +177,11 @@ class graphPanel(SP.ScrolledPanel):
         self.SetupScrolling()
         self.eeg = parent.eeg
         self.subSampling = 0
+        # vars for zoom
+        self.zoom = False
+        self.zStart = None
+        self.zEnd = None
+
         self.nSamp = self.eeg.frequency * self.eeg.duration
         if self.nSamp > 10000 and len(self.eeg.channels) > 5:
             self.setSamplingRate(10)
@@ -123,7 +189,21 @@ class graphPanel(SP.ScrolledPanel):
             self.setSamplingRate(50)
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnClickDown)
+        self.Bind(wx.EVT_LEFT_UP, self.OnClickReleased)
+        self.Bind(wx.EVT_MOTION, self.MovingMouse)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+    def OnClickDown(self, event):
+        self.zStart = event.GetPosition()
+
+    def MovingMouse(self, event):
+        if self.zoom and self.zStart is not None:
+            self.GetParent().moveZoom([self.zStart, event.GetPosition()])
+
+    def OnClickReleased(self, event):
+        self.zStart = None
+
 
     '''sets the how many readings will we skip
      is set as a value from 0 to 100 represents 
@@ -148,7 +228,6 @@ class graphPanel(SP.ScrolledPanel):
         return newV
 
 
-
     def OnPaint(self, event=None):
         #buffered so it doesn't paint channel per channel
         dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
@@ -169,5 +248,17 @@ class graphPanel(SP.ScrolledPanel):
                 x += subSampling
             y += hSpace
 
+        '''if self.zoom:
+            gc = wx.GraphicsContext.Create(dc)
+            gc.SetPen(wx.RED_PEN)
+            path = gc.CreatePath()
+            if self.zEnd is None:
+                w = 0
+                h = 0
+            else:
+                w = self.zEnd[0] - self.zStart[0]
+                h = self.zEnd[1] - self.zStart[1]
+            path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
+            gc.StrokePath(path)'''
 
 
