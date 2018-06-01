@@ -11,7 +11,7 @@ class EEGraph(wx.Panel):
 
     def __init__(self, parent, eeg, selected):
         h = parent.GetParent().GetParent().Size[1]
-        h = h - 180
+        h = h - 170
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w/5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
@@ -26,10 +26,8 @@ class EEGraph(wx.Panel):
         self.transparent = transparentPanel(self, self.graph)
         # bottom is reserved just for the time ruler
         values = [0, self.eeg.duration]
-        self.timeRuler = RC.RulerCtrl(self, -1, orient=wx.HORIZONTAL, style=wx.SUNKEN_BORDER)
-        self.timeRuler.SetFormat(2)
-        self.timeRuler.SetRange(0, self.eeg.duration)
-        self.timeRuler.SetUnits("s")
+        self.timeRuler =  customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels))
+
         # left amplitud ruler side
         # creating a ruler for each channel
         values = []
@@ -86,7 +84,6 @@ class customList(wx.Panel):
             i += 1
 
     def getChecked(self):
-        print(self.GetParent())
         checked = self.GetParent().selected.GetCheckedItems()
         channels = []
         for ix in checked:
@@ -100,12 +97,15 @@ class customRuler(wx.Panel):
     values are sent in as minAmp and maxAmp'''
     def __init__(self, parent, orientation, style, values, nCh):
         h = parent.graph.Size[1]
+        self.w =parent.graph.Size[0]
         self.values = values
+
         wx.Panel.__init__(self, parent, style=style, size=(30, h))
         self.eeg = parent.eeg
         baseSizer = wx.BoxSizer(orientation)
         if orientation == wx.HORIZONTAL:
-            self.makeTimeRuler(values)
+
+            self.makeTimeRuler(self.eeg.duration)
         else:
             self.makeAmpRuler(nCh, values)
 
@@ -113,6 +113,55 @@ class customRuler(wx.Panel):
 
     def makeTimeRuler(self, values):
         h = 0
+        self.font = wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+                            wx.FONTWEIGHT_BOLD, False, 'Courier 10 Pitch')
+        self.lapse = values
+        self.place = (self.w/10)
+
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+    def ChangeRange(self, v, nu, nl):
+        oldRange = (self.w-91) - 0
+        newRange = nu - 0
+        newV = round((((v - 0) * newRange) / oldRange) + 0,2)
+        return newV
+
+
+
+    def OnPaint(self, e):
+
+        dc = wx.PaintDC(self)
+
+        dc.DrawRectangle(0, 0, self.w-91, 30)
+        dc.SetPen(wx.Pen('#000000'))
+        dc.SetTextForeground('#000000')
+        RM = 4
+        l = (self.w-91)/100
+        u=0
+        i=0
+        while i < (self.w-91):
+            if (u % 10) == 0:
+                dc.DrawLine(i + RM, 0, i + RM, 10)
+                y = self.ChangeRange(i,self.lapse,0)
+                w, h = dc.GetTextExtent(str(y))
+                dc.DrawText(str(y), i + RM - w / 2, 11)
+
+            elif (u % 5) == 0:
+                dc.DrawLine(i + RM, 0, i + RM, 8)
+
+            elif not (u % 1):
+
+                dc.DrawLine(i + RM, 0, i + RM, 4)
+
+            u+=1
+            i+=l
+        dc.DrawLine((self.w-93) , 0, (self.w-93), 10)
+        w, h = dc.GetTextExtent(str(self.lapse))
+        dc.DrawText(str(self.lapse), (self.w-93) - w, 11)
+
+
+
 
     def makeAmpRuler(self, nCh, values):
         h = (self.Size[1]) / nCh
@@ -135,7 +184,7 @@ class customRuler(wx.Panel):
         while i < len(channels):
 
             rule = wx.StaticText(self, -1, str(self.values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
-            if h > 20  :
+            if h > 20:
                 ruler = wx.StaticText(self, -1, str(self.values[2]), style=wx.ALIGN_CENTER, pos=(0, posy + 9), size=(30, h))
                 ruler.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
