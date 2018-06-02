@@ -195,6 +195,7 @@ class customRuler(wx.Panel):
                     dc.DrawText(str(self.values[0]), 0, posy + 1)
                     dc.DrawText(str(self.values[1]), 0, posy + (h-6))
 
+
                     posy += h
                     i += 1
 
