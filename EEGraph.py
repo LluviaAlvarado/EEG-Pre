@@ -55,7 +55,7 @@ class EEGraph(wx.Panel):
 
 class customList(wx.Panel):
     def __init__(self, parent, orientation, style, channels):
-        h = parent.graph.Size[1]
+        h = parent.graph.Size[1]-3
         self.eeg = parent.eeg
         wx.Panel.__init__(self, parent, style=style, size=(30, h))
         baseSizer = wx.BoxSizer(orientation)
@@ -96,17 +96,20 @@ class customRuler(wx.Panel):
     it also will add the zooming future for the eeg
     values are sent in as minAmp and maxAmp'''
     def __init__(self, parent, orientation, style, values, nCh):
-        h = parent.graph.Size[1]
+        self.h = parent.graph.Size[1]-3
         self.w =parent.graph.Size[0]
+        self.nCh = nCh
         self.values = values
+        self.opc = 0
 
-        wx.Panel.__init__(self, parent, style=style, size=(30, h))
+        wx.Panel.__init__(self, parent, style=style, size=(30, self.h))
         self.eeg = parent.eeg
         baseSizer = wx.BoxSizer(orientation)
         if orientation == wx.HORIZONTAL:
-
+            self.opc = 1
             self.makeTimeRuler(self.eeg.duration)
         else:
+            self.opc = 2
             self.makeAmpRuler(nCh, values)
 
         self.SetSizer(baseSizer)
@@ -130,67 +133,92 @@ class customRuler(wx.Panel):
 
 
     def OnPaint(self, e):
-
         dc = wx.PaintDC(self)
-
-        dc.DrawRectangle(0, 0, self.w-91, 30)
+        dc.Clear()
+        channel = self.getChecked()
+        self.nCh = len(channel)
         dc.SetPen(wx.Pen('#000000'))
         dc.SetTextForeground('#000000')
-        RM = 4
-        l = (self.w-91)/100
-        u=0
-        i=0
-        while i < (self.w-91):
-            if (u % 10) == 0:
-                dc.DrawLine(i + RM, 0, i + RM, 10)
-                y = self.ChangeRange(i,self.lapse,0)
-                w, h = dc.GetTextExtent(str(y))
-                dc.DrawText(str(y), i + RM - w / 2, 11)
+        dc.SetFont(self.font)
+        if self.opc == 1:
+            dc.DrawRectangle(0, 0, self.w - 91, 30)
+            dc = wx.PaintDC(self)
+            dc.SetPen(wx.Pen('#000000'))
+            dc.SetTextForeground('#000000')
+            RM = 4
+            l = (self.w-91)/100
+            u=0
+            i=0
+            while i < (self.w-91):
+                if (u % 10) == 0:
+                    dc.DrawLine(i + RM, 0, i + RM, 10)
+                    y = self.ChangeRange(i,self.lapse,0)
+                    w, h = dc.GetTextExtent(str(y))
+                    dc.DrawText(str(y), i + RM - w / 2, 11)
 
-            elif (u % 5) == 0:
-                dc.DrawLine(i + RM, 0, i + RM, 8)
+                elif (u % 5) == 0:
+                    dc.DrawLine(i + RM, 0, i + RM, 8)
 
-            elif not (u % 1):
+                elif not (u % 1):
 
-                dc.DrawLine(i + RM, 0, i + RM, 4)
+                    dc.DrawLine(i + RM, 0, i + RM, 4)
 
-            u+=1
-            i+=l
-        dc.DrawLine((self.w-93) , 0, (self.w-93), 10)
-        w, h = dc.GetTextExtent(str(self.lapse))
-        dc.DrawText(str(self.lapse), (self.w-93) - w, 11)
+                u+=1
+                i+=l
+            dc.DrawLine((self.w-93) , 0, (self.w-93), 10)
+            w, h = dc.GetTextExtent(str(self.lapse))
+            dc.DrawText(str(self.lapse), (self.w-93) - w, 11)
+        else:
+            h = (self.h) / self.nCh
+            i = 0
+            posy = 0
+
+            if h < 12:
+                while i < self.nCh:
+                    print(i)
+                    dc.DrawRectangle(0, posy, 30, posy+h)
+                    dc.DrawText(str(self.values[0]), 0, posy + 1)
+                    posy += h
+                    i += 1
+            elif h < 27:
+                while i < self.nCh:
+                    print(i)
+                    dc.DrawRectangle(0, posy, 30, posy+h)
+                    dc.DrawText(str(self.values[0]), 0, posy + 1)
+                    dc.DrawText(str(self.values[1]), 0, (posy+h) - 6)
+
+                    posy += h
+                    i += 1
+            elif h >= 27:
+                while i < self.nCh:
+                    dc.DrawRectangle(0, posy, 30, posy+h)
+                    dc.DrawText(str(self.values[0]), 0, posy + 1)
+                    dc.DrawText(str(self.values[1]), 0, posy + (h-6))
+
+                    posy += h
+                    i += 1
 
 
 
 
     def makeAmpRuler(self, nCh, values):
+        self.font = wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+
         h = (self.Size[1]) / nCh
         i = 0
         posy = 0
-        while i < nCh:
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        '''while i < nCh:
+
             rule = wx.StaticText(self, -1, str(values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
             ruler = wx.StaticText(self, -1, str(values[2]), style=wx.ALIGN_CENTER, pos=(0, posy + 9), size=(30, h))
             ruler.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             posy += h
-            i += 1
+            i += 1'''
 
     def redo(self):
-        self.DestroyChildren()
-        channels = self.getChecked()
-        h = (self.Size[1]) / len(channels)
-        i = 0
-        posy = 0
-        while i < len(channels):
-
-            rule = wx.StaticText(self, -1, str(self.values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
-            if h > 20:
-                ruler = wx.StaticText(self, -1, str(self.values[2]), style=wx.ALIGN_CENTER, pos=(0, posy + 9), size=(30, h))
-                ruler.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-            # baseSizer.Add(rule, 0, wx.EXPAND, 0)
-            posy += h
-            i += 1
+        self.Refresh()
 
     def getChecked(self):
         checked = self.GetParent().selected.GetCheckedItems()
