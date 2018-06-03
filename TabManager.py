@@ -1,8 +1,9 @@
 import wx
-import wx.lib.masked.numctrl as nmC
 '''custom tab manager that contains
     the information of the selected
     windows'''
+from EEGraph import graphPanel
+
 class TabManager(wx.Notebook):
 
     def __init__(self, p, parent, winL):
@@ -54,8 +55,8 @@ class windowTab(wx.Panel):
         wx.Panel.__init__(self, p)
         self.SetBackgroundColour("#eff2f4")
         pageSizer = wx.BoxSizer(wx.VERTICAL)
-        windowThumb = wx.Panel(self, size=(200, 200))
-        windowThumb.SetBackgroundColour('#FFFFFF')
+        #panel for the window thumb
+        windowThumb = WindowThumb(self, p.par.eeg, 215, 215)
         pageSizer.Add(windowThumb, 0, wx.EXPAND | wx.ALL, 5)
         pageSizer.Add(wx.StaticText(self, label="Marcador:",
                                     style=wx.ALIGN_CENTRE_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
@@ -165,3 +166,70 @@ class windowTab(wx.Panel):
     def changeMarker(self, event):
         self._marker = self.GetSliderValue()
         self.marker.SetValue(str(self.GetSliderValue()))
+
+class WindowThumb(wx.Panel):
+
+    def __init__(self, parent, eeg, w, h):
+        wx.Panel.__init__(self, parent, size=(w, h),
+            style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.eeg = eeg
+        self.subSampling = 0
+        self.incx = 1
+        self.nSamp = self.eeg.frequency * self.eeg.duration
+        self.setSamplingRate(self.nSamp)
+        self.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+    '''sets the how many readings will we skip
+    and how many pixels'''
+    def setSamplingRate(self, nSamp):
+        if nSamp < self.Size[0]:
+            self.incx = int(self.Size[0] / nSamp)
+            self.subSampling = 1
+        else:
+            self.subSampling = int(nSamp / self.Size[0])
+            self.incx = 1
+
+    #gets the selected electrodes to graph
+    def getChecked(self):
+        print(self.GetParent())
+        checked = self.GetParent().GetParent().par.electrodeList.GetCheckedItems()
+        channels = []
+        for ix in checked:
+            channels.append(self.eeg.channels[ix])
+        return channels
+
+    #changes the value for printable porpuses
+    def ChangeRange(self, v, nu, nl):
+        oldRange = self.eeg.amUnits[0] - self.eeg.amUnits[1]
+        newRange = nu - nl
+        newV = round((((v - self.eeg.amUnits[1]) * newRange) / oldRange) + nl, 2)
+        return newV
+
+    def OnPaint(self, event=None):
+        #buffered so it doesn't paint channel per channel
+        dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
+        dc.Clear()
+        dc.SetPen(wx.Pen(wx.BLACK, 4))
+        y = 0
+
+        amUnits = self.eeg.amUnits
+        subSampling=self.subSampling
+        incx = self.incx
+        self.chanPosition = []
+        #defining channels to plot
+        channels = self.getChecked()
+        hSpace = (self.Size[1] - 5) / len(channels)
+        w = self.Size[0]
+        dc.SetPen(wx.Pen(wx.BLACK, 1))
+        for channel in channels:
+            x = 0
+            i = 0
+            self.chanPosition.append([channel.label, y])
+            while x < w - incx:
+                ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                dc.DrawPoint(x, ny)
+                i += subSampling
+                x += incx
+            y += hSpace

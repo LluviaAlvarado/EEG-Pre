@@ -109,6 +109,7 @@ class WindowEditor (wx.Frame):
         self.eegGraph.GetSizer().GetChildren()[0].GetWindow().redo()
         self.eegGraph.GetSizer().GetChildren()[1].GetWindow().redo()
         self.eegGraph.changeElectrodes()
+        self.tabManager.GetPage(self.tabManager.GetSelection()).Refresh()
 
 class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
     """

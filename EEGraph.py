@@ -1,7 +1,6 @@
 #imports
 
 import wx
-import wx.lib.agw.rulerctrl as RC
 import wx.lib.scrolledpanel as SP
 
 class EEGraph(wx.Panel):
@@ -22,7 +21,9 @@ class EEGraph(wx.Panel):
         baseSizer = wx.FlexGridSizer(2, 3, gap=(0, 0))
 
         #and to the right the eeg graph
-        self.graph = graphPanel(self)
+        w = self.Size[0] - 30
+        h = self.Size[1]
+        self.graph = graphPanel(self, eeg, w, h)
         self.transparent = transparentPanel(self, self.graph)
         # bottom is reserved just for the time ruler
         values = [0, self.eeg.duration]
@@ -51,7 +52,7 @@ class EEGraph(wx.Panel):
 
     #method to redraw EEG graph after changing the selected electrodes
     def changeElectrodes(self):
-        self.graph.Refresh()
+        self.graph.resetZoom()
 
 class customList(wx.Panel):
     def __init__(self, parent, orientation, style, channels):
@@ -175,14 +176,12 @@ class customRuler(wx.Panel):
 
             if h < 12:
                 while i < self.nCh:
-                    print(i)
                     dc.DrawRectangle(0, posy, 30, posy+h)
                     dc.DrawText(str(self.values[0]), 0, posy + 1)
                     posy += h
                     i += 1
             elif h < 27:
                 while i < self.nCh:
-                    print(i)
                     dc.DrawRectangle(0, posy, 30, posy+h)
                     dc.DrawText(str(self.values[0]), 0, posy + 1)
                     dc.DrawText(str(self.values[1]), 0, (posy+h) - 6)
@@ -285,15 +284,12 @@ class transparentPanel(wx.Panel):
                 gc.StrokePath(path)
 
 
-class graphPanel(SP.ScrolledPanel):
+class graphPanel(wx.Panel):
 
-    def __init__(self, parent):
-        w = parent.Size[0] - 30
-        h = parent.Size[1]
-        SP.ScrolledPanel.__init__(self, parent, size=(w, h),
-            style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN | wx.HSCROLL | wx.VSCROLL)
-        self.SetupScrolling()
-        self.eeg = parent.eeg
+    def __init__(self, parent, eeg, w, h):
+        wx.Panel.__init__(self, parent, size=(w, h),
+            style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.eeg = eeg
         self.subSampling = 0
         self.incx = 1
         #list of channels in screen and start position
@@ -418,7 +414,7 @@ class graphPanel(SP.ScrolledPanel):
             x = 0
             i = 0
             self.chanPosition.append([channel.label, y])
-            while x < w - 1:
+            while x < w - incx:
                 ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
                 ny2 = (((channel.readings[i+subSampling] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
                 if abs(ny - ny2) > 3 or (x + incx) > 3:
