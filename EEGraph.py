@@ -128,7 +128,8 @@ class transparentPanel(wx.Panel):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
 
     def OnClickDown(self, pos):
-        self.zStart = pos
+        if self.zoom:
+            self.zStart = pos
 
     def MovingMouse(self, pos):
         self.zEnd = pos
@@ -138,15 +139,15 @@ class transparentPanel(wx.Panel):
     def OnClickReleased(self, pos):
         self.zEnd = pos
         if self.zoom:
+            self.GetParent().graph.setZoom(self.zStart, self.zEnd)
             self.OnPaint()
             self.zStart = None
             self.zEnd = None
 
     def onEraseBackground(self, event):
-        """
-        Overridden to do nothing to prevent flicker
-        """
+        #Overridden to do nothing to prevent flicker
         pass
+
     #needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self):
         self.GetParent().graph.Refresh()
@@ -154,7 +155,7 @@ class transparentPanel(wx.Panel):
         gc = wx.GraphicsContext.Create(dc)
         if self.zoom:
             if gc:
-                color = wx.Colour(255, 0, 0, 60)
+                color = wx.Colour(255, 0, 0, 10)
                 gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
                 gc.SetPen(wx.RED_PEN)
                 path = gc.CreatePath()
@@ -179,12 +180,17 @@ class graphPanel(SP.ScrolledPanel):
         self.SetupScrolling()
         self.eeg = parent.eeg
         self.subSampling = 0
+        self.incx = 1
+        #list of channels in screen and start position
+        self.chanPosition = []
+        #vars for zooming
+        self.zoom = False
+        self.strCh = None
+        self.endCh = None
+        self.nZSamp = None
 
         self.nSamp = self.eeg.frequency * self.eeg.duration
-        if self.nSamp > 10000 and len(self.eeg.channels) > 5:
-            self.setSamplingRate(10)
-        else:
-            self.setSamplingRate(50)
+        self.setSamplingRate(self.nSamp)
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnClickDown)
@@ -205,8 +211,13 @@ class graphPanel(SP.ScrolledPanel):
     '''sets the how many readings will we skip
      is set as a value from 0 to 100 represents 
      the % of the readings to use'''
-    def setSamplingRate(self, r):
-        self.subSampling = int(self.nSamp/round((r * self.nSamp) / 100))
+    def setSamplingRate(self, nSamp):
+        if nSamp < self.Size[0]:
+            self.incx = int(self.Size[0] / nSamp)
+            self.subSampling = 1
+        else:
+            self.subSampling = int(nSamp / self.Size[0])
+            self.incx = 1
 
     #gets the selected electrodes to graph
     def getChecked(self):
@@ -224,6 +235,53 @@ class graphPanel(SP.ScrolledPanel):
         newV = round((((v - self.eeg.amUnits[1]) * newRange) / oldRange) + nl, 2)
         return newV
 
+    def resetZoom(self):
+        self.zoom = False
+        self.setSamplingRate(self.nSamp)
+        self.Refresh()
+
+    def setZoom(self, start, end):
+        self.zoom = True
+        i = 0
+        pos = self.chanPosition
+        while i < len(pos) - 1:
+            c = pos[i]
+            cx = pos[i+1]
+            if c[1] < start[1] < cx[1]:
+                break
+            i += 1
+        self.strCh = i
+        i = 0
+        while i < len(pos) - 1:
+            c = pos[i]
+            cx = pos[i+1]
+            if c[1] < end[1] < cx[1]:
+                break
+            i += 1
+        self.endCh = i
+        if self.endCh <= self.strCh:
+            self.endCh = self.strCh + 1
+        lenght = end[0] - start[0]
+        nsamp = lenght / self.incx
+        if nsamp < 10:
+            nsamp = 10
+        self.setSamplingRate(nsamp)
+        #repainting
+        self.Refresh()
+
+    def getViewChannels(self):
+        checked = self.getChecked()
+        channels = []
+        #if there is zoom
+        if self.zoom:
+            i = self.strCh
+            while i < self.endCh:
+                channels.append(checked[i])
+                i += 1
+        else:
+            channels = checked
+        return channels
+
 
     def OnPaint(self, event=None):
         #buffered so it doesn't paint channel per channel
@@ -231,18 +289,29 @@ class graphPanel(SP.ScrolledPanel):
         dc.Clear()
         dc.SetPen(wx.Pen(wx.BLACK, 4))
         y = 0
-        channels = self.getChecked()
-        hSpace = (self.Size[1]-5) / len(channels)
-        nSamp =self.nSamp
+
         amUnits = self.eeg.amUnits
         subSampling=self.subSampling
-        #TODO if there is zoom hspace will change
-        for channel in self.eeg.channels:
+        incx = self.incx
+        self.chanPosition = []
+        #defining channels to plot
+        channels = self.getViewChannels()
+        hSpace = (self.Size[1] - 5) / len(channels)
+        w = self.Size[0]
+        dc.SetPen(wx.Pen(wx.BLACK, 1))
+        for channel in channels:
             x = 0
-            while x < nSamp:
-                ny = (((channel.readings[x] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
-                dc.DrawPoint(x, ny)
-                x += subSampling
+            i = 0
+            self.chanPosition.append([channel.label, y])
+            while x < w - 1:
+                ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                ny2 = (((channel.readings[i+subSampling] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                if abs(ny - ny2) > 3 or (x + incx) > 3:
+                    dc.DrawLine(x, ny, x + incx, ny2)
+                else:
+                    dc.DrawPoint(x, ny)
+                i += subSampling
+                x += incx
             y += hSpace
 
 
