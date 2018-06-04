@@ -71,6 +71,19 @@ class customList(wx.Panel):
             i += 1
         self.SetSizer(baseSizer)
 
+    def zooMa(self, channels):
+        self.DestroyChildren()
+        h = (self.Size[1]) / len(channels)
+        i = 0
+        posy = 0
+        while i < len(channels):
+            rule = wx.StaticText(self, i, channels[i].label, style=wx.ALIGN_CENTER, pos=(0, posy+(h/3)), size=(30, h))
+            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+            # baseSizer.Add(rule, 0, wx.EXPAND, 0)
+            posy += h
+            i += 1
+
+
     def redo(self):
         self.DestroyChildren()
         channels = self.getChecked()
@@ -101,7 +114,19 @@ class customRuler(wx.Panel):
         self.w =parent.graph.Size[0]
         self.nCh = nCh
         self.values = values
+
+        self.Ogmax = 0
+        self.Ogmin = 0
+
+        self.Lgmax = 0
+        self.Lgmin = 0
+
+        self.max=0
+        self.min=0
+
         self.opc = 0
+        self.zoom =False
+        self.num=0
 
         wx.Panel.__init__(self, parent, style=style, size=(30, self.h))
         self.eeg = parent.eeg
@@ -109,11 +134,19 @@ class customRuler(wx.Panel):
         if orientation == wx.HORIZONTAL:
             self.opc = 1
             self.makeTimeRuler(self.eeg.duration)
+            self.Ogmax = self.eeg.duration
+            self.Lgmax = self.Ogmax
         else:
             self.opc = 2
             self.makeAmpRuler(nCh, values)
 
         self.SetSizer(baseSizer)
+
+    def zoomH(self, s, e):
+        self.max = self.ChangeRange(e,self.Lgmax,self.Lgmin)
+        self.min = self.ChangeRange(s,self.Lgmax,self.Lgmin)
+        self.zoom=True
+        self.Refresh()
 
     def makeTimeRuler(self, values):
         h = 0
@@ -125,10 +158,10 @@ class customRuler(wx.Panel):
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
-    def ChangeRange(self, v, nu, nl):
+    def ChangeRange(self, v, nx, nm):
         oldRange = (self.w-91) - 0
-        newRange = nu - 0
-        newV = round((((v - 0) * newRange) / oldRange) + 0,2)
+        newRange = nx - nm
+        newV = round((((v - 0) * newRange) / oldRange) + nm, 2)
         return newV
 
 
@@ -142,6 +175,14 @@ class customRuler(wx.Panel):
         dc.SetTextForeground('#000000')
         dc.SetFont(self.font)
         if self.opc == 1:
+            max = self.Ogmax
+            min = self.Ogmin
+            if self.zoom:
+                max = self.max
+                min = self.min
+                self.Lgmax =self.max
+                self.Lgmin =self.min
+
             dc.DrawRectangle(0, 0, self.w - 91, 30)
             dc = wx.PaintDC(self)
             dc.SetPen(wx.Pen('#000000'))
@@ -153,7 +194,7 @@ class customRuler(wx.Panel):
             while i < (self.w-91):
                 if (u % 10) == 0:
                     dc.DrawLine(i + RM, 0, i + RM, 10)
-                    y = self.ChangeRange(i,self.lapse,0)
+                    y = self.ChangeRange(i, max, min)
                     w, h = dc.GetTextExtent(str(y))
                     dc.DrawText(str(y), i + RM - w / 2, 11)
 
@@ -167,36 +208,42 @@ class customRuler(wx.Panel):
                 u+=1
                 i+=l
             dc.DrawLine((self.w-93) , 0, (self.w-93), 10)
-            w, h = dc.GetTextExtent(str(self.lapse))
-            dc.DrawText(str(self.lapse), (self.w-93) - w, 11)
+            w, h = dc.GetTextExtent(str(max))
+            dc.DrawText(str(round(max,2)), (self.w-93) - w, 11)
+
         else:
-            h = (self.h) / self.nCh
+            h = self.h / self.nCh
+            if self.zoom:
+                h = self.h /self.num
             i = 0
             posy = 0
-
             if h < 12:
                 while i < self.nCh:
                     dc.DrawRectangle(0, posy, 30, posy+h)
                     dc.DrawText(str(self.values[0]), 0, posy + 1)
                     posy += h
                     i += 1
-            elif h < 27:
+            elif 12 < h < 35:
                 while i < self.nCh:
                     dc.DrawRectangle(0, posy, 30, posy+h)
                     dc.DrawText(str(self.values[0]), 0, posy + 1)
-                    dc.DrawText(str(self.values[1]), 0, (posy+h) - 6)
+                    dc.DrawText(str(self.values[2]), 0, (posy+h) - 8)
 
                     posy += h
                     i += 1
-            elif h >= 27:
+            elif h >= 35:
                 while i < self.nCh:
                     dc.DrawRectangle(0, posy, 30, posy+h)
                     dc.DrawText(str(self.values[0]), 0, posy + 1)
-                    dc.DrawText(str(self.values[1]), 0, posy + (h-6))
-
+                    dc.DrawLine(15, posy + 2, 30, posy + 2)
+                    dc.DrawText(str(self.values[1]), 0, posy + (h/2))
+                    dc.DrawLine(15, posy + (h/2), 30, posy + (h/2))
+                    dc.DrawText(str(self.values[2]), 0, posy + (h-8))
+                    dc.DrawLine(15, posy + (h-3), 30, posy + (h-3))
 
                     posy += h
                     i += 1
+        self.zoom=False
 
 
 
@@ -216,6 +263,16 @@ class customRuler(wx.Panel):
             rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             posy += h
             i += 1'''
+
+    def zooMa(self, num):
+        self.zoom = True
+        self.num = num
+        self.Refresh()
+
+    def update(self):
+        self.Lgmax = self.Ogmax
+        self.Lgmin = self.Ogmin
+        self.Refresh()
 
     def redo(self):
         self.Refresh()
@@ -255,6 +312,7 @@ class transparentPanel(wx.Panel):
         if self.zoom:
             self.GetParent().graph.setZoom(self.zStart, self.zEnd)
             self.OnPaint()
+            self.GetParent().GetChildren()[2].zoomH(self.zStart[0], self.zEnd[0])
             self.zStart = None
             self.zEnd = None
 
@@ -332,7 +390,6 @@ class graphPanel(wx.Panel):
 
     #gets the selected electrodes to graph
     def getChecked(self):
-        print(self.GetParent())
         checked = self.GetParent().selected.GetCheckedItems()
         channels = []
         for ix in checked:
@@ -379,6 +436,10 @@ class graphPanel(wx.Panel):
         self.setSamplingRate(nsamp)
         #repainting
         self.Refresh()
+        chil = self.GetParent().GetChildren()
+        ch = self.getViewChannels()
+        chil[3].zooMa(len(ch))
+        chil[4].zooMa(ch)
 
     def getViewChannels(self):
         checked = self.getChecked()

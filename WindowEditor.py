@@ -108,6 +108,7 @@ class WindowEditor (wx.Frame):
     def updateElectrodes(self, event):
         self.eegGraph.GetSizer().GetChildren()[0].GetWindow().redo()
         self.eegGraph.GetSizer().GetChildren()[1].GetWindow().redo()
+        self.eegGraph.GetSizer().GetChildren()[5].GetWindow().update()
         self.eegGraph.changeElectrodes()
         self.tabManager.GetPage(self.tabManager.GetSelection()).Refresh()
 
@@ -157,6 +158,9 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.unToggleOthers(self.ID_FIT)
             self.graph.transparent.zoom = False
             self.graph.graph.resetZoom()
+            self.graph.GetSizer().GetChildren()[0].GetWindow().redo()
+            self.graph.GetSizer().GetChildren()[1].GetWindow().redo()
+            self.graph.GetSizer().GetChildren()[5].GetWindow().update()
 
         event.Skip()
 
