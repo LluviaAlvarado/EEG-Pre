@@ -10,7 +10,7 @@ class EEGraph(wx.Panel):
 
     def __init__(self, parent, eeg, selected):
         h = parent.GetParent().GetParent().Size[1]
-        h = h - 170
+        h = h - 180
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w/5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
@@ -111,7 +111,7 @@ class customRuler(wx.Panel):
     values are sent in as minAmp and maxAmp'''
     def __init__(self, parent, orientation, style, values, nCh):
         self.h = parent.graph.Size[1]-3
-        self.w =parent.graph.Size[0]
+        self.w = parent.graph.Size[0]
         self.nCh = nCh
         self.values = values
 
@@ -354,10 +354,12 @@ class graphPanel(wx.Panel):
         self.chanPosition = []
         #vars for zooming
         self.zoom = False
-        self.strCh = None
-        self.endCh = None
-        self.nZSamp = None
-
+        self.strCh = 0
+        self.endCh = len(eeg.channels) - 1
+        self.strRead = 0
+        self.zoomPile = []
+        #var for moving graph
+        self.move = False
         self.nSamp = self.eeg.frequency * self.eeg.duration
         self.setSamplingRate(self.nSamp)
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
@@ -385,7 +387,7 @@ class graphPanel(wx.Panel):
             self.incx = int(self.Size[0] / nSamp)
             self.subSampling = 1
         else:
-            self.subSampling = int(nSamp / self.Size[0])
+            self.subSampling = round(nSamp / self.Size[0])
             self.incx = 1
 
     #gets the selected electrodes to graph
@@ -405,10 +407,34 @@ class graphPanel(wx.Panel):
 
     def resetZoom(self):
         self.zoom = False
+        self.strRead = 0
+        self.strCh = 0
+        self.endCh = len(self.eeg.channels)-1
         self.setSamplingRate(self.nSamp)
+        self.zoomPile = []
         self.Refresh()
 
+    def returnZoom(self):
+        if len(self.zoomPile) > 0:
+            zoom = self.zoomPile.pop(len(self.zoomPile)-1)
+            self.strRead = zoom[0]
+            self.subSampling = zoom[1]
+            self.incx = zoom[2]
+            self.strCh = zoom[3]
+            self.endCh = zoom[4]
+            # repainting
+            self.Refresh()
+            # changing channel labels
+            chil = self.GetParent().GetChildren()
+            ch = self.getViewChannels()
+            chil[3].zooMa(len(ch))
+            chil[4].zooMa(ch)
+        else:
+            self.resetZoom()
+
     def setZoom(self, start, end):
+        # adding this zoom to the pile
+        self.zoomPile.append([self.strRead, self.subSampling, self.incx, self.strCh, self.endCh])
         self.zoom = True
         i = 0
         pos = self.chanPosition
@@ -430,12 +456,17 @@ class graphPanel(wx.Panel):
         if self.endCh <= self.strCh:
             self.endCh = self.strCh + 1
         lenght = end[0] - start[0]
-        nsamp = lenght / self.incx
+        #getting the readings to show
+        startr = self.strRead
+        self.strRead += (start[0] * self.subSampling) / self.incx
+        endRead = startr + (end[0] * self.subSampling) / self.incx
+        nsamp = endRead - self.strRead
         if nsamp < 10:
             nsamp = 10
         self.setSamplingRate(nsamp)
         #repainting
         self.Refresh()
+        #changing channel labels
         chil = self.GetParent().GetChildren()
         ch = self.getViewChannels()
         chil[3].zooMa(len(ch))
@@ -471,9 +502,11 @@ class graphPanel(wx.Panel):
         hSpace = (self.Size[1] - 5) / len(channels)
         w = self.Size[0]
         dc.SetPen(wx.Pen(wx.BLACK, 1))
+        #the reading to start with
+        start = int(self.strRead)
         for channel in channels:
             x = 0
-            i = 0
+            i = start
             self.chanPosition.append([channel.label, y])
             while x < w - incx:
                 ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y

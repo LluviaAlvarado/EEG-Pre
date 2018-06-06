@@ -9,8 +9,6 @@ class BaseWindow(wx.Frame):
         super(BaseWindow, self).__init__(*args, **kw)
         self.Maximize(True)
         width, height = self.GetSize()
-        print("width " + str(width))
-        print("height " + str(height))
         self.workArea = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
         self.circleMngr = CircleManager(self.workArea, width, height, self)
         #making it decent
@@ -51,7 +49,7 @@ class BaseWindow(wx.Frame):
         # platforms that support it those letters are underlined and can be
         # triggered from the keyboard.
         menuBar = wx.MenuBar()
-        menuBar.Append(fileMenu, "&Archivo")
+        menuBar.Append(fileMenu, "&Proyecto")
         menuBar.Append(helpMenu, "&Ayuda")
 
 

@@ -122,18 +122,27 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         wx.lib.agw.buttonpanel.ButtonPanel.__init__(self, par)
         self.ID_FIT = wx.NewId()
         self.ID_ZOOM = wx.NewId()
+        self.ID_ZOOMOUT = wx.NewId()
         self.graph = graph
         self.AddSpacer()
         self.buttons = []
-
+        #button to fit graph to screen
         self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
                              shortHelp='Reiniciar Zoom')
         self.btnRestart.SetKind(wx.ITEM_CHECK)
         self.AddButton(self.btnRestart)
         self.buttons.append(self.btnRestart)
         self.Bind(wx.EVT_BUTTON, self.ZoomFit, self.btnRestart)
+        #button for zooming out
+        self.btnZoomO = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOMOUT,
+                                                         wx.Bitmap("src/zoom_out.png", wx.BITMAP_TYPE_PNG),
+                                                         shortHelp='Alejar')
+        self.AddButton(self.btnZoomO)
+        self.buttons.append(self.btnZoomO)
+        self.Bind(wx.EVT_BUTTON, self.ZoomO, self.btnZoomO)
 
-        self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM, wx.Bitmap("src/zoom.png", wx.BITMAP_TYPE_PNG),
+        #button for zooming in
+        self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM, wx.Bitmap("src/zoom_in.png", wx.BITMAP_TYPE_PNG),
                              shortHelp='Acercar')
         self.btnZoom.SetKind(wx.ITEM_CHECK)
         self.AddButton(self.btnZoom)
@@ -163,6 +172,17 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.GetSizer().GetChildren()[5].GetWindow().update()
 
         event.Skip()
+
+    def ZoomO(self, event):
+        #setting to zoom cursor in graph
+        myCursor = wx.Cursor(wx.CURSOR_ARROW)
+        self.graph.SetCursor(myCursor)
+        self.graph.transparent.zoom = False
+        self.graph.graph.returnZoom()
+        #untoggling others
+        self.unToggleOthers(self.ID_ZOOMOUT)
+        event.Skip()
+
 
     def Zoom(self, event):
         if event.GetEventObject().GetToggled():
