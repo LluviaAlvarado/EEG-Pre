@@ -159,6 +159,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.AddButton(self.btnMove)
         self.buttons.append(self.btnMove)
         self.Bind(wx.EVT_BUTTON, self.Move, self.btnMove)
+
         wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(-1, -1))
         wx.StaticText(self, -1, "Maxima:  " + str(self.graph.eeg.amUnits[0]), style=wx.ALIGN_CENTER, pos=(2, 16),
                       size=(-1, -1))
