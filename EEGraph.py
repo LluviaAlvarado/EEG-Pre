@@ -355,11 +355,13 @@ class graphPanel(wx.Panel):
         #vars for zooming
         self.zoom = False
         self.strCh = 0
-        self.endCh = len(eeg.channels) - 1
+        self.endCh = len(eeg.channels)
         self.strRead = 0
         self.zoomPile = []
         #var for moving graph
         self.move = False
+        self.strMove = None
+        self.endMove = None
         self.nSamp = self.eeg.frequency * self.eeg.duration
         self.setSamplingRate(self.nSamp)
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
@@ -370,13 +372,77 @@ class graphPanel(wx.Panel):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
     def OnClickDown(self, event):
-        self.GetParent().transparent.OnClickDown(event.GetPosition())
+        if self.move:
+            self.strMove = event.GetPosition()
+        else:
+            self.GetParent().transparent.OnClickDown(event.GetPosition())
 
     def MovingMouse(self, event):
-        self.GetParent().transparent.MovingMouse(event.GetPosition())
+        if self.move:
+            if self.strMove is not None:
+                self.endMove = event.GetPosition()
+                self.moveGraph()
+        else:
+            self.GetParent().transparent.MovingMouse(event.GetPosition())
 
     def OnClickReleased(self, event):
-        self.GetParent().transparent.OnClickReleased(event.GetPosition())
+        if self.move:
+            if self.strMove is not None:
+                self.endMove = event.GetPosition()
+                self.moveGraph()
+                self.strMove = None
+                self.endMove = None
+        else:
+            self.GetParent().transparent.OnClickReleased(event.GetPosition())
+
+    #moves the eeg when it is zoomed
+    def moveGraph(self):
+        if self.zoom:
+            pos = self.chanPosition
+            start = self.strMove
+            end = self.endMove
+            if len(pos) < 2:
+                chanH = self.Size[1]
+            else:
+                c = pos[0]
+                cx = pos[1]
+                chanH = cx[1] - c[1]
+            height = abs(end[1] - start[1])
+            chansMoved = int(height / chanH)
+            chansShowing = self.endCh - self.strCh
+            if end[1] < start[1]:
+                self.strCh += chansMoved
+            else:
+                self.strCh -= chansMoved
+            self.endCh = self.strCh + chansShowing
+            #making sure it is a valid index
+            if self.strCh < 0 or self.endCh < 0:
+                self.strCh = 0
+                self.endCh = chansShowing
+            if self.strCh > len(self.eeg.channels) - 1 or self.endCh > len(self.eeg.channels) - 1:
+                self.strCh = len(self.eeg.channels) - chansShowing
+                self.endCh = len(self.eeg.channels)
+
+            lenght = abs(end[0] - start[0])
+            # getting the readings to show
+            if end[0] < start[0]:
+                self.strRead += (lenght * self.subSampling) / self.incx
+                #make sure it is not longer than the actual readings
+                if (self.strRead + (self.Size[0]*self.incx*self.subSampling)) > self.nSamp:
+                    self.strRead = self.nSamp - 1 - self.Size[0]*self.incx*self.subSampling
+            else:
+                self.strRead -= (lenght * self.subSampling) / self.incx
+                # make sure it does not go to negative index
+                if self.strRead < 0:
+                    self.strRead = 0
+            aux = self.endCh - self.strCh
+            # repainting
+            self.Refresh()
+            # changing channel labels
+            chil = self.GetParent().GetChildren()
+            ch = self.getViewChannels()
+            chil[3].zooMa(len(ch))
+            chil[4].zooMa(ch)
 
 
     '''sets the how many readings will we skip
@@ -409,7 +475,7 @@ class graphPanel(wx.Panel):
         self.zoom = False
         self.strRead = 0
         self.strCh = 0
-        self.endCh = len(self.eeg.channels)-1
+        self.endCh = len(self.eeg.channels)
         self.setSamplingRate(self.nSamp)
         self.zoomPile = []
         self.Refresh()
@@ -452,7 +518,7 @@ class graphPanel(wx.Panel):
             if c[1] < end[1] < cx[1]:
                 break
             i += 1
-        self.endCh = i
+        self.endCh = i + 1
         if self.endCh <= self.strCh:
             self.endCh = self.strCh + 1
         lenght = end[0] - start[0]
