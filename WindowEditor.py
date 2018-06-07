@@ -68,6 +68,7 @@ class WindowEditor (wx.Frame):
         #panel for eeg graph
         self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList)
         #creation of toolbar
+
         self.toolbar = Toolbar(rightPnl, self.eegGraph)
         #sending toolbar to graph to bind
         self.eegGraph.setToolbar(self.toolbar)
@@ -148,6 +149,10 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.AddButton(self.btnZoom)
         self.buttons.append(self.btnZoom)
         self.Bind(wx.EVT_BUTTON, self.Zoom, self.btnZoom)
+
+        wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(-1, -1))
+        wx.StaticText(self, -1, "Maxima:  "+str(self.graph.eeg.amUnits[0]), style=wx.ALIGN_CENTER, pos=(2, 16), size=(-1, -1))
+        wx.StaticText(self, -1, "Minima: " + str(self.graph.eeg.amUnits[1]), style=wx.ALIGN_CENTER, pos=(2, 30),size=(-1, -1))
 
         self.AddSpacer()
 

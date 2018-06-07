@@ -118,8 +118,8 @@ class customRuler(wx.Panel):
         self.Ogmax = 0
         self.Ogmin = 0
 
-        self.Lgmax = 0
-        self.Lgmin = 0
+        self.maxPile = []
+        self.minPile = []
 
         self.max=0
         self.min=0
@@ -135,7 +135,9 @@ class customRuler(wx.Panel):
             self.opc = 1
             self.makeTimeRuler(self.eeg.duration)
             self.Ogmax = self.eeg.duration
-            self.Lgmax = self.Ogmax
+            self.maxPile.append(self.Ogmax+0)
+            self.minPile.append(0)
+
         else:
             self.opc = 2
             self.makeAmpRuler(nCh, values)
@@ -143,8 +145,10 @@ class customRuler(wx.Panel):
         self.SetSizer(baseSizer)
 
     def zoomH(self, s, e):
-        self.max = self.ChangeRange(e,self.Lgmax,self.Lgmin)
-        self.min = self.ChangeRange(s,self.Lgmax,self.Lgmin)
+        self.max = self.ChangeRange(e,self.maxPile[len(self.maxPile)-1], self.minPile[len(self.minPile)-1])
+        self.min = self.ChangeRange(s,self.maxPile[len(self.maxPile)-1], self.minPile[len(self.minPile)-1])
+        self.maxPile.append(self.max)
+        self.minPile.append(self.min)
         self.zoom=True
         self.Refresh()
 
@@ -164,8 +168,6 @@ class customRuler(wx.Panel):
         newV = round((((v - 0) * newRange) / oldRange) + nm, 2)
         return newV
 
-
-
     def OnPaint(self, e):
         dc = wx.PaintDC(self)
         dc.Clear()
@@ -180,8 +182,6 @@ class customRuler(wx.Panel):
             if self.zoom:
                 max = self.max
                 min = self.min
-                self.Lgmax =self.max
-                self.Lgmin =self.min
 
             dc.DrawRectangle(0, 0, self.w - 91, 30)
             dc = wx.PaintDC(self)
@@ -217,32 +217,10 @@ class customRuler(wx.Panel):
                 h = self.h /self.num
             i = 0
             posy = 0
-            if h < 12:
-                while i < self.nCh:
-                    dc.DrawRectangle(0, posy, 30, posy+h)
-                    dc.DrawText(str(self.values[0]), 0, posy + 1)
-                    posy += h
-                    i += 1
-            elif 12 < h < 35:
-                while i < self.nCh:
-                    dc.DrawRectangle(0, posy, 30, posy+h)
-                    dc.DrawText(str(self.values[0]), 0, posy + 1)
-                    dc.DrawText(str(self.values[2]), 0, (posy+h) - 8)
-
-                    posy += h
-                    i += 1
-            elif h >= 35:
-                while i < self.nCh:
-                    dc.DrawRectangle(0, posy, 30, posy+h)
-                    dc.DrawText(str(self.values[0]), 0, posy + 1)
-                    dc.DrawLine(15, posy + 2, 30, posy + 2)
-                    dc.DrawText(str(self.values[1]), 0, posy + (h/2))
-                    dc.DrawLine(15, posy + (h/2), 30, posy + (h/2))
-                    dc.DrawText(str(self.values[2]), 0, posy + (h-8))
-                    dc.DrawLine(15, posy + (h-3), 30, posy + (h-3))
-
-                    posy += h
-                    i += 1
+            while i < self.nCh:
+                dc.DrawRectangle(0, posy, 30, posy+h)
+                posy += h
+                i += 1
         self.zoom=False
 
 
@@ -269,9 +247,21 @@ class customRuler(wx.Panel):
         self.num = num
         self.Refresh()
 
+
     def update(self):
-        self.Lgmax = self.Ogmax
-        self.Lgmin = self.Ogmin
+        self.maxPile =[]
+        self.minPile =[]
+        self.maxPile.append(self.Ogmax)
+        self.minPile.append(self.Ogmin)
+        self.Refresh()
+
+    def zoomOut(self):
+
+        self.minPile.pop()
+        self.maxPile.pop()
+        self.max = self.maxPile[len(self.maxPile)-1]
+        self.min = self.minPile[len(self.maxPile)-1]
+        self.zoom = True
         self.Refresh()
 
     def redo(self):
@@ -427,6 +417,7 @@ class graphPanel(wx.Panel):
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
+            chil[2].zoomOut()
             chil[3].zooMa(len(ch))
             chil[4].zooMa(ch)
         else:
