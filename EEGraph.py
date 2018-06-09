@@ -10,7 +10,7 @@ class EEGraph(wx.Panel):
 
     def __init__(self, parent, eeg, selected):
         h = parent.GetParent().GetParent().Size[1]
-        h = h - 180
+        h = h - 177
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w/5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
@@ -112,8 +112,10 @@ class customRuler(wx.Panel):
     def __init__(self, parent, orientation, style, values, nCh):
         self.h = parent.graph.Size[1]-3
         self.w = parent.graph.Size[0]
+        self.reduce=(self.w/100)*8.6
         self.nCh = nCh
         self.values = values
+        self.sum=0
 
         self.Ogmax = 0
         self.Ogmin = 0
@@ -128,11 +130,12 @@ class customRuler(wx.Panel):
         self.zoom =False
         self.num=0
 
-        wx.Panel.__init__(self, parent, style=style, size=(30, self.h))
+
         self.eeg = parent.eeg
         baseSizer = wx.BoxSizer(orientation)
         if orientation == wx.HORIZONTAL:
             self.opc = 1
+            wx.Panel.__init__(self, parent, style=style, size=(self.w, 35))
             self.makeTimeRuler(self.eeg.duration)
             self.Ogmax = self.eeg.duration
             self.maxPile.append(self.Ogmax+0)
@@ -140,6 +143,7 @@ class customRuler(wx.Panel):
 
         else:
             self.opc = 2
+            wx.Panel.__init__(self, parent, style=style, size=(30, self.h))
             self.makeAmpRuler(nCh, values)
 
         self.SetSizer(baseSizer)
@@ -147,6 +151,9 @@ class customRuler(wx.Panel):
     def zoomH(self, s, e):
         self.max = self.ChangeRange(e,self.maxPile[len(self.maxPile)-1], self.minPile[len(self.minPile)-1])
         self.min = self.ChangeRange(s,self.maxPile[len(self.maxPile)-1], self.minPile[len(self.minPile)-1])
+
+        self.sum = (self.max-self.min)/(self.w)
+
         self.maxPile.append(self.max)
         self.minPile.append(self.min)
         self.zoom=True
@@ -163,9 +170,9 @@ class customRuler(wx.Panel):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
     def ChangeRange(self, v, nx, nm):
-        oldRange = (self.w-91) - 0
+        oldRange = (self.w-self.reduce) - 0
         newRange = nx - nm
-        newV = round((((v - 0) * newRange) / oldRange) + nm, 2)
+        newV = round((((v - 0) * newRange) / oldRange) + nm, 5)
         return newV
 
     def OnPaint(self, e):
@@ -177,26 +184,28 @@ class customRuler(wx.Panel):
         dc.SetTextForeground('#000000')
         dc.SetFont(self.font)
         if self.opc == 1:
-            max = self.Ogmax
-            min = self.Ogmin
+            max = round(self.Ogmax,2)
+            min = round(self.Ogmin,2)
             if self.zoom:
-                max = self.max
-                min = self.min
+                max = round(self.max,2)
+                min = round(self.min,2)
 
             dc.DrawRectangle(0, 0, self.w - 91, 30)
             dc = wx.PaintDC(self)
             dc.SetPen(wx.Pen('#000000'))
             dc.SetTextForeground('#000000')
             RM = 4
-            l = (self.w-91)/100
+            l = (self.w-self.reduce)/100
             u=0
             i=0
-            while i < (self.w-91):
+            while i < (self.w-self.reduce):
                 if (u % 10) == 0:
                     dc.DrawLine(i + RM, 0, i + RM, 10)
-                    y = self.ChangeRange(i, max, min)
+                    y = round(self.ChangeRange(i, max, min),2)
                     w, h = dc.GetTextExtent(str(y))
                     dc.DrawText(str(y), i + RM - w / 2, 11)
+                    dc.DrawText("s", i+RM+w/2, 11)
+
 
                 elif (u % 5) == 0:
                     dc.DrawLine(i + RM, 0, i + RM, 8)
@@ -207,9 +216,9 @@ class customRuler(wx.Panel):
 
                 u+=1
                 i+=l
-            dc.DrawLine((self.w-93) , 0, (self.w-93), 10)
+            dc.DrawLine((self.w-self.reduce-2) , 0, (self.w-self.reduce-2), 10)
             w, h = dc.GetTextExtent(str(max))
-            dc.DrawText(str(round(max,2)), (self.w-93) - w, 11)
+            dc.DrawText(str(round(max,2)), (self.w-self.reduce-2) - w, 11)
 
         else:
             h = self.h / self.nCh
@@ -234,7 +243,6 @@ class customRuler(wx.Panel):
         posy = 0
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         '''while i < nCh:
-
             rule = wx.StaticText(self, -1, str(values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
             ruler = wx.StaticText(self, -1, str(values[2]), style=wx.ALIGN_CENTER, pos=(0, posy + 9), size=(30, h))
             ruler.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
@@ -266,6 +274,34 @@ class customRuler(wx.Panel):
 
     def redo(self):
         self.Refresh()
+
+    def moveZoom(self,dis):
+        d=0
+        if dis < 0:
+            d=round((dis*-1)*self.sum,8)
+            if(self.minPile[len(self.minPile)-1] - d) > 0:
+                self.minPile[len(self.minPile)-1] -= d
+                self.maxPile[len(self.minPile)-1] -= d
+            else:
+                self.minPile[len(self.minPile) - 1] -= self.minPile[len(self.minPile) - 1]
+                self.maxPile[len(self.minPile) - 1] -= self.minPile[len(self.minPile) - 1]
+        else:
+            d=round(dis*self.sum,8)
+            if(self.maxPile[len(self.minPile) - 1] + d) < self.Ogmax:
+                self.minPile[len(self.minPile) - 1] += d
+                self.maxPile[len(self.minPile) - 1] += d
+            else:
+                r= self.Ogmax - self.maxPile[len(self.minPile) - 1]
+                self.minPile[len(self.minPile) - 1] += r
+                self.maxPile[len(self.minPile) - 1] = self.Ogmax
+
+
+        self.max=self.maxPile[len(self.minPile) - 1]
+        self.min=self.minPile[len(self.minPile) - 1]
+        self.zoom= True
+        self.Refresh()
+
+
 
     def getChecked(self):
         checked = self.GetParent().selected.GetCheckedItems()
@@ -372,6 +408,8 @@ class graphPanel(wx.Panel):
             if self.strMove is not None:
                 self.endMove = event.GetPosition()
                 self.moveGraph()
+                self.strMove=self.endMove
+
         else:
             self.GetParent().transparent.MovingMouse(event.GetPosition())
 
@@ -391,6 +429,7 @@ class graphPanel(wx.Panel):
             pos = self.chanPosition
             start = self.strMove
             end = self.endMove
+
             if len(pos) < 2:
                 chanH = self.Size[1]
             else:
@@ -428,11 +467,14 @@ class graphPanel(wx.Panel):
             aux = self.endCh - self.strCh
             # repainting
             self.Refresh()
+
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
+            chil[2].moveZoom(self.strMove[0]-self.endMove[0])
             chil[3].zooMa(len(ch))
             chil[4].zooMa(ch)
+            self.strMove = self.endMove
 
 
     '''sets the how many readings will we skip

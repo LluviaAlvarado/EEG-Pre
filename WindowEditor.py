@@ -160,11 +160,19 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.buttons.append(self.btnMove)
         self.Bind(wx.EVT_BUTTON, self.Move, self.btnMove)
 
-        wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(-1, -1))
-        wx.StaticText(self, -1, "Maxima:  " + str(self.graph.eeg.amUnits[0]), style=wx.ALIGN_CENTER, pos=(2, 16),
+        b1=wx.StaticText(self,0, " ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(96,46))
+        b1.SetBackgroundColour((0,0,0))
+        b2 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(3, 3), size=(94, 44))
+
+        r1= wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(5, 4), size=(-1, -1))
+        r2=wx.StaticText(self, -1, "Máxima:  " + str(self.graph.eeg.amUnits[0]), style=wx.ALIGN_CENTER, pos=(5, 18),
                       size=(-1, -1))
-        wx.StaticText(self, -1, "Minima: " + str(self.graph.eeg.amUnits[1]), style=wx.ALIGN_CENTER, pos=(2, 30),
+        r3=wx.StaticText(self, -1, "Mínima:  " + str(self.graph.eeg.amUnits[1]), style=wx.ALIGN_CENTER, pos=(5, 32),
                       size=(-1, -1))
+        r1.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+        r2.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+        r3.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+
         self.AddSpacer()
 
         self.DoLayout()
@@ -189,6 +197,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.GetSizer().GetChildren()[5].GetWindow().update()
 
         event.Skip()
+
 
     def ZoomO(self, event):
         #setting to zoom cursor in graph
