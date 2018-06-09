@@ -175,6 +175,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
 
         self.AddSpacer()
 
+
         self.DoLayout()
 
     def unToggleOthers(self, toggled):

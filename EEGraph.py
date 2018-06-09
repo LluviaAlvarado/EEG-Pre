@@ -275,6 +275,8 @@ class customRuler(wx.Panel):
     def redo(self):
         self.Refresh()
 
+
+
     def moveZoom(self,dis):
         d=0
         if dis < 0:
