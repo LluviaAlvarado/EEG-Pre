@@ -75,10 +75,13 @@ class customList(wx.Panel):
         self.DestroyChildren()
         h = (self.Size[1]) / len(channels)
         i = 0
+        tam= int(h)-3
+        if h > 20:
+            tam= 10
         posy = 0
         while i < len(channels):
-            rule = wx.StaticText(self, i, channels[i].label, style=wx.ALIGN_CENTER, pos=(0, posy+(h/3)), size=(30, h))
-            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+            rule = wx.StaticText(self, i, channels[i].label, style=wx.ALIGN_CENTER, pos=(0, posy+(h/2)-(tam/2)), size=(30, h))
+            rule.SetFont(wx.Font(tam, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             # baseSizer.Add(rule, 0, wx.EXPAND, 0)
             posy += h
             i += 1
@@ -92,7 +95,7 @@ class customList(wx.Panel):
         posy = 0
         while i < len(channels):
             rule = wx.StaticText(self, i, channels[i].label, style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
-            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
             # baseSizer.Add(rule, 0, wx.EXPAND, 0)
             posy += h
             i += 1
