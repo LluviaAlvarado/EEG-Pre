@@ -50,8 +50,8 @@ class WindowEditor (wx.Frame):
         elecSizer.Add(elecLabel, 0, wx.EXPAND | wx.ALL, 5)
 
         self.electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
-        #select all items
-        for i in range(len(self.electrodeList.GetItems())):
+        #select all the channel items to view
+        for i in range(len(self.eeg.channels)):
             self.electrodeList.Check(i, check=True)
         elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
         #button to apply changes from electrode selector

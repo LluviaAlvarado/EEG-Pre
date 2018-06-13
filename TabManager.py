@@ -197,7 +197,10 @@ class WindowThumb(wx.Panel):
         checked = self.GetParent().GetParent().par.electrodeList.GetCheckedItems()
         channels = []
         for ix in checked:
-            channels.append(self.eeg.channels[ix])
+            if ix < len(self.eeg.channels):
+                channels.append(self.eeg.channels[ix])
+            else:
+                channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
         return channels
 
     #changes the value for printable porpuses

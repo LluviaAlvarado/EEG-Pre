@@ -54,14 +54,8 @@ class FileReader:
             eeg = self.read_EDF(fileAddress)
         elif fileExt == ".gdf":
             eeg = self.read_GDF(fileAddress)
-        elif fileExt == ".rec":
-            eeg = self.readREC(eegFile)
-        elif fileExt == ".bci2000":
-            eeg = self.readBCI(eegFile)
         elif fileExt == ".acq":
             eeg = self.readACQ(eegFile)
-        elif fileExt == ".eeg":
-            eeg = self.readEEG(eegFile)
         else:
             self.setError(1)
             return None
@@ -106,7 +100,7 @@ class FileReader:
             filtr = _dfFile.getPrefilter()
         except:
             filtr = None
-        return EEGData(frecuency, _dfFile.datarecord_duration, signals, filtr, None, labels)
+        return EEGData(frecuency, _dfFile.datarecord_duration, signals, filtr, labels)
 
     def read_GDF(self, fileAddress):
         try:
@@ -128,7 +122,7 @@ class FileReader:
             filtr = _dfFile.getPrefilter()
         except:
             filtr = None
-        return EEGData(frecuency, np.amax(_dfFile.times), signals, filtr, None, labels)
+        return EEGData(frecuency, np.amax(_dfFile.times), signals, filtr, labels)
 
     def readREC(self, eegFile):
 
@@ -161,7 +155,7 @@ class FileReader:
             filtr = None
         except:
             filtr = None
-        return EEGData(frequency, time, signals, filtr, None, labels)
+        return EEGData(frequency, time, signals, filtr, labels)
 
     def readEEG(self, eegFile):
 

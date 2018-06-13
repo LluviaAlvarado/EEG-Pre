@@ -37,7 +37,8 @@ class EEGraph(wx.Panel):
         values.append(self.eeg.amUnits[0] - half)
         values.append(self.eeg.amUnits[1])
         ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels))
-        channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER, self.eeg.channels)
+        channels = self.eeg.channels + self.eeg.additionalData
+        channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER, channels)
         baseSizer.Add(channelList, 0, wx.EXPAND, 0)
         baseSizer.Add(ampRuler, 0, wx.EXPAND, 0)
         baseSizer.Add(self.graph, 0, wx.EXPAND, 0)
@@ -104,7 +105,10 @@ class customList(wx.Panel):
         checked = self.GetParent().selected.GetCheckedItems()
         channels = []
         for ix in checked:
-            channels.append(self.eeg.channels[ix])
+            if ix < len(self.eeg.channels):
+                channels.append(self.eeg.channels[ix])
+            else:
+                channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
         return channels
 
 class customRuler(wx.Panel):
@@ -115,7 +119,7 @@ class customRuler(wx.Panel):
     def __init__(self, parent, orientation, style, values, nCh):
         self.h = parent.graph.Size[1]-3
         self.w = parent.graph.Size[0]
-        self.reduce=(self.w/100)*8.6
+        self.reduce=0
         self.nCh = nCh
         self.values = values
         self.sum=0
@@ -193,7 +197,7 @@ class customRuler(wx.Panel):
                 max = round(self.max,2)
                 min = round(self.min,2)
 
-            dc.DrawRectangle(0, 0, self.w - 91, 30)
+            dc.DrawRectangle(0, 0, self.w, 30)
             dc = wx.PaintDC(self)
             dc.SetPen(wx.Pen('#000000'))
             dc.SetTextForeground('#000000')
@@ -306,13 +310,14 @@ class customRuler(wx.Panel):
         self.zoom= True
         self.Refresh()
 
-
-
     def getChecked(self):
         checked = self.GetParent().selected.GetCheckedItems()
         channels = []
         for ix in checked:
-            channels.append(self.eeg.channels[ix])
+            if ix < len(self.eeg.channels):
+                channels.append(self.eeg.channels[ix])
+            else:
+                channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
         return channels
 
 '''a transparent panel over the eegraph to draw other elements
@@ -387,6 +392,7 @@ class graphPanel(wx.Panel):
         self.zoom = False
         self.strCh = 0
         self.endCh = len(eeg.channels)
+        self.totalChan = len(eeg.channels) + len(eeg.additionalData)
         self.strRead = 0
         self.zoomPile = []
         #var for moving graph
@@ -453,9 +459,9 @@ class graphPanel(wx.Panel):
             if self.strCh < 0 or self.endCh < 0:
                 self.strCh = 0
                 self.endCh = chansShowing
-            if self.strCh > len(self.eeg.channels) - 1 or self.endCh > len(self.eeg.channels) - 1:
-                self.strCh = len(self.eeg.channels) - chansShowing
-                self.endCh = len(self.eeg.channels)
+            if self.strCh > len(self.eeg.channels) - 1 or self.endCh > self.totalChan - 1:
+                self.strCh = self.totalChan - chansShowing
+                self.endCh = self.totalChan
 
             lenght = abs(end[0] - start[0])
             # getting the readings to show
@@ -498,7 +504,10 @@ class graphPanel(wx.Panel):
         checked = self.GetParent().selected.GetCheckedItems()
         channels = []
         for ix in checked:
-            channels.append(self.eeg.channels[ix])
+            if ix < len(self.eeg.channels):
+                channels.append(self.eeg.channels[ix])
+            else:
+                channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
         return channels
 
     #changes the value for printable porpuses
@@ -598,7 +607,7 @@ class graphPanel(wx.Panel):
         y = 0
 
         amUnits = self.eeg.amUnits
-        subSampling=self.subSampling
+        subSampling=int(self.subSampling)
         incx = self.incx
         self.chanPosition = []
         #defining channels to plot
