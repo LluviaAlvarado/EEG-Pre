@@ -332,7 +332,7 @@ class transparentPanel(wx.Panel):
 
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self):
-        self.GetParent().graph.Refresh()
+        self.GetParent().Refresh()
         dc = wx.ClientDC(self)
         gc = wx.GraphicsContext.Create(dc)
         if self.zoom:
@@ -437,15 +437,15 @@ class graphPanel(wx.Panel):
                 self.strCh = self.totalChan - chansShowing
                 self.endCh = self.totalChan
 
-            lenght = abs(end[0] - start[0])
+            length = abs(end[0] - start[0])
             # getting the readings to show
             if end[0] < start[0]:
-                self.strRead += (lenght * self.subSampling) / self.incx
+                self.strRead += (length * self.subSampling) / self.incx
                 # make sure it is not longer than the actual readings
                 if (self.strRead + (self.Size[0] * self.incx * self.subSampling)) > self.nSamp:
                     self.strRead = self.nSamp - 1 - self.Size[0] * self.incx * self.subSampling
             else:
-                self.strRead -= (lenght * self.subSampling) / self.incx
+                self.strRead -= (length * self.subSampling) / self.incx
                 # make sure it does not go to negative index
                 if self.strRead < 0:
                     self.strRead = 0
@@ -458,7 +458,7 @@ class graphPanel(wx.Panel):
             ch = self.getViewChannels()
             chil[2].moveZoom(self.strMove[0] - self.endMove[0])
             chil[3].zoomManager(len(ch))
-            chil[4].zoomManager(ch)
+            chil[4].adjustment(ch)
             self.strMove = self.endMove
 
     '''sets the how many readings will we skip
@@ -484,7 +484,7 @@ class graphPanel(wx.Panel):
                 channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
         return channels
 
-    # changes the value for printable porpuses
+    # changes the value for printable purposes
     def ChangeRange(self, v, nu, nl):
         oldRange = self.eeg.amUnits[0] - self.eeg.amUnits[1]
         newRange = nu - nl
@@ -528,7 +528,7 @@ class graphPanel(wx.Panel):
         while i < len(pos) - 1:
             c = pos[i]
             cx = pos[i + 1]
-            if c[1] < start[1] < cx[1]:
+            if c[1] <= start[1] <= cx[1]:
                 break
             i += 1
         self.strCh = i
@@ -536,7 +536,7 @@ class graphPanel(wx.Panel):
         while i < len(pos) - 1:
             c = pos[i]
             cx = pos[i + 1]
-            if c[1] < end[1] < cx[1]:
+            if c[1] <= end[1] <= cx[1]:
                 break
             i += 1
         self.endCh = i + 1

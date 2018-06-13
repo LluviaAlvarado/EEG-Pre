@@ -107,7 +107,7 @@ class WindowEditor (wx.Frame):
 
     #redraws the eeg with the selected electrodes
     def updateElectrodes(self, event):
-        self.eegGraph.GetSizer().GetChildren()[0].GetWindow().redo()
+        self.eegGraph.GetSizer().GetChildren()[0].GetWindow().adjustment()
         self.eegGraph.GetSizer().GetChildren()[1].GetWindow().redo()
         self.eegGraph.GetSizer().GetChildren()[5].GetWindow().update()
         self.eegGraph.changeElectrodes()
