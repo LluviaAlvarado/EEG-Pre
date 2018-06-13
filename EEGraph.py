@@ -458,7 +458,7 @@ class graphPanel(wx.Panel):
             ch = self.getViewChannels()
             chil[2].moveZoom(self.strMove[0] - self.endMove[0])
             chil[3].zoomManager(len(ch))
-            chil[4].zoomManager(ch)
+            chil[4].adjustment(ch)
             self.strMove = self.endMove
 
     '''sets the how many readings will we skip
