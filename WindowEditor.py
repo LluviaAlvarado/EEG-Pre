@@ -193,7 +193,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.graph.move = False
             self.graph.transparent.zoom = False
             self.graph.graph.resetZoom()
-            self.graph.GetSizer().GetChildren()[0].GetWindow().redo()
+            self.graph.GetSizer().GetChildren()[0].GetWindow().adjustment()
             self.graph.GetSizer().GetChildren()[1].GetWindow().redo()
             self.graph.GetSizer().GetChildren()[5].GetWindow().update()
 
