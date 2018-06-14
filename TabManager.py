@@ -193,7 +193,7 @@ class WindowThumb(wx.Panel):
 
     #gets the selected electrodes to graph
     def getChecked(self):
-        print(self.GetParent())
+        #print(self.GetParent())
         checked = self.GetParent().GetParent().par.electrodeList.GetCheckedItems()
         channels = []
         for ix in checked:
@@ -214,25 +214,26 @@ class WindowThumb(wx.Panel):
         #buffered so it doesn't paint channel per channel
         dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
         dc.Clear()
+
         dc.SetPen(wx.Pen(wx.BLACK, 4))
         y = 0
-
         amUnits = self.eeg.amUnits
         subSampling=self.subSampling
         incx = self.incx
         self.chanPosition = []
         #defining channels to plot
         channels = self.getChecked()
-        hSpace = (self.Size[1] - 5) / len(channels)
-        w = self.Size[0]
-        dc.SetPen(wx.Pen(wx.BLACK, 1))
-        for channel in channels:
-            x = 0
-            i = 0
-            self.chanPosition.append([channel.label, y])
-            while x < w - incx:
-                ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
-                dc.DrawPoint(x, ny)
-                i += subSampling
-                x += incx
-            y += hSpace
+        if len(channels) != 0:
+            hSpace = (self.Size[1] - 5) / len(channels)
+            w = self.Size[0]
+            dc.SetPen(wx.Pen(wx.BLACK, 1))
+            for channel in channels:
+                x = 0
+                i = 0
+                self.chanPosition.append([channel.label, y])
+                while x < w - incx:
+                    ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                    dc.DrawPoint(x, ny)
+                    i += subSampling
+                    x += incx
+                y += hSpace

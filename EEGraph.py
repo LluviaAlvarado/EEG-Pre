@@ -52,7 +52,10 @@ class EEGraph(wx.Panel):
 
     # method to redraw EEG graph after changing the selected electrodes
     def changeElectrodes(self):
-        self.graph.resetZoom()
+        self.graph.apply()
+
+    def checkV(self):
+        return self.graph.getViewChannels()
 
 
 class customList(wx.Panel):
@@ -68,20 +71,21 @@ class customList(wx.Panel):
         if channels == -1:
             channels = self.getChecked()
         self.DestroyChildren()
-        h = (self.Size[1]-5) / len(channels)
-        fontSize = int(h) - 3
-        if h > 15:
-            fontSize = 10
-        i = 0
-        posy = 0
-        while i < len(channels):
-            center = posy + (h / 2) - (fontSize / 2)
-            rule = wx.StaticText(self, i, channels[i].label, style=wx.ALIGN_CENTER,
-                                 pos=(0, center),
-                                 size=(30, h))
-            rule.SetFont(wx.Font(fontSize, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-            posy += h
-            i += 1
+        if len(channels) > 0:
+            h = (self.Size[1]-5) / len(channels)
+            fontSize = int(h) - 3
+            if h > 15:
+                fontSize = 10
+            i = 0
+            posy = 0
+            while i < len(channels):
+                center = posy + (h / 2) - (fontSize / 2)
+                rule = wx.StaticText(self, i, channels[i].label, style=wx.ALIGN_CENTER,
+                                     pos=(0, center),
+                                     size=(30, h))
+                rule.SetFont(wx.Font(fontSize, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
+                posy += h
+                i += 1
 
     def getChecked(self):
         checked = self.GetParent().selected.GetCheckedItems()
@@ -206,16 +210,17 @@ class customRuler(wx.Panel):
             dc.DrawText(str(round(max, 2)), (self.Size[0]-5 - 2) - w, 11)
 
         else:
-            h = self.height / self.nCh
-            if self.zoom:
-                h = self.height / self.num
-            i = 0
-            posy = 0
-            while i < self.nCh:
-                dc.DrawRectangle(0, posy, 30, posy + h)
-                posy += h
-                i += 1
-        self.zoom = False
+            if self.nCh > 0:
+                h = self.height / self.nCh
+                if self.zoom:
+                    h = self.height / self.num
+                i = 0
+                posy = 0
+                while i < self.nCh:
+                    dc.DrawRectangle(0, posy, 30, posy + h)
+                    posy += h
+                    i += 1
+            self.zoom = False
 
     def makeAmpRuler(self, nCh, values):
         self.font = wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
@@ -495,9 +500,13 @@ class graphPanel(wx.Panel):
         self.zoom = False
         self.strRead = 0
         self.strCh = 0
-        self.endCh = len(self.eeg.channels)
+        self.endCh = len(self.getChecked())
         self.setSamplingRate(self.nSamp)
         self.zoomPile = []
+        self.Refresh()
+
+
+    def apply(self):
         self.Refresh()
 
     def returnZoom(self):
@@ -517,12 +526,18 @@ class graphPanel(wx.Panel):
             chil[3].zoomManager(len(ch))
             chil[4].adjustment(ch)
         else:
+            chil = self.GetParent().GetChildren()
+            ch = self.getViewChannels()
+            chil[2].update()
+            chil[3].zoomManager(len(ch))
+            chil[4].adjustment()
             self.resetZoom()
 
     def setZoom(self, start, end):
         # adding this zoom to the pile
         self.zoomPile.append([self.strRead, self.subSampling, self.incx, self.strCh, self.endCh])
         self.zoom = True
+        tmpS = self.strCh
         i = 0
         pos = self.chanPosition
         while i < len(pos) - 1:
@@ -542,7 +557,11 @@ class graphPanel(wx.Panel):
         self.endCh = i + 1
         if self.endCh <= self.strCh:
             self.endCh = self.strCh + 1
+        tmpE= self.endCh - self.strCh
+        self.strCh+=tmpS
+        self.endCh = self.strCh +tmpE
         lenght = end[0] - start[0]
+
         # getting the readings to show
         startr = self.strRead
         self.strRead += (start[0] * self.subSampling) / self.incx
@@ -552,6 +571,7 @@ class graphPanel(wx.Panel):
             nsamp = 10
         self.setSamplingRate(nsamp)
         # repainting
+        #print("Ini: "+str(self.strCh)+"  End: "+str(self.endCh))
         self.Refresh()
         # changing channel labels
         chil = self.GetParent().GetChildren()
@@ -561,10 +581,24 @@ class graphPanel(wx.Panel):
 
     def getViewChannels(self):
         checked = self.getChecked()
+        #print(len(checked))
         channels = []
         # if there is zoom
         if self.zoom:
             i = self.strCh
+            r = self.endCh - i
+            #print("I: "+str(i)+" R: "+str(r) + " E: "+str(self.endCh))
+
+            if self.endCh > len(checked):
+                i -= (self.endCh - len(checked))
+                self.endCh = len(checked)
+            if r > len(checked):
+                self.endCh=len(checked)
+            #print(i)
+            #print(self.endCh)
+            if i < 0:
+                i=0
+            self.strCh = i
             while i < self.endCh:
                 channels.append(checked[i])
                 i += 1
@@ -585,24 +619,25 @@ class graphPanel(wx.Panel):
         self.chanPosition = []
         # defining channels to plot
         channels = self.getViewChannels()
-        hSpace = (self.Size[1] - 5) / len(channels)
-        w = self.Size[0]
-        dc.SetPen(wx.Pen(wx.BLACK, 1))
-        # the reading to start with
-        start = int(self.strRead)
-        for channel in channels:
-            x = 0
-            i = start
-            self.chanPosition.append([channel.label, y])
-            while x < w - incx:
-                ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
-                ny2 = (((channel.readings[i+subSampling] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
-                if abs(ny - ny2) > 3 or (x + incx) > 3:
-                    dc.DrawLine(x, ny, x + incx, ny2)
-                else:
-                    dc.DrawPoint(x, ny)
-                i += subSampling
-                x += incx
-            y += hSpace
+        if len(channels) > 0:
+            hSpace = (self.Size[1] - 5) / len(channels)
+            w = self.Size[0]
+            dc.SetPen(wx.Pen(wx.BLACK, 1))
+            # the reading to start with
+            start = int(self.strRead)
+            for channel in channels:
+                x = 0
+                i = start
+                self.chanPosition.append([channel.label, y])
+                while x < w - incx:
+                    ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                    ny2 = (((channel.readings[i+subSampling] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                    if abs(ny - ny2) > 3 or (x + incx) > 3:
+                        dc.DrawLine(x, ny, x + incx, ny2)
+                    else:
+                        dc.DrawPoint(x, ny)
+                    i += subSampling
+                    x += incx
+                y += hSpace
 
 

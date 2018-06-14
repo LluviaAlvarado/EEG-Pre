@@ -107,10 +107,11 @@ class WindowEditor (wx.Frame):
 
     #redraws the eeg with the selected electrodes
     def updateElectrodes(self, event):
-        self.eegGraph.GetSizer().GetChildren()[0].GetWindow().adjustment()
-        self.eegGraph.GetSizer().GetChildren()[1].GetWindow().redo()
-        self.eegGraph.GetSizer().GetChildren()[5].GetWindow().update()
         self.eegGraph.changeElectrodes()
+        ch=self.eegGraph.checkV()
+        self.eegGraph.GetSizer().GetChildren()[0].GetWindow().adjustment(ch)
+        self.eegGraph.GetSizer().GetChildren()[1].GetWindow().zoomManager(len(ch))
+        #self.eegGraph.GetSizer().GetChildren()[5].GetWindow().update()
         self.tabManager.GetPage(self.tabManager.GetSelection()).Refresh()
 
 class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
