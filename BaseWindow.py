@@ -1,7 +1,8 @@
 import wx
 
+#Local Imports
 from CircleManager import *
-
+from Project import *
 
 class BaseWindow(wx.Frame):
 
@@ -11,12 +12,13 @@ class BaseWindow(wx.Frame):
         width, height = self.GetSize()
         self.workArea = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
         self.circleMngr = CircleManager(self.workArea, width, height, self)
-        #making it decent
+        #TODO CARGAR PROYECTO SI HAY
+        self.project = Project()
         # create the menu bar that we don't need yet
         self.makeMenuBar()
         # create the status bar
         self.CreateStatusBar()
-        self.SetStatusText("Esperando por archivo de EEG...")
+        self.SetStatusText("Esperando por Archivos de EEG...")
 
     def makeMenuBar(self):
         """

@@ -399,7 +399,6 @@ class graphPanel(wx.Panel):
                 self.endMove = event.GetPosition()
                 self.moveGraph()
                 self.strMove = self.endMove
-
         else:
             self.GetParent().transparent.MovingMouse(event.GetPosition())
 

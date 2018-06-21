@@ -12,6 +12,7 @@ class EEGData:
 
 
     def __init__(self, freq, time, chM, f, labels):
+        self.name = ""
         self.system10_20 = System10_20()
         self.i = 0
         self.frequency = freq
@@ -23,6 +24,9 @@ class EEGData:
         self.channels = []
         self.fillChannels(labels)
         self. windows = []
+
+    def setName(self, na):
+        self.name = na
 
     #adds a WindowEEG object to the list
     def addWindow(self, w):
@@ -70,4 +74,50 @@ class EEGData:
             lbls.append(ex.label)
         return lbls
 
+    def getChannelLabels(self):
+        lbls = []
+        for ch in self.channels:
+            lbls.append(ch.label)
+        return lbls
+
+    def sameLabels(self, test):
+        different = 0
+        equal = False
+        chans = self.channels
+        for ts in test:
+            for ch in chans:
+                if ch.label == ts.label:
+                    equal = True
+            if not equal:
+                different += 1
+            equal = False
+        if different > 0:
+            return False
+        return True
+
+    def sameLabelsCh(self, labels):
+        different = 0
+        equal = False
+        chans = self.channels
+        for ts in labels:
+            for ch in chans:
+                if ch.label == ts:
+                    equal = True
+            if not equal:
+                different += 1
+            equal = False
+        if different > 0:
+            return False
+        return True
+
+    def sameProject(self, test):
+        if test.frequency != self.frequency:
+            return "Frequency"
+        if test.duration != self.duration:
+            return "Duration"
+        if len(test.channels) != len(self.channels):
+            return "Number of Channels"
+        if not self.sameLabels(test.channels):
+            return "Channel Names"
+        return ""
 
