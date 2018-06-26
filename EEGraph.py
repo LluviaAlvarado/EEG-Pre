@@ -10,7 +10,7 @@ class EEGraph(wx.Panel):
 
     def __init__(self, parent, eeg, selected):
         h = parent.GetParent().GetParent().Size[1]
-        h = h - 177
+        h = h - 187
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w / 5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
@@ -191,9 +191,14 @@ class customRuler(wx.Panel):
                 if (u % 10) == 0:
                     dc.DrawLine(i + RM, 0, i + RM, 10)
                     y = round(self.ChangeRange(i, max, min), 2)
+                    st = "s"
+                    if(y<2):
+                        st = "ms"
+                        y = y * 1000
+                        y = int(y)
                     w, h = dc.GetTextExtent(str(y))
                     dc.DrawText(str(y), i + RM - w / 2, 11)
-                    dc.DrawText("s", i + RM + w / 2, 11)
+                    dc.DrawText(st, i + RM + w / 2, 11)
 
 
                 elif (u % 5) == 0:
@@ -206,6 +211,9 @@ class customRuler(wx.Panel):
                 u += 1
                 i += l
             dc.DrawLine((self.Size[0]-5 - 2), 0, (self.Size[0]-5 - 2), 10)
+            if(max<2):
+                max = max * 1000
+                max = int(max)
             w, h = dc.GetTextExtent(str(max))
             dc.DrawText(str(round(max, 2)), (self.Size[0]-5 - 2) - w, 11)
 
@@ -247,7 +255,10 @@ class customRuler(wx.Panel):
         self.minPile = []
         self.maxPile.append(self.Ogmax)
         self.minPile.append(self.Ogmin)
+        self.max = self.maxPile[len(self.maxPile) - 1]
+        self.min = self.minPile[len(self.maxPile) - 1]
         self.Refresh()
+
 
     def zoomOut(self):
 
@@ -535,6 +546,7 @@ class graphPanel(wx.Panel):
         self.zoomPile.append([self.strRead, self.subSampling, self.incx, self.strCh, self.endCh])
         self.zoom = True
         tmpS = self.strCh
+
         i = 0
         pos = self.chanPosition
         while i < len(pos) - 1:
