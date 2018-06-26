@@ -15,8 +15,6 @@ class FilesWindow(wx.Frame):
         wx.Frame.__init__(self, parent, -1, "Editor de EEGs", )
         self.SetSize(500, 500)
         self.Centre()
-        #global length of windows
-        self.WindowLength = None
         # create base panel in the frame
         self.pnl = wx.Panel(self,
                    style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)

@@ -3,9 +3,7 @@ import wx
 import wx.lib.agw.aquabutton as AB
 import wx.lib.scrolledpanel
 import wx.html2
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+import wx.aui as aui
 import wx.lib.agw.buttonpanel
 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
@@ -17,73 +15,28 @@ from EEGraph import *
 class WindowEditor (wx.Frame):
     title = "Edición de Ventanas"
     def __init__(self, e, parent):
-        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
+        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE^(wx.RESIZE_BORDER))
         self.Maximize(True)
         self.SetMinSize((self.Size[0], self.Size[1]))
-        # create base panel in the frame
-        self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
-        self.eeg = e
+        self.project = parent.GetParent().project
         #updating length to max size of eeg if it has not been initialized
-        if parent.WindowLength is None:
-            self.updateLength(self.eeg.duration)
-        baseContainer = wx.BoxSizer(wx.HORIZONTAL)
-        #container of window information
-        leftPnl = wx.Panel(self.pnl)
-        self.tabManager = TabManager(leftPnl, self, self.GetParent().WindowLength)
-        leftSizer = wx.BoxSizer(wx.VERTICAL)
-        leftSizer.Add(self.tabManager, 0, wx.EXPAND | wx.ALL, 5)
-        #panel for tab buttons
-        tabBtnPanel = wx.Panel(leftPnl)
-        tbpSizer = wx.BoxSizer(wx.HORIZONTAL)
-        newTab = wx.Button(tabBtnPanel, label="Nueva")
-        newTab.Bind(wx.EVT_BUTTON, self.createNewWindow)
-        deleteTab = wx.Button(tabBtnPanel, label="Eliminar")
-        deleteTab.Bind(wx.EVT_BUTTON, self.deleteWindow)
-        tbpSizer.Add(newTab, 0, wx.EXPAND | wx.ALL, 5)
-        tbpSizer.Add(deleteTab, 0, wx.EXPAND | wx.ALL, 5)
-        tabBtnPanel.SetSizer(tbpSizer)
-        leftSizer.Add(tabBtnPanel, 0, wx.EXPAND | wx.ALL, 5)
-        # panel for electrode selector
-        electrodePanel = wx.Panel(leftPnl)
-        elecSizer = wx.BoxSizer(wx.VERTICAL)
-        elecLabel = wx.StaticText(electrodePanel, label="Selección de Electrodos:")
-        elecSizer.Add(elecLabel, 0, wx.EXPAND | wx.ALL, 5)
-
-        self.electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
-        #select all the channel items to view
-        for i in range(len(self.eeg.channels)):
-            self.electrodeList.Check(i, check=True)
-        elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
-        #button to apply changes from electrode selector
-        applyChanges = wx.Button(electrodePanel, label="Aplicar")
-
-        elecSizer.Add(applyChanges, 0, wx.CENTER | wx.ALL, 5)
-        electrodePanel.SetSizer(elecSizer)
-        leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
-        leftPnl.SetSizer(leftSizer)
-        baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 20)
-        #eeg grafic information right side
-        rightPnl = wx.Panel(self.pnl)
-        graphContainer = wx.BoxSizer(wx.VERTICAL)
-        #panel for eeg graph
-        self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList)
-        #creation of toolbar
-
-        self.toolbar = Toolbar(rightPnl, self.eegGraph)
-        #sending toolbar to graph to bind
-        self.eegGraph.setToolbar(self.toolbar)
-        graphContainer.Add(self.toolbar, 0, wx.EXPAND | wx.ALL, 0)
-        graphContainer.Add(self.eegGraph, 1, wx.EXPAND | wx.ALL, 0)
-        rightPnl.SetSizer(graphContainer)
-        baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 20)
-        self.pnl.SetSizer(baseContainer)
-        self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
+        if self.project.windowLength is None:
+            self.project.windowLength = e.duration
+        #frame will contain the base container of window editor and eeg tabs
+        frameSizer = wx.BoxSizer(wx.VERTICAL)
+        # EEG tabs
+        self.eegTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]), style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE )
+                                       | aui.AUI_NB_WINDOWLIST_BUTTON)
+        #filling the tabs
+        self.fillEEGTabs(e)
+        frameSizer.Add(self.eegTabs, 0, wx.EXPAND, 3)
+        self.SetSizer(frameSizer)
         #creating a status bar to inform user of process
         self.CreateStatusBar()
         #setting the cursor to loading
         myCursor = wx.Cursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
-        self.SetStatusText("Loading EEG Readings...")
+        self.SetStatusText("Loading EEG...")
         self.Centre()
         self.Show()
         wx.CallLater(0, lambda: self.SetStatus("", 0))
@@ -94,21 +47,90 @@ class WindowEditor (wx.Frame):
             myCursor = wx.Cursor(wx.CURSOR_ARROW)
             self.SetCursor(myCursor)
 
+    def fillEEGTabs(self, e):
+        eegs = self.GetParent().GetParent().project.EEGS
+        i = 0
+        found = False
+        for eeg in eegs:
+            if e.name == eeg.name:
+                found = True
+            page = EEGTab(self.eegTabs, eeg)
+            self.eegTabs.AddPage(page, eeg.name)
+            if not found:
+                i += 1
+        #setting the selection to eeg user clicked
+        self.eegTabs.ChangeSelection(i)
+
+
+class EEGTab(wx.Panel):
+    '''Panel that contains graph of an EEG
+    and window tools'''
+    def __init__(self, p, e):
+        wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.eeg = e
+        baseContainer = wx.BoxSizer(wx.HORIZONTAL)
+        # container of window information
+        leftPnl = wx.Panel(self)
+        tabLabel = wx.StaticText(leftPnl, label="Ventanas:")
+        project = self.GetParent().GetParent().project
+        self.tabManager = TabManager(leftPnl, self, project.windowLength)
+        leftSizer = wx.BoxSizer(wx.VERTICAL)
+        leftSizer.Add(tabLabel, 0, wx.CENTER, 5)
+        leftSizer.Add(self.tabManager, 0, wx.EXPAND | wx.ALL, 5)
+        # panel for tab buttons
+        tabBtnPanel = wx.Panel(leftPnl)
+        tbpSizer = wx.BoxSizer(wx.HORIZONTAL)
+        newTab = wx.Button(tabBtnPanel, label="Nueva")
+        newTab.Bind(wx.EVT_BUTTON, self.createNewWindow)
+        tbpSizer.Add(newTab, 0, wx.EXPAND | wx.ALL, 5)
+        tabBtnPanel.SetSizer(tbpSizer)
+        leftSizer.Add(tabBtnPanel, 0, wx.EXPAND | wx.ALL, 5)
+        # panel for electrode selector
+        electrodePanel = wx.Panel(leftPnl)
+        elecSizer = wx.BoxSizer(wx.VERTICAL)
+        elecLabel = wx.StaticText(electrodePanel, label="Selección de Electrodos:")
+        elecSizer.Add(elecLabel, 0, wx.EXPAND | wx.ALL, 5)
+
+        self.electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
+        # select all the channel items to view
+        for i in range(len(self.eeg.channels)):
+            self.electrodeList.Check(i, check=True)
+        elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
+        # button to apply changes from electrode selector
+        applyChanges = wx.Button(electrodePanel, label="Aplicar")
+
+        elecSizer.Add(applyChanges, 0, wx.CENTER | wx.ALL, 5)
+        electrodePanel.SetSizer(elecSizer)
+        leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
+        leftPnl.SetSizer(leftSizer)
+        baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
+        # eeg grafic information right side
+        rightPnl = wx.Panel(self)
+        graphContainer = wx.BoxSizer(wx.VERTICAL)
+        # panel for eeg graph
+        self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList)
+        # creation of toolbar
+        self.toolbar = Toolbar(rightPnl, self.eegGraph)
+        # sending toolbar to graph to bind
+        self.eegGraph.setToolbar(self.toolbar)
+        graphContainer.Add(self.toolbar, 0, wx.EXPAND | wx.ALL, 0)
+        graphContainer.Add(self.eegGraph, 1, wx.EXPAND | wx.ALL, 0)
+        rightPnl.SetSizer(graphContainer)
+        baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 10)
+        self.SetSizer(baseContainer)
+        self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
+
     def createNewWindow(self, event):
         self.tabManager.addWindow()
         event.Skip()
 
-    def deleteWindow(self, event):
-        self.tabManager.deleteWindow()
-        event.Skip()
-
     def updateLength(self, l):
-        self.GetParent().WindowLength = l
+        self.GetParent().GetParent().WindowLength = l
 
     #redraws the eeg with the selected electrodes
     def updateElectrodes(self, event):
         self.eegGraph.changeElectrodes()
-        ch=self.eegGraph.checkV()
+        ch =self.eegGraph.checkV()
         self.eegGraph.GetSizer().GetChildren()[0].GetWindow().adjustment(ch)
         self.eegGraph.GetSizer().GetChildren()[1].GetWindow().zoomManager(len(ch))
         #self.eegGraph.GetSizer().GetChildren()[5].GetWindow().update()

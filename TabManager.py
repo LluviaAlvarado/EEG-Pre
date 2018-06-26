@@ -1,18 +1,26 @@
+#Imports
 import wx
+import wx.aui as aui
 '''custom tab manager that contains
     the information of the selected
     windows'''
-from EEGraph import graphPanel
 
-class TabManager(wx.Notebook):
+
+class TabManager(aui.AuiNotebook):
 
     def __init__(self, p, parent, winL):
         #calling the sup init
-        wx.Notebook.__init__(self, p)
+        w = parent.GetParent().Size[0] / 7
+        h = parent.GetParent().Size[1] / 2.1
+        aui.AuiNotebook.__init__(self, p, size=(w, h),
+                                 style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE )
+                                       | aui.AUI_NB_WINDOWLIST_BUTTON)
         #parameters for window size
         self.par = parent
         #this takes the global window length
         self.length = winL
+        #bind when a window is deleted
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.renameWindows)
         #creating the base window
         self.addWindow()
 
@@ -42,8 +50,7 @@ class TabManager(wx.Notebook):
         self.AddPage(page, str(self.GetPageCount()+1))
 
     #called on delete button delete selected tab
-    def deleteWindow(self):
-        self.DeletePage(self.GetSelection())
+    def renameWindows(self, event):
         #renaming all tabs
         for i in range(self.GetPageCount()):
             self.SetPageText(i, str(i+1))
@@ -56,119 +63,78 @@ class windowTab(wx.Panel):
         self.SetBackgroundColour("#eff2f4")
         pageSizer = wx.BoxSizer(wx.VERTICAL)
         #panel for the window thumb
-        windowThumb = WindowThumb(self, p.par.eeg, 215, 215)
-        pageSizer.Add(windowThumb, 0, wx.EXPAND | wx.ALL, 5)
-        pageSizer.Add(wx.StaticText(self, label="Marcador:",
-                                    style=wx.ALIGN_CENTRE_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
+        windowThumb = WindowThumb(self, p.par.eeg, 200, 200)
+        pageSizer.Add(windowThumb, 0, wx.CENTER | wx.ALL, 5)
         parameters = wx.Panel(self)
         paramSizer = wx.FlexGridSizer(4, 2, (5, 5))
-        # for testing purposes
+        # TODO CHANGE START AND END WITH THE PROPER DATA
         self._start = 0
-        self._end = p.length
-        self.readings = p.par.eeg.frequency * p.par.eeg.duration
-        self.slider = wx.Slider(parameters, value=self.readings / 2, minValue=self._start, maxValue=self.readings,
-                                style=wx.SL_HORIZONTAL)
-        self.Bind(wx.EVT_SLIDER, self.changeMarker)
-        self.marker = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
-        self.marker.SetValue(str(self.GetSliderValue()))
-        self._marker = self.GetSliderValue()
-        lthLabel = wx.StaticText(parameters, label="Longitud (s):")
-        strLabel = wx.StaticText(parameters, label="Inicio (s):")
-        endLabel = wx.StaticText(parameters, label="Fin (s):")
-        self.length = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER, name="length")
+        self._l = self.toMilis(p.length)
+        self._end = self._start + self._l
+        self.estimulus = self.toMilis(p.length/2)
+        self._tbe = self._start + self.estimulus
+        #Data to show of the window
+        #Time Before Estimulus (TBE)
+        TBELabel = wx.StaticText(parameters, label="TAE (ms):")
+        lthLabel = wx.StaticText(parameters, label="Longitud (ms):")
+        strLabel = wx.StaticText(parameters, label="Inicio (ms):")
+        endLabel = wx.StaticText(parameters, label="Fin (ms):")
+        self.tbe = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
+        self.tbe.SetValue(str(self._tbe))
+        self.length = wx.TextCtrl(parameters, style=wx.TE_READONLY, name="length")
         self.length.SetValue(str(p.length))
-        self.start = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
+        self.start = wx.TextCtrl(parameters, style=wx.TE_READONLY)
         self.start.SetValue(str(self._start))
-        self.end = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
+        self.end = wx.TextCtrl(parameters, style=wx.TE_READONLY)
         self.end.SetValue(str(self._end))
-        #binding for changes by user
-        self.length.Bind(wx.EVT_TEXT_ENTER, self.onLengthChange)
-        self.start.Bind(wx.EVT_TEXT_ENTER, self.onLengthChange)
-        self.end.Bind(wx.EVT_TEXT_ENTER, self.onLengthChange)
-        self.marker.Bind(wx.EVT_TEXT_ENTER, self.changeSlider)
+        #binding for changes by user on the TBE
+        self.tbe.Bind(wx.EVT_TEXT_ENTER, self.changeTBE)
         paramSizer.AddMany(
-            [(self.slider, 1, wx.EXPAND), (self.marker, 1, wx.EXPAND), lthLabel, (self.length, 1, wx.EXPAND),
+            [(TBELabel, 1, wx.EXPAND), (self.tbe, 1, wx.EXPAND), lthLabel, (self.length, 1, wx.EXPAND),
              strLabel, (self.start, 1, wx.EXPAND), endLabel, (self.end, 1, wx.EXPAND)])
         parameters.SetSizer(paramSizer)
         pageSizer.Add(parameters, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(pageSizer)
 
-    #set float value to int for slider
-    def SetSliderValue(self, v):
-        oldRange = self.GetParent().par.eeg.duration - 0
-        newRange = self.readings - 0
-        newV = round((((v - 0) * newRange) / oldRange) + 0, 2)
-        self.slider.SetValue(int(newV))
+    def toMilis(self, seconds):
+        return seconds * 1000
 
-    #we need to change the value to float
-    def GetSliderValue(self):
-        oldRange = self.readings - 0
-        newRange = self.GetParent().par.eeg.duration - 0
-        v = float(self.slider.GetValue())
-        return round((((v - 0) * newRange) / oldRange) + 0, 2)
+    def toSeconds(self, milis):
+        return milis / 1000
 
-    def returnLastValue(self):
-        self.end.SetValue(str(self._end))
-        self.start.SetValue(str(self._start))
-        self.length.SetValue(str(self._end - self._start))
-
-    def onLengthChange(self, event):
+    def changeTBE(self, event):
+        duration = self.toMilis(self.GetParent().par.eeg.duration)
         try:
-            if float(self.end.GetValue()) > self.GetParent().par.eeg.duration or \
-                float(self.end.GetValue()) < 0:
-                self.end.SetValue(str(self._end))
-            if float(self.start.GetValue()) > self.GetParent().par.eeg.duration or \
-                float(self.start.GetValue()) < 0:
-                self.start.SetValue(str(self._start))
-            if float(self.length.GetValue()) > self.GetParent().par.eeg.duration or \
-                float(self.length.GetValue()) < 0:
-                self.returnLastValue()
+            #make sure it is a valid value
+            if float(self.tbe.GetValue()) > duration or \
+                    float(self.tbe.GetValue()) < 0:
+                self.tbe.SetValue(str(self._tbe))
         except:
-            #not a numeric number return to last value
-            self.returnLastValue()
-        l = round(float(self.end.GetValue()) - float(self.start.GetValue()), 2)
-        #if the one changed was the length
-        if event.EventObject.Name == "length":
-            #we need to change the end if possible
-            nE = float(self.start.GetValue()) + float(self.length.GetValue())
-            if nE > self.GetParent().par.eeg.duration:
-                nE = self.GetParent().par.eeg.duration
-            self.end.SetValue(str(round(nE,2)))
-            #change to valid length
-            l = round(float(self.end.GetValue()) - float(self.start.GetValue()), 2)
-        self.length.SetValue(str(l))
+            #not a numeric number return to last value and finish
+            self.tbe.SetValue(str(self._tbe))
+            return
+        #modify the other parameters if valid
+        tbe = float(self.tbe.GetValue())
+        start = self.estimulus - tbe
+        end = start + self._l
+        #valid start
+        if start <= self.estimulus and start >= 0:
+            #valid end
+            if end >= self.estimulus and end <= duration:
+                #now we can change the TBE
+                self._tbe = tbe
+                self._start = start
+                self.start.SetValue(str(start))
+                self._end = end
+                self.end.SetValue(str(end))
+        #return to valid TBE to make sure
+        self.tbe.SetValue(str(self._tbe))
 
-        #updating new values
-        self._start = float(self.start.GetValue())
-        self._end = float(self.end.GetValue())
-        #changing marker pos to middle of new values if not between them
-        if self._marker > self._end or self._marker < self._start:
-            half = round(self._start + (l/2), 2)
-            self.marker.SetValue(str(half))
-            self.SetSliderValue(half)
-        #updating length on all windows, they always need to be the same
-        #TODO change window size in viewer
-        self.GetParent().updateLengthOnAll(l)
 
-    def changeSlider(self, event):
-        try:
-            if float(self.marker.GetValue()) > float(self.end.GetValue()) or \
-                    float(self.marker.GetValue()) < float(self.start.GetValue()):
-                self.marker.SetValue(str(self._marker))
-        except:
-            #change to last valid marker
-            self.marker.SetValue(str(self._marker))
-        self._marker = float(self.marker.GetValue())
-        # changing the slider
-        self.SetSliderValue(self._marker)
-
-    #changes de marker of a window
-    def changeMarker(self, event):
-        self._marker = self.GetSliderValue()
-        self.marker.SetValue(str(self.GetSliderValue()))
-
+'''this panel shows a thumbnail of
+    the window for viewing purposes'''
 class WindowThumb(wx.Panel):
-
+    #TODO agrega los valores del reading inicial y final
     def __init__(self, parent, eeg, w, h):
         wx.Panel.__init__(self, parent, size=(w, h),
             style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
@@ -214,7 +180,6 @@ class WindowThumb(wx.Panel):
         #buffered so it doesn't paint channel per channel
         dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
         dc.Clear()
-
         dc.SetPen(wx.Pen(wx.BLACK, 4))
         y = 0
         amUnits = self.eeg.amUnits

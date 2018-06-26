@@ -298,9 +298,7 @@ class customRuler(wx.Panel):
 
 
 '''a transparent panel over the eegraph to draw other elements
-    like the zoom rectangle'''
-
-
+    like the zoom rectangle and windows'''
 class transparentPanel(wx.Panel):
 
     def __init__(self, parent, over):
