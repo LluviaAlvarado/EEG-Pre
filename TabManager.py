@@ -10,7 +10,7 @@ class TabManager(aui.AuiNotebook):
 
     def __init__(self, p, parent, winL):
         #calling the sup init
-        w = parent.GetParent().Size[0] / 7
+        w = parent.GetParent().Size[0] / 6
         h = parent.GetParent().Size[1] / 2.1
         aui.AuiNotebook.__init__(self, p, size=(w, h),
                                  style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE )

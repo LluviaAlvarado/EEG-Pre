@@ -29,22 +29,33 @@ class WindowEditor (wx.Frame):
                                        | aui.AUI_NB_WINDOWLIST_BUTTON)
         #filling the tabs
         self.fillEEGTabs(e)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
         frameSizer.Add(self.eegTabs, 0, wx.EXPAND, 3)
         self.SetSizer(frameSizer)
         #creating a status bar to inform user of process
         self.CreateStatusBar()
         #setting the cursor to loading
-        myCursor = wx.Cursor(wx.CURSOR_WAIT)
-        self.SetCursor(myCursor)
-        self.SetStatusText("Loading EEG...")
+        self.SetStatus("Loading EEG...", 1)
         self.Centre()
         self.Show()
+        wx.CallLater(0, lambda: self.SetStatus("", 0))
+
+    def loadingNew(self, event):
+        # set loading status when eeg is changed
+        self.SetStatus("Loading EEG...", 1)
+
+    def loadingFinished(self, event):
+        # return mouse to normal after load
         wx.CallLater(0, lambda: self.SetStatus("", 0))
 
     def SetStatus(self, st, mouse):
         self.SetStatusText(st)
         if mouse == 0:
             myCursor = wx.Cursor(wx.CURSOR_ARROW)
+            self.SetCursor(myCursor)
+        elif mouse == 1:
+            myCursor = wx.Cursor(wx.CURSOR_WAIT)
             self.SetCursor(myCursor)
 
     def fillEEGTabs(self, e):

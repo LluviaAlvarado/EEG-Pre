@@ -483,7 +483,7 @@ class graphPanel(wx.Panel):
             self.incx = int(self.Size[0] / nSamp)
             self.subSampling = 1
         else:
-            self.subSampling = round(nSamp / self.Size[0])
+            self.subSampling = int(nSamp / self.Size[0])
             self.incx = 1
 
     # gets the selected electrodes to graph
