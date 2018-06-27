@@ -32,6 +32,9 @@ class EEGData:
     def addWindow(self, w):
         self.windows.append(w)
 
+    def removeWindow(self, i):
+        self.windows.remove(self.windows[i])
+
     def windowOverlap(self):
         #TODO check window overlap
         return False

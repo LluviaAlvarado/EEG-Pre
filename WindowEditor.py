@@ -14,24 +14,23 @@ from EEGraph import *
 
 class WindowEditor (wx.Frame):
     title = "Edición de Ventanas"
-    def __init__(self, e, parent):
+    def __init__(self, parent):
         wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE^(wx.RESIZE_BORDER))
         self.Maximize(True)
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
-        #updating length to max size of eeg if it has not been initialized
-        if self.project.windowLength is None:
-            self.project.windowLength = e.duration
         #frame will contain the base container of window editor and eeg tabs
         frameSizer = wx.BoxSizer(wx.VERTICAL)
         # EEG tabs
         self.eegTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]), style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE )
                                        | aui.AUI_NB_WINDOWLIST_BUTTON)
         #filling the tabs
-        self.fillEEGTabs(e)
+        self.fillEEGTabs()
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
         frameSizer.Add(self.eegTabs, 0, wx.EXPAND, 3)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         self.SetSizer(frameSizer)
         #creating a status bar to inform user of process
         self.CreateStatusBar()
@@ -40,6 +39,16 @@ class WindowEditor (wx.Frame):
         self.Centre()
         self.Show()
         wx.CallLater(0, lambda: self.SetStatus("", 0))
+
+    def setEEG(self, e):
+        eegs = self.GetParent().GetParent().project.EEGS
+        i = 0
+        for eeg in eegs:
+            if e.name == eeg.name:
+                break
+            i += 1
+        #setting the selection to eeg user clicked
+        self.eegTabs.ChangeSelection(i)
 
     def loadingNew(self, event):
         # set loading status when eeg is changed
@@ -58,20 +67,39 @@ class WindowEditor (wx.Frame):
             myCursor = wx.Cursor(wx.CURSOR_WAIT)
             self.SetCursor(myCursor)
 
-    def fillEEGTabs(self, e):
-        eegs = self.GetParent().GetParent().project.EEGS
-        i = 0
-        found = False
-        for eeg in eegs:
-            if e.name == eeg.name:
-                found = True
-            page = EEGTab(self.eegTabs, eeg)
-            self.eegTabs.AddPage(page, eeg.name)
-            if not found:
-                i += 1
-        #setting the selection to eeg user clicked
-        self.eegTabs.ChangeSelection(i)
+    def addTab(self, e):
+        page = EEGTab(self.eegTabs, e)
+        self.eegTabs.AddPage(page, e.name)
 
+    def fillEEGTabs(self):
+        eegs = self.GetParent().GetParent().project.EEGS
+        for eeg in eegs:
+            self.addTab(eeg)
+
+    # since each eeg must have the same windows
+    def addWindow(self, st, tbe):
+        i = 0
+        #to reset selection since notebook changes it with this
+        currentSelection = self.eegTabs.GetSelection()
+        while i < self.eegTabs.GetPageCount():
+            self.eegTabs.GetPage(i).tabManager.addWindow(st, self.project.windowLength, tbe)
+            i += 1
+        self.eegTabs.SetSelection(currentSelection)
+
+    # since each eeg must have the same windows
+    def deleteWindow(self, index):
+        i = 0
+        # to reset selection since notebook changes it with this
+        currentSelection = self.eegTabs.GetSelection()
+        while i < self.eegTabs.GetPageCount():
+            self.eegTabs.GetPage(i).tabManager.DeletePage(index)
+            self.eegTabs.GetPage(i).tabManager.renameWindows()
+            i += 1
+        self.eegTabs.SetSelection(currentSelection)
+
+    def onClose(self, event):
+        self.GetParent().onWEClose()
+        self.Destroy()
 
 class EEGTab(wx.Panel):
     '''Panel that contains graph of an EEG
@@ -132,11 +160,9 @@ class EEGTab(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
 
     def createNewWindow(self, event):
-        self.tabManager.addWindow()
-        event.Skip()
-
-    def updateLength(self, l):
-        self.GetParent().GetParent().WindowLength = l
+        #TODO fill window information correctly
+        #creates a new window on every eeg
+        self.GetParent().GetParent().addWindow(500, 50)
 
     #redraws the eeg with the selected electrodes
     def updateElectrodes(self, event):

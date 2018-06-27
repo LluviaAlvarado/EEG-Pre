@@ -1,6 +1,9 @@
 #Imports
 import wx
 import wx.aui as aui
+
+#Local imports
+from WindowEEG import *
 '''custom tab manager that contains
     the information of the selected
     windows'''
@@ -20,9 +23,27 @@ class TabManager(aui.AuiNotebook):
         #this takes the global window length
         self.length = winL
         #bind when a window is deleted
-        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.renameWindows)
-        #creating the base window
-        self.addWindow()
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.deleteWindow)
+        #filling windows if exist
+        self.fillTabs()
+
+    def fillTabs(self):
+        for i in range(len(self.par.eeg.windows)):
+            page = windowTab(self, i)
+            self.AddPage(page, str(i + 1))
+        if self.GetPageCount() == 0:
+            self.showInfoTab()
+
+    def showInfoTab(self):
+        infoTab = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.AddSpacer(self.Size[1]/3)
+        info = wx.StaticText(infoTab, label='No hay Ventanas que mostrar.')
+        sizer.Add(info, 0, wx.CENTER | wx.ALL, 5)
+        info = wx.StaticText(infoTab, label='Cree una con la herramienta de "Ventana".')
+        sizer.Add(info, 0, wx.CENTER | wx.ALL, 5)
+        infoTab.SetSizer(sizer)
+        self.AddPage(infoTab, "")
 
     #for iterating over tabs
     def __getitem__(self, index):
@@ -45,34 +66,52 @@ class TabManager(aui.AuiNotebook):
                 tab.SetSliderValue(half)
 
     #this is called on new button
-    def addWindow(self):
-        page = windowTab(self)
+    def addWindow(self, est, len, tbe):
+        if self.GetPageCount() == 1 and self.GetPageText(0) == "":
+            #there only was the info tab so remove it
+            self.DeletePage(0)
+        # adding to eeg from project
+        window = WindowEEG(est, len, tbe)
+        self.par.eeg.addWindow(window)
+        page = windowTab(self, self.GetPageCount())
         self.AddPage(page, str(self.GetPageCount()+1))
 
+
     #called on delete button delete selected tab
-    def renameWindows(self, event):
-        #renaming all tabs
-        for i in range(self.GetPageCount()):
-            self.SetPageText(i, str(i+1))
+    def deleteWindow(self, event):
+        #delete on all eegs
+        self.par.GetParent().GetParent().deleteWindow(event.Selection)
+        # removing from eeg from project
+        self.par.eeg.removeWindow(event.Selection)
+        event.Veto()
+
+    def renameWindows(self):
+        if self.GetPageCount() == 0:
+            self.showInfoTab()
+        else:
+            #renaming all tabs
+            for i in range(self.GetPageCount()):
+                self.SetPageText(i, str(i+1))
 
 class windowTab(wx.Panel):
 
-    def __init__(self, p):
+    def __init__(self, p, w):
         #calling sup init
         wx.Panel.__init__(self, p)
         self.SetBackgroundColour("#eff2f4")
         pageSizer = wx.BoxSizer(wx.VERTICAL)
+        #the window we are working on
+        self.window = p.par.eeg.windows[w]
         #panel for the window thumb
-        windowThumb = WindowThumb(self, p.par.eeg, 200, 200)
-        pageSizer.Add(windowThumb, 0, wx.CENTER | wx.ALL, 5)
+        self.windowThumb = WindowThumb(self, p.par.eeg, self.window, 200, 200)
+        pageSizer.Add(self.windowThumb, 0, wx.CENTER | wx.ALL, 5)
         parameters = wx.Panel(self)
         paramSizer = wx.FlexGridSizer(4, 2, (5, 5))
-        # TODO CHANGE START AND END WITH THE PROPER DATA
-        self._start = 0
-        self._l = self.toMilis(p.length)
+        self._start = self.window.stimulus - self.window.TBE
+        self._l = self.window.length
         self._end = self._start + self._l
-        self.estimulus = self.toMilis(p.length/2)
-        self._tbe = self._start + self.estimulus
+        self.stimulus = self.window.stimulus
+        self._tbe = self.window.TBE
         #Data to show of the window
         #Time Before Estimulus (TBE)
         TBELabel = wx.StaticText(parameters, label="TAE (ms):")
@@ -82,7 +121,7 @@ class windowTab(wx.Panel):
         self.tbe = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
         self.tbe.SetValue(str(self._tbe))
         self.length = wx.TextCtrl(parameters, style=wx.TE_READONLY, name="length")
-        self.length.SetValue(str(p.length))
+        self.length.SetValue(str(self._l))
         self.start = wx.TextCtrl(parameters, style=wx.TE_READONLY)
         self.start.SetValue(str(self._start))
         self.end = wx.TextCtrl(parameters, style=wx.TE_READONLY)
@@ -105,37 +144,41 @@ class windowTab(wx.Panel):
     def changeTBE(self, event):
         duration = self.toMilis(self.GetParent().par.eeg.duration)
         try:
-            #make sure it is a valid value
+            # make sure it is a valid value
             if float(self.tbe.GetValue()) > duration or \
                     float(self.tbe.GetValue()) < 0:
                 self.tbe.SetValue(str(self._tbe))
         except:
-            #not a numeric number return to last value and finish
+            # not a numeric number return to last value and finish
             self.tbe.SetValue(str(self._tbe))
             return
-        #modify the other parameters if valid
+        # modify the other parameters if valid
         tbe = float(self.tbe.GetValue())
-        start = self.estimulus - tbe
+        start = self.stimulus - tbe
         end = start + self._l
-        #valid start
-        if start <= self.estimulus and start >= 0:
-            #valid end
-            if end >= self.estimulus and end <= duration:
-                #now we can change the TBE
-                self._tbe = tbe
-                self._start = start
-                self.start.SetValue(str(start))
-                self._end = end
-                self.end.SetValue(str(end))
-        #return to valid TBE to make sure
+        # valid start
+        if start <= self.stimulus and start >= 0:
+            # valid end
+            if end >= self.stimulus and end <= duration:
+                # now we can change the TBE
+                self._tbe = int(tbe)
+                self._start = int(start)
+                self.start.SetValue(str(self._start))
+                self._end = int(end)
+                self.end.SetValue(str(self._end))
+                # modify window data
+                self.window.modifyTBE(self._tbe)
+                # refresh window graph
+                self.windowThumb.setDelimiters(self.window)
+                self.windowThumb.Refresh()
+        # return to valid TBE to make sure
         self.tbe.SetValue(str(self._tbe))
 
 
 '''this panel shows a thumbnail of
     the window for viewing purposes'''
 class WindowThumb(wx.Panel):
-    #TODO agrega los valores del reading inicial y final
-    def __init__(self, parent, eeg, w, h):
+    def __init__(self, parent, eeg, window, w, h):
         wx.Panel.__init__(self, parent, size=(w, h),
             style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.eeg = eeg
@@ -143,6 +186,10 @@ class WindowThumb(wx.Panel):
         self.incx = 1
         self.nSamp = self.eeg.frequency * self.eeg.duration
         self.setSamplingRate(self.nSamp)
+        #info for window delimiting
+        self.strReading = 0
+        self.stimulusReading = 0
+        self.setDelimiters(window)
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -157,9 +204,26 @@ class WindowThumb(wx.Panel):
             self.subSampling = int(nSamp / self.Size[0])
             self.incx = 1
 
+    def milisToReading(self, milis):
+        freq = self.eeg.frequency / 1000
+        return milis * freq
+
+    #sets the limits to graph of the window
+    def setDelimiters(self, window):
+        # getting the readings to show
+        start = window.stimulus - window.TBE
+        end = start + window.length
+        self.strReading = self.milisToReading(start)
+        endRead = self.milisToReading(end)
+        nsamp = endRead - self.strReading
+        if nsamp < 10:
+            nsamp = 10
+        self.setSamplingRate(nsamp)
+        self.stimulusReading = self.milisToReading(window.stimulus)
+
+
     #gets the selected electrodes to graph
     def getChecked(self):
-        #print(self.GetParent())
         checked = self.GetParent().GetParent().par.electrodeList.GetCheckedItems()
         channels = []
         for ix in checked:
@@ -194,7 +258,7 @@ class WindowThumb(wx.Panel):
             dc.SetPen(wx.Pen(wx.BLACK, 1))
             for channel in channels:
                 x = 0
-                i = 0
+                i = int(self.strReading)
                 self.chanPosition.append([channel.label, y])
                 while x < w - incx:
                     ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y

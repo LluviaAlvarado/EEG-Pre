@@ -1,6 +1,14 @@
 class WindowEEG:
-    def __init__(self, s, e, t, m):
-        self.start = s
-        self.end = e
-        self.mark = m
-        self.tag = t
+    '''Contains basic info of a window inside and EEG
+    that is the length in ms, the Time Before Estimulus
+    indicates were the start ms should be calculated also
+    in ms and the time of the stimulus in ms as well'''
+
+    def __init__(self, st, len, tbe):
+        self.length = len
+        self.TBE = tbe
+        self.stimulus = st
+
+    #we can only change this value
+    def modifyTBE(self, tbe):
+        self.TBE = tbe

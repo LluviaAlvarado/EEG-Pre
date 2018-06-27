@@ -14,6 +14,8 @@ class BaseWindow(wx.Frame):
         self.circleMngr = CircleManager(self.workArea, width, height, self)
         #TODO CARGAR PROYECTO SI HAY
         self.project = Project()
+        #for now
+        self.project.windowLength = 100
         # create the menu bar that we don't need yet
         self.makeMenuBar()
         # create the status bar

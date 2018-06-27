@@ -15,6 +15,8 @@ class FilesWindow(wx.Frame):
         wx.Frame.__init__(self, parent, -1, "Editor de EEGs", )
         self.SetSize(500, 500)
         self.Centre()
+        #window editor instance so only 1 is opened
+        self.windowEditor = None
         # create base panel in the frame
         self.pnl = wx.Panel(self,
                    style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
@@ -25,6 +27,9 @@ class FilesWindow(wx.Frame):
         #TODO AQUI CARGA LOS NOMBRES DE LOS EEG QUE YA SE HABIAN GUARDADO EN EL PROYECTO PLOX
         infoLabel = wx.StaticText(self.pnl, label="Archivos EEG cargados:")
         self.filesList = wx.ListBox(self.pnl, choices=[], style=wx.LB_SINGLE | wx.LB_HSCROLL | wx.LB_NEEDED_SB)
+        #filling with files already in project
+        for eeg in self.GetParent().project.EEGS:
+            self.filesList.Append(eeg.name)
         self.filesList.Bind(wx.EVT_LISTBOX_DCLICK, self.openWindowEditor)
         self.leftSizer.Add(infoLabel, 0, wx.CENTER, 5)
         self.leftSizer.Add(self.filesList, 1, wx.EXPAND | wx.ALL, 5)
@@ -89,6 +94,9 @@ class FilesWindow(wx.Frame):
         if len(self.GetParent().project.EEGS) > currentAmount:
             while currentAmount < len(self.GetParent().project.EEGS):
                 self.filesList.Append(self.GetParent().project.EEGS[currentAmount].name)
+                if self.windowEditor is not None:
+                    #add the new tab
+                    self.windowEditor.addTab(self.GetParent().project.EEGS[currentAmount])
                 currentAmount += 1
         #showing errors that ocurred
         self.showErrorFiles(errorFiles)
@@ -178,6 +186,10 @@ class FilesWindow(wx.Frame):
     def openWindowEditor(self, event):
         index = event.GetEventObject().Selection
         eeg = self.GetParent().project.EEGS[index]
-        windowEditor = WindowEditor(eeg, self)
-        windowEditor.Show()
+        if self.windowEditor is None:
+            self.windowEditor = WindowEditor(self)
+        self.windowEditor.setEEG(eeg)
 
+    def onWEClose(self):
+        #so we can create another
+        self.windowEditor = None
