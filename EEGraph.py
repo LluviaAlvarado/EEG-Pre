@@ -15,6 +15,7 @@ class EEGraph(wx.Panel):
         w = w - (w / 5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.eeg = eeg
+        num = len(self.eeg.channelMatrix[0])
         self.selected = selected
         self.toolbar = None
         # baseSizer
@@ -27,7 +28,7 @@ class EEGraph(wx.Panel):
         self.transparent = transparentPanel(self, self.graph)
         # bottom is reserved just for the time ruler
         values = [0, self.eeg.duration]
-        self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels))
+        self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
 
         # left amplitud ruler side
         # creating a ruler for each channel
@@ -36,7 +37,7 @@ class EEGraph(wx.Panel):
         half = (self.eeg.amUnits[0] - self.eeg.amUnits[1]) / 2
         values.append(self.eeg.amUnits[0] - half)
         values.append(self.eeg.amUnits[1])
-        ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels))
+        ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
         channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER, self.eeg.channels)
         baseSizer.Add(channelList, 0, wx.EXPAND, 0)
         baseSizer.Add(ampRuler, 0, wx.EXPAND, 0)
@@ -104,12 +105,17 @@ class customRuler(wx.Panel):
     it also will add the zooming future for the eeg
     values are sent in as minAmp and maxAmp'''
 
-    def __init__(self, parent, orientation, style, values, nCh):
+    def __init__(self, parent, orientation, style, values, nCh, num):
         self.height = parent.graph.Size[1] - 3
         self.width = parent.graph.Size[0]
+        #Amplitude range
         self.values = values
+        self.eeg = parent.eeg
+        # Number of channels
         self.nCh = nCh
         self.increment = 0
+        self.numReads = num
+        self.t_r = self.eeg.duration / num
         self.maxPile = []
         self.minPile = []
 
@@ -120,7 +126,7 @@ class customRuler(wx.Panel):
         self.zoom = False
         self.num = 0
 
-        self.eeg = parent.eeg
+
         baseSizer = wx.BoxSizer(orientation)
         if orientation == wx.HORIZONTAL:
             self.opc = 1
@@ -139,8 +145,8 @@ class customRuler(wx.Panel):
         self.SetSizer(baseSizer)
 
     def zoomH(self, s, e):
-        self.max = self.ChangeRange(e, self.maxPile[len(self.maxPile) - 1], self.minPile[len(self.minPile) - 1])
-        self.min = self.ChangeRange(s, self.maxPile[len(self.maxPile) - 1], self.minPile[len(self.minPile) - 1])
+        self.max = self.t_r*e
+        self.min = self.t_r*s
 
         self.increment = (self.max - self.min) / (self.width)
 
@@ -161,7 +167,7 @@ class customRuler(wx.Panel):
     def ChangeRange(self, v, nx, nm):
         oldRange = (self.Size[0]-5) - 0
         newRange = nx - nm
-        newV = round((((v - 0) * newRange) / oldRange) + nm, 5)
+        newV = (((v - 0) * newRange) / oldRange) + nm
         return newV
 
     def OnPaint(self, e):
@@ -176,29 +182,31 @@ class customRuler(wx.Panel):
             max = round(self.Ogmax, 2)
             min = round(self.Ogmin, 2)
             if self.zoom:
-                max = round(self.max, 2)
-                min = round(self.min, 2)
+                max = self.max
+                min = self.min
 
             dc.DrawRectangle(0, 0, self.Size[0]-5, 30)
             dc = wx.PaintDC(self)
             dc.SetPen(wx.Pen('#000000'))
             dc.SetTextForeground('#000000')
-            RM = 4
+            RM = 1
             l = (self.Size[0]-5) / 100
             u = 0
             i = 0
             while i < (self.Size[0]-5):
                 if (u % 10) == 0:
                     dc.DrawLine(i + RM, 0, i + RM, 10)
-                    y = round(self.ChangeRange(i, max, min), 2)
+                    y = round(self.ChangeRange(i, max, min), 4)
                     st = "s"
                     if(y<2):
                         st = "ms"
                         y = y * 1000
                         y = int(y)
                     w, h = dc.GetTextExtent(str(y))
+                    if(i==0): RM = w/2
                     dc.DrawText(str(y), i + RM - w / 2, 11)
                     dc.DrawText(st, i + RM + w / 2, 11)
+                    RM = 1
 
 
                 elif (u % 5) == 0:
@@ -214,7 +222,7 @@ class customRuler(wx.Panel):
             if(max<2):
                 max = max * 1000
                 max = int(max)
-            w, h = dc.GetTextExtent(str(max))
+            w, h = dc.GetTextExtent(str(round(max,2)))
             dc.DrawText(str(round(max, 2)), (self.Size[0]-5 - 2) - w, 11)
 
         else:
@@ -272,10 +280,19 @@ class customRuler(wx.Panel):
     def redo(self):
         self.Refresh()
 
+    def moveZom(self, s, e):
+        self.maxPile[len(self.minPile) - 1] = self.t_r*e
+        self.minPile[len(self.minPile) - 1] = self.t_r*s
+        self.max = self.maxPile[len(self.minPile) - 1]
+        self.min = self.minPile[len(self.minPile) - 1]
+        self.zoom = True
+        self.Refresh()
+
+
     def moveZoom(self, dis):
         d = 0
         if dis < 0:
-            d = round((dis * -1) * self.increment, 8)
+            d = (dis * -1) * self.increment
             if (self.minPile[len(self.minPile) - 1] - d) > 0:
                 self.minPile[len(self.minPile) - 1] -= d
                 self.maxPile[len(self.minPile) - 1] -= d
@@ -283,7 +300,7 @@ class customRuler(wx.Panel):
                 self.minPile[len(self.minPile) - 1] -= self.minPile[len(self.minPile) - 1]
                 self.maxPile[len(self.minPile) - 1] -= self.minPile[len(self.minPile) - 1]
         else:
-            d = round(dis * self.increment, 8)
+            d = dis * self.increment
             if (self.maxPile[len(self.minPile) - 1] + d) < self.Ogmax:
                 self.minPile[len(self.minPile) - 1] += d
                 self.maxPile[len(self.minPile) - 1] += d
@@ -336,7 +353,9 @@ class transparentPanel(wx.Panel):
         if self.zoom:
             self.GetParent().graph.setZoom(self.zStart, self.zEnd)
             self.OnPaint()
-            self.GetParent().GetChildren()[2].zoomH(self.zStart[0], self.zEnd[0])
+
+            #self.GetParent().GetChildren()[2].moveZom(self.GetParent().graph.strRead, self.GetParent().graph.endRead)
+            # self.GetParent().GetChildren()[2].zoomH(self.zStart[0], self.zEnd[0])
             self.zStart = None
             self.zEnd = None
 
@@ -374,6 +393,7 @@ class graphPanel(wx.Panel):
         self.eeg = eeg
         self.subSampling = 0
         self.incx = 1
+        self.w = self.Size[0]
         # list of channels in screen and start position
         self.chanPosition = []
         # vars for zooming
@@ -383,6 +403,7 @@ class graphPanel(wx.Panel):
         self.totalChan = len(eeg.channels) + len(eeg.additionalData)
         self.strRead = 0
         self.zoomPile = []
+        self.endRead = 0
         # var for moving graph
         self.move = False
         self.strMove = None
@@ -412,6 +433,7 @@ class graphPanel(wx.Panel):
             self.GetParent().transparent.MovingMouse(event.GetPosition())
 
     def OnClickReleased(self, event):
+
         if self.move:
             if self.strMove is not None:
                 self.endMove = event.GetPosition()
@@ -437,6 +459,7 @@ class graphPanel(wx.Panel):
             height = abs(end[1] - start[1])
             chansMoved = int(height / chanH)
             chansShowing = self.endCh - self.strCh
+
             if end[1] < start[1]:
                 self.strCh += chansMoved
             else:
@@ -451,25 +474,28 @@ class graphPanel(wx.Panel):
                 self.endCh = self.totalChan
 
             length = abs(end[0] - start[0])
+
             # getting the readings to show
+            res = abs(self.endRead - self.strRead)
             if end[0] < start[0]:
                 self.strRead += (length * self.subSampling) / self.incx
                 # make sure it is not longer than the actual readings
-                if (self.strRead + (self.Size[0] * self.incx * self.subSampling)) > self.nSamp:
-                    self.strRead = self.nSamp - 1 - self.Size[0] * self.incx * self.subSampling
+                if (self.strRead + res) > self.nSamp:
+                    self.strRead = (self.nSamp - 1) - res
             else:
                 self.strRead -= (length * self.subSampling) / self.incx
                 # make sure it does not go to negative index
                 if self.strRead < 0:
                     self.strRead = 0
-            aux = self.endCh - self.strCh
+
             # repainting
             self.Refresh()
 
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
-            chil[2].moveZoom(self.strMove[0] - self.endMove[0])
+            chil[2].moveZom(self.strRead, self.endRead)
+            # chil[2].moveZoom(self.strMove[0] - self.endMove[0])
             chil[3].zoomManager(len(ch))
             chil[4].adjustment(ch)
             self.strMove = self.endMove
@@ -483,7 +509,7 @@ class graphPanel(wx.Panel):
             self.incx = int(self.Size[0] / nSamp)
             self.subSampling = 1
         else:
-            self.subSampling = int(nSamp / self.Size[0])
+            self.subSampling = (nSamp / self.Size[0])
             self.incx = 1
 
     # gets the selected electrodes to graph
@@ -512,6 +538,7 @@ class graphPanel(wx.Panel):
         self.setSamplingRate(self.nSamp)
         self.zoomPile = []
         self.Refresh()
+
 
 
     def apply(self):
@@ -575,6 +602,7 @@ class graphPanel(wx.Panel):
         startr = self.strRead
         self.strRead += (start[0] * self.subSampling) / self.incx
         endRead = startr + (end[0] * self.subSampling) / self.incx
+
         nsamp = endRead - self.strRead
         if nsamp < 10:
             nsamp = 10
@@ -585,6 +613,7 @@ class graphPanel(wx.Panel):
         # changing channel labels
         chil = self.GetParent().GetChildren()
         ch = self.getViewChannels()
+        #chil[2].moveZom(self.strRead, self.endRead)
         chil[3].zoomManager(len(ch))
         chil[4].adjustment(ch)
 
@@ -623,14 +652,16 @@ class graphPanel(wx.Panel):
         y = 0
 
         amUnits = self.eeg.amUnits
-        subSampling=int(self.subSampling)
+        sub = self.subSampling - int(self.subSampling)
+        asub=0
+        subSampling= int(self.subSampling)
         incx = self.incx
         self.chanPosition = []
         # defining channels to plot
         channels = self.getViewChannels()
         if len(channels) > 0:
             hSpace = (self.Size[1] - 5) / len(channels)
-            w = self.Size[0]
+            w = self.w
             dc.SetPen(wx.Pen(wx.BLACK, 1))
             # the reading to start with
             start = int(self.strRead)
@@ -638,15 +669,24 @@ class graphPanel(wx.Panel):
                 x = 0
                 i = start
                 self.chanPosition.append([channel.label, y])
+                u=0
                 while x < w - incx:
+                    asub += sub
+                    r = i+subSampling # +int(asub)
+                    if r >= self.nSamp: r = int(self.nSamp)-1
+                    if i >= self.nSamp: i = int(self.nSamp)-1
                     ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
-                    ny2 = (((channel.readings[i+subSampling] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                    ny2 = (((channel.readings[r] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
                     if abs(ny - ny2) > 3 or (x + incx) > 3:
                         dc.DrawLine(x, ny, x + incx, ny2)
                     else:
                         dc.DrawPoint(x, ny)
-                    i += subSampling
+                    i += subSampling # + int(asub)
+                    if asub > 1: asub = asub - 1
                     x += incx
+                    u+=1
                 y += hSpace
-
-
+                self.endRead=i
+            chil = self.GetParent().GetChildren()
+            if self.zoom:
+                chil[2].zoomH(self.strRead, self.endRead)
