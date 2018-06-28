@@ -2,7 +2,6 @@
 import wx
 import wx.lib.agw.aquabutton as AB
 import wx.lib.scrolledpanel
-import wx.html2
 import wx.lib.agw.buttonpanel
 
 #Local Imports
@@ -74,10 +73,20 @@ class WindowEditor (wx.Frame):
         for eeg in eegs:
             self.addTab(eeg)
 
+    # every eeg must have the same channels
+    def updateChannels(self, selected):
+        i = 0
+        # to reset selection since notebook changes it with this
+        currentSelection = self.eegTabs.GetSelection()
+        while i < self.eegTabs.GetPageCount():
+            self.eegTabs.GetPage(i).updateChannels(selected)
+            i += 1
+        self.eegTabs.SetSelection(currentSelection)
+
     # since each eeg must have the same windows
     def addWindow(self, st, tbe):
         i = 0
-        #to reset selection since notebook changes it with this
+        # to reset selection since notebook changes it with this
         currentSelection = self.eegTabs.GetSelection()
         while i < self.eegTabs.GetPageCount():
             self.eegTabs.GetPage(i).tabManager.addWindow(st, self.project.windowLength, tbe)
@@ -98,6 +107,7 @@ class WindowEditor (wx.Frame):
     def onClose(self, event):
         self.GetParent().onWEClose()
         self.Destroy()
+
 
 class EEGTab(wx.Panel):
     '''Panel that contains graph of an EEG
@@ -130,8 +140,15 @@ class EEGTab(wx.Panel):
 
         self.electrodeList = wx.CheckListBox(electrodePanel, choices=self.eeg.getLabels())
         # select all the channel items to view
-        for i in range(len(self.eeg.channels)):
-            self.electrodeList.Check(i, check=True)
+        if len(self.eeg.selectedCh) == 0:
+            # let's fill them with all the channels
+            for i in range(len(self.eeg.channels)):
+                self.electrodeList.Check(i, check=True)
+            self.eeg.setSelected(self.electrodeList.GetCheckedItems())
+        else:
+            # fill checklist with the saved selection
+            for i in self.eeg.selectedCh:
+                self.electrodeList.Check(i, check=True)
         elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
         # button to apply changes from electrode selector
         applyChanges = wx.Button(electrodePanel, label="Aplicar")
@@ -141,7 +158,7 @@ class EEGTab(wx.Panel):
         leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
         leftPnl.SetSizer(leftSizer)
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
-        # eeg grafic information right side
+        # eeg graphic information right side
         rightPnl = wx.Panel(self)
         graphContainer = wx.BoxSizer(wx.VERTICAL)
         # panel for eeg graph
@@ -158,18 +175,24 @@ class EEGTab(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
 
     def createNewWindow(self, event):
-        #TODO fill window information correctly
-        #creates a new window on every eeg
+        # TODO fill window information correctly
+        # creates a new window on every eeg
         self.GetParent().GetParent().addWindow(500, 50)
 
-    #redraws the eeg with the selected electrodes
+    # redraws the eeg with the selected electrodes
     def updateElectrodes(self, event):
+        self.GetParent().GetParent().updateChannels(self.electrodeList.GetCheckedItems())
+
+    def updateChannels(self, selected):
+        # even if it is redundant it is needed to update all eegs
+        self.electrodeList.SetCheckedItems(selected)
         self.eegGraph.changeElectrodes()
-        ch =self.eegGraph.checkV()
+        ch = self.eegGraph.checkV()
         self.eegGraph.GetSizer().GetChildren()[0].GetWindow().adjustment(ch)
         self.eegGraph.GetSizer().GetChildren()[1].GetWindow().zoomManager(len(ch))
-        #self.eegGraph.GetSizer().GetChildren()[5].GetWindow().update()
+        self.eeg.setSelected(self.electrodeList.GetCheckedItems())
         self.tabManager.GetPage(self.tabManager.GetSelection()).Refresh()
+
 
 class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
     """
@@ -186,14 +209,14 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.graph = graph
         self.AddSpacer()
         self.buttons = []
-        #button to fit graph to screen
+        # button to fit graph to screen
         self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
                              shortHelp='Reiniciar Zoom')
         self.btnRestart.SetKind(wx.ITEM_CHECK)
         self.AddButton(self.btnRestart)
         self.buttons.append(self.btnRestart)
         self.Bind(wx.EVT_BUTTON, self.ZoomFit, self.btnRestart)
-        #button for zooming out
+        # button for zooming out
         self.btnZoomO = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOMOUT,
                                                          wx.Bitmap("src/zoom_out.png", wx.BITMAP_TYPE_PNG),
                                                          shortHelp='Alejar')
@@ -201,7 +224,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.buttons.append(self.btnZoomO)
         self.Bind(wx.EVT_BUTTON, self.ZoomO, self.btnZoomO)
 
-        #button for zooming in
+        # button for zooming in
         self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM, wx.Bitmap("src/zoom_in.png", wx.BITMAP_TYPE_PNG),
                              shortHelp='Acercar')
         self.btnZoom.SetKind(wx.ITEM_CHECK)
@@ -243,10 +266,10 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
 
     def ZoomFit(self, event):
         if event.GetEventObject().GetToggled():
-            #setting to zoom cursor in graph
+            # setting to zoom cursor in graph
             myCursor = wx.Cursor(wx.CURSOR_ARROW)
             self.graph.SetCursor(myCursor)
-            #untoggling others
+            # untoggling others
             self.unToggleOthers(self.ID_FIT)
             self.graph.graph.move = False
             self.graph.transparent.zoom = False
@@ -259,25 +282,25 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
 
 
     def ZoomO(self, event):
-        #setting to zoom cursor in graph
+        # setting to zoom cursor in graph
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.graph.SetCursor(myCursor)
         self.graph.graph.move = False
         self.graph.transparent.zoom = False
         self.graph.graph.returnZoom()
-        #untoggling others
+        # untoggling others
         self.unToggleOthers(self.ID_ZOOMOUT)
         event.Skip()
 
 
     def Zoom(self, event):
         if event.GetEventObject().GetToggled():
-            #setting to zoom cursor in graph
+            # setting to zoom cursor in graph
             myCursor = wx.Cursor(wx.CURSOR_CROSS)
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = False
             self.graph.transparent.zoom = True
-            #untoggling others
+            # untoggling others
             self.unToggleOthers(self.ID_ZOOM)
         else:
             # setting to zoom cursor in graph

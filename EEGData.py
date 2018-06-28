@@ -24,6 +24,10 @@ class EEGData:
         self.channels = []
         self.fillChannels(labels)
         self. windows = []
+        self.selectedCh = []
+
+    def setSelected(self, sel):
+        self.selectedCh = sel
 
     def setName(self, na):
         self.name = na
