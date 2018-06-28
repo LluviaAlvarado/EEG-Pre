@@ -1,8 +1,8 @@
-#Imports
+# Imports
 import wx
 import wx.aui as aui
 
-#Local imports
+# Local imports
 from WindowEEG import *
 '''custom tab manager that contains
     the information of the selected

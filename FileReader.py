@@ -2,10 +2,7 @@
 FileReader can read the next EEG formats:
 .mat
 .gdf/.edf
-.rec
-.bci2000
 .acq
-.eeg
 It returns a EEGData object.
 '''
 # lib imports

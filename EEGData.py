@@ -1,15 +1,15 @@
-'''
-class that contains all the necessary information
-from the EEG files
-'''
-#lib imports
+'''class that contains all the necessary information
+from the EEG files'''
+# lib imports
 import numpy as np
 
-#local imports
+# local imports
 from Channel import *
 from System10_20 import *
-class EEGData:
+from WindowEEG import *
 
+
+class EEGData:
 
     def __init__(self, freq, time, chM, f, labels):
         self.name = ""
@@ -28,9 +28,15 @@ class EEGData:
     def setName(self, na):
         self.name = na
 
-    #adds a WindowEEG object to the list
+    # adds a WindowEEG object to the list
     def addWindow(self, w):
         self.windows.append(w)
+
+    # adds windows loaded by a csv
+    def addMultipleWindows(self, windows, l, tbe):
+        for st in windows:
+            window = WindowEEG(int(st), int(l), int(tbe))
+            self.windows.append(window)
 
     def removeWindow(self, i):
         self.windows.remove(self.windows[i])

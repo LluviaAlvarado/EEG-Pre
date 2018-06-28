@@ -1,8 +1,7 @@
-import wx
-
-#Local Imports
+# Local Imports
 from CircleManager import *
 from Project import *
+
 
 class BaseWindow(wx.Frame):
 

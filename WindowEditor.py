@@ -3,14 +3,12 @@ import wx
 import wx.lib.agw.aquabutton as AB
 import wx.lib.scrolledpanel
 import wx.html2
-import wx.aui as aui
 import wx.lib.agw.buttonpanel
-
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
 #Local Imports
 from TabManager import *
 from EEGraph import *
+
 
 class WindowEditor (wx.Frame):
     title = "Edición de Ventanas"

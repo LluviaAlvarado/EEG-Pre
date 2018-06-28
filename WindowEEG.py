@@ -9,6 +9,6 @@ class WindowEEG:
         self.TBE = tbe
         self.stimulus = st
 
-    #we can only change this value
+    # we can only change this value
     def modifyTBE(self, tbe):
         self.TBE = tbe
