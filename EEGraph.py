@@ -66,7 +66,7 @@ class customList(wx.Panel):
         wx.Panel.__init__(self, parent, style=style, size=(30, parent.graph.Size[1]))
         self.eeg = parent.eeg
         baseSizer = wx.BoxSizer(orientation)
-        self.adjustment(channels)
+        self.adjustment(-1)
         self.SetSizer(baseSizer)
 
     def adjustment(self, channels=-1):
@@ -134,8 +134,7 @@ class customRuler(wx.Panel):
             self.makeTimeRuler(self.eeg.duration)
             self.Ogmax = self.eeg.duration
             self.Ogmin = 0
-            self.maxPile.append(self.Ogmax + 0)
-            self.minPile.append(0)
+
 
         else:
             self.opc = 2
@@ -144,7 +143,11 @@ class customRuler(wx.Panel):
 
         self.SetSizer(baseSizer)
 
-    def zoomH(self, s, e):
+    def zoomH(self, s, e , n):
+        if n == 1:
+            self.Ogmax = self.t_r * e
+            self.Ogmin = self.t_r * s
+
         self.max = self.t_r*e
         self.min = self.t_r*s
 
@@ -190,7 +193,7 @@ class customRuler(wx.Panel):
             dc.SetPen(wx.Pen('#000000'))
             dc.SetTextForeground('#000000')
             RM = 1
-            l = (self.Size[0]-5) / 100
+            l = (self.Size[0]-5) / 90
             u = 0
             i = 0
             while i < (self.Size[0]-5):
@@ -320,6 +323,7 @@ class graphPanel(wx.Panel):
         self.eeg = eeg
         self.subSampling = 0
         self.incx = 1
+        self.first = True
         self.w = self.Size[0]
         # list of channels in screen and start position
         self.chanPosition = []
@@ -617,4 +621,7 @@ class graphPanel(wx.Panel):
                 self.endRead=i
             chil = self.GetParent().GetChildren()
             if self.zoom:
-                chil[3].zoomH(self.strRead, self.endRead)
+                chil[3].zoomH(self.strRead, self.endRead, 0)
+            if self.first:
+                chil[3].zoomH(self.strRead, self.endRead, 1)
+                self.first = False

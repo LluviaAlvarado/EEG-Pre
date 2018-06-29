@@ -1,6 +1,13 @@
+import os
+import wx
+import _pickle
+
 # Local Imports
 from CircleManager import *
 from Project import *
+
+
+wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
 
 
 class BaseWindow(wx.Frame):
@@ -9,6 +16,7 @@ class BaseWindow(wx.Frame):
         super(BaseWindow, self).__init__(*args, **kw)
         self.Maximize(True)
         width, height = self.GetSize()
+        self.currentDirectory = os.getcwd()
         self.workArea = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
         self.circleMngr = CircleManager(self.workArea, width, height, self)
         #TODO CARGAR PROYECTO SI HAY
@@ -62,6 +70,8 @@ class BaseWindow(wx.Frame):
         # Finally, associate a handler function with the EVT_MENU event for
         # each of the menu items. That means that when that menu item is
         # activated then the associated handler function will be called.
+        self.Bind(wx.EVT_MENU, self.OnSave, saveSessionItem)
+        self.Bind(wx.EVT_MENU, self.OnLoad, loadSessionItem)
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
@@ -77,3 +87,29 @@ class BaseWindow(wx.Frame):
                       "Dentro del Editor de archivos puedes abrir el Editor de Ventanas.",
                       "Como usar el Programa.",
                       wx.OK|wx.ICON_INFORMATION)
+
+    def OnSave(self, event):
+        """Save  project session"""
+        dlg = wx.FileDialog(
+            self, message="Guardar como",
+            defaultDir=self.currentDirectory,
+            defaultFile="", wildcard=wildcard, style=wx.FD_SAVE
+        )
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            with open(path, 'wb') as output:
+                _pickle.dump(self.project, output, protocol=4)
+        dlg.Destroy()
+
+    def OnLoad(self, event):
+        """Load project session"""
+        dlg = wx.FileDialog(
+            self, message="Cargar",
+            defaultDir=self.currentDirectory,
+            defaultFile="", wildcard=wildcard, style=wx.FD_OPEN
+        )
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            with open(path, 'rb') as input:
+                self.project = _pickle.load(input)
+        dlg.Destroy()
