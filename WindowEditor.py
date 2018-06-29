@@ -288,6 +288,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.channelList.adjustment()
             self.graph.ampRuler.redo()
             self.graph.GetSizer().GetChildren()[5].GetWindow().update()
+            # ups
 
         event.Skip()
 

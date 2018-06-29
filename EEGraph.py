@@ -31,7 +31,7 @@ class EEGraph(wx.Panel):
         self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
 
         # left amplitud ruler side
-        # creating a ruler for each channel
+        # creating a ruler for each channell
         values = []
         values.append(self.eeg.amUnits[0])
         half = (self.eeg.amUnits[0] - self.eeg.amUnits[1]) / 2
