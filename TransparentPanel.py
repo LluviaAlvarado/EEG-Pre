@@ -85,15 +85,14 @@ class windowPanel(wx.Panel):
     def msToPixel(self, ms):
         freq = self.GetParent().eeg.frequency / 1000
         reading = ms * freq
-        subS = self.GetParent().graph.subSampling
+        subS = int(self.GetParent().graph.subSampling)
         incx = self.GetParent().graph.incx
-        return (reading * incx) / subS
+        return int((reading * incx) / subS)
 
     def drawWindow(self, window, gc, path, color, pen):
         # gc is graphic context, color is wx.Colour and pen a wx.Pen
         gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
         gc.SetPen(pen)
-
         start = self.msToPixel(window.stimulus - window.TBE)
         e = window.stimulus + (window.length - window.TBE)
         end = self.msToPixel(e)
