@@ -1,7 +1,7 @@
 # imports
 
 import wx
-import wx.lib.scrolledpanel as SP
+from TransparentPanel import *
 
 
 class EEGraph(wx.Panel):
@@ -25,7 +25,8 @@ class EEGraph(wx.Panel):
         w = self.Size[0] - 30
         h = self.Size[1]
         self.graph = graphPanel(self, eeg, w, h)
-        self.transparent = transparentPanel(self, self.graph)
+        self.zoomP = zoomPanel(self, self.graph)
+        self.windowP = windowPanel(self, self.graph)
         # bottom is reserved just for the time ruler
         values = [0, self.eeg.duration]
         self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
@@ -108,7 +109,7 @@ class customRuler(wx.Panel):
     def __init__(self, parent, orientation, style, values, nCh, num):
         self.height = parent.graph.Size[1] - 3
         self.width = parent.graph.Size[0]
-        #Amplitude range
+        # Amplitude range
         self.values = values
         self.eeg = parent.eeg
         # Number of channels
@@ -125,7 +126,6 @@ class customRuler(wx.Panel):
         self.opc = 0
         self.zoom = False
         self.num = 0
-
 
         baseSizer = wx.BoxSizer(orientation)
         if orientation == wx.HORIZONTAL:
@@ -208,7 +208,6 @@ class customRuler(wx.Panel):
                     dc.DrawText(st, i + RM + w / 2, 11)
                     RM = 1
 
-
                 elif (u % 5) == 0:
                     dc.DrawLine(i + RM, 0, i + RM, 8)
 
@@ -240,18 +239,7 @@ class customRuler(wx.Panel):
 
     def makeAmpRuler(self, nCh, values):
         self.font = wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
-
-        h = (self.Size[1]) / nCh
-        i = 0
-        posy = 0
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-        '''while i < nCh:
-            rule = wx.StaticText(self, -1, str(values[0]), style=wx.ALIGN_CENTER, pos=(0, posy), size=(30, h))
-            ruler = wx.StaticText(self, -1, str(values[2]), style=wx.ALIGN_CENTER, pos=(0, posy + 9), size=(30, h))
-            ruler.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-            rule.SetFont(wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-            posy += h
-            i += 1'''
 
     def zoomManager(self, num):
         self.zoom = True
@@ -266,7 +254,6 @@ class customRuler(wx.Panel):
         self.max = self.maxPile[len(self.maxPile) - 1]
         self.min = self.minPile[len(self.maxPile) - 1]
         self.Refresh()
-
 
     def zoomOut(self):
 
@@ -325,66 +312,6 @@ class customRuler(wx.Panel):
         return channels
 
 
-'''a transparent panel over the eegraph to draw other elements
-    like the zoom rectangle and windows'''
-class transparentPanel(wx.Panel):
-
-    def __init__(self, parent, over):
-        wx.Panel.__init__(self, parent, size=(over.Size[0], over.Size[1]), pos=(60, 0))
-        # vars for zoom
-        self.zoom = False
-        self.zStart = None
-        self.zEnd = None
-        self.dc = None
-        self.gc = None
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
-
-    def OnClickDown(self, pos):
-        if self.zoom:
-            self.zStart = pos
-
-    def MovingMouse(self, pos):
-        self.zEnd = pos
-        if self.zoom and self.zStart is not None:
-            self.OnPaint()
-
-    def OnClickReleased(self, pos):
-        self.zEnd = pos
-        if self.zoom:
-            self.GetParent().graph.setZoom(self.zStart, self.zEnd)
-            self.OnPaint()
-
-            #self.GetParent().GetChildren()[2].moveZom(self.GetParent().graph.strRead, self.GetParent().graph.endRead)
-            # self.GetParent().GetChildren()[2].zoomH(self.zStart[0], self.zEnd[0])
-            self.zStart = None
-            self.zEnd = None
-
-    def onEraseBackground(self, event):
-        # Overridden to do nothing to prevent flicker
-        pass
-
-    # needs to repaint the eegraph and adds the zoom rectangle
-    def OnPaint(self):
-        self.GetParent().Refresh()
-        dc = wx.ClientDC(self)
-        gc = wx.GraphicsContext.Create(dc)
-        if self.zoom:
-            if gc:
-                color = wx.Colour(255, 0, 0, 10)
-                gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
-                gc.SetPen(wx.RED_PEN)
-                path = gc.CreatePath()
-                if self.zEnd is None:
-                    w = 0
-                    h = 0
-                else:
-                    w = self.zEnd[0] - self.zStart[0]
-                    h = self.zEnd[1] - self.zStart[1]
-                path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
-                gc.FillPath(path)
-                gc.StrokePath(path)
-
-
 class graphPanel(wx.Panel):
 
     def __init__(self, parent, eeg, w, h):
@@ -421,7 +348,7 @@ class graphPanel(wx.Panel):
         if self.move:
             self.strMove = event.GetPosition()
         else:
-            self.GetParent().transparent.OnClickDown(event.GetPosition())
+            self.GetParent().zoomP.OnClickDown(event.GetPosition())
 
     def MovingMouse(self, event):
         if self.move:
@@ -430,7 +357,7 @@ class graphPanel(wx.Panel):
                 self.moveGraph()
                 self.strMove = self.endMove
         else:
-            self.GetParent().transparent.MovingMouse(event.GetPosition())
+            self.GetParent().zoomP.MovingMouse(event.GetPosition())
 
     def OnClickReleased(self, event):
 
@@ -441,7 +368,7 @@ class graphPanel(wx.Panel):
                 self.strMove = None
                 self.endMove = None
         else:
-            self.GetParent().transparent.OnClickReleased(event.GetPosition())
+            self.GetParent().zoomP.OnClickReleased(event.GetPosition())
 
     # moves the eeg when it is zoomed
     def moveGraph(self):
@@ -490,14 +417,14 @@ class graphPanel(wx.Panel):
 
             # repainting
             self.Refresh()
-
+            # refresh the window panel
+            self.GetParent().windowP.Refresh()
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
-            chil[2].moveZom(self.strRead, self.endRead)
-            # chil[2].moveZoom(self.strMove[0] - self.endMove[0])
-            chil[3].zoomManager(len(ch))
-            chil[4].adjustment(ch)
+            chil[3].moveZom(self.strRead, self.endRead)
+            chil[4].zoomManager(len(ch))
+            chil[5].adjustment(ch)
             self.strMove = self.endMove
 
     '''sets the how many readings will we skip
@@ -538,11 +465,13 @@ class graphPanel(wx.Panel):
         self.setSamplingRate(self.nSamp)
         self.zoomPile = []
         self.Refresh()
-
-
+        # refresh the window panel
+        self.GetParent().windowP.Refresh()
 
     def apply(self):
         self.Refresh()
+        # refresh the window panel
+        self.GetParent().windowP.Refresh()
 
     def returnZoom(self):
         if len(self.zoomPile) > 0:
@@ -554,18 +483,20 @@ class graphPanel(wx.Panel):
             self.endCh = zoom[4]
             # repainting
             self.Refresh()
+            # refresh the window panel
+            self.GetParent().windowP.Refresh()
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
-            chil[2].zoomOut()
-            chil[3].zoomManager(len(ch))
-            chil[4].adjustment(ch)
+            chil[3].zoomOut()
+            chil[4].zoomManager(len(ch))
+            chil[5].adjustment(ch)
         else:
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
-            chil[2].update()
-            chil[3].zoomManager(len(ch))
-            chil[4].adjustment()
+            chil[3].update()
+            chil[4].zoomManager(len(ch))
+            chil[5].adjustment()
             self.resetZoom()
 
     def setZoom(self, start, end):
@@ -596,26 +527,23 @@ class graphPanel(wx.Panel):
         tmpE= self.endCh - self.strCh
         self.strCh+=tmpS
         self.endCh = self.strCh +tmpE
-        lenght = end[0] - start[0]
-
         # getting the readings to show
         startr = self.strRead
         self.strRead += (start[0] * self.subSampling) / self.incx
         endRead = startr + (end[0] * self.subSampling) / self.incx
-
         nsamp = endRead - self.strRead
         if nsamp < 10:
             nsamp = 10
         self.setSamplingRate(nsamp)
         # repainting
-        #print("Ini: "+str(self.strCh)+"  End: "+str(self.endCh))
         self.Refresh()
+        # refresh the window panel
+        self.GetParent().windowP.Refresh()
         # changing channel labels
         chil = self.GetParent().GetChildren()
         ch = self.getViewChannels()
-        #chil[2].moveZom(self.strRead, self.endRead)
-        chil[3].zoomManager(len(ch))
-        chil[4].adjustment(ch)
+        chil[4].zoomManager(len(ch))
+        chil[5].adjustment(ch)
 
     def getViewChannels(self):
         checked = self.getChecked()
@@ -689,4 +617,4 @@ class graphPanel(wx.Panel):
                 self.endRead=i
             chil = self.GetParent().GetChildren()
             if self.zoom:
-                chil[2].zoomH(self.strRead, self.endRead)
+                chil[3].zoomH(self.strRead, self.endRead)

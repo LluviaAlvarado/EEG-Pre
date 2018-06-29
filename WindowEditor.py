@@ -255,8 +255,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         r3.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
 
         self.AddSpacer()
-
-
         self.DoLayout()
 
     def unToggleOthers(self, toggled):
@@ -272,7 +270,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             # untoggling others
             self.unToggleOthers(self.ID_FIT)
             self.graph.graph.move = False
-            self.graph.transparent.zoom = False
+            self.graph.zoomP.zoom = False
             self.graph.graph.resetZoom()
             self.graph.GetSizer().GetChildren()[0].GetWindow().adjustment()
             self.graph.GetSizer().GetChildren()[1].GetWindow().redo()
@@ -286,7 +284,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.graph.SetCursor(myCursor)
         self.graph.graph.move = False
-        self.graph.transparent.zoom = False
+        self.graph.zoomP.zoom = False
         self.graph.graph.returnZoom()
         # untoggling others
         self.unToggleOthers(self.ID_ZOOMOUT)
@@ -299,14 +297,14 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             myCursor = wx.Cursor(wx.CURSOR_CROSS)
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = False
-            self.graph.transparent.zoom = True
+            self.graph.zoomP.zoom = True
             # untoggling others
             self.unToggleOthers(self.ID_ZOOM)
         else:
             # setting to zoom cursor in graph
             myCursor = wx.Cursor(wx.CURSOR_ARROW)
             self.graph.SetCursor(myCursor)
-            self.graph.transparent.zoom = False
+            self.graph.zoomP.zoom = False
         event.Skip()
 
     def Move(self, event):
