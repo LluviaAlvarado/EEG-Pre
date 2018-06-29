@@ -206,9 +206,11 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.ID_ZOOM = wx.NewId()
         self.ID_ZOOMOUT = wx.NewId()
         self.ID_MOVE = wx.NewId()
+        self.ID_VIEW =wx.NewId()
         self.graph = graph
         self.AddSpacer()
         self.buttons = []
+        self.window_s =0
         # button to fit graph to screen
         self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
                              shortHelp='Reiniciar Zoom')
@@ -240,6 +242,17 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.AddButton(self.btnMove)
         self.buttons.append(self.btnMove)
         self.Bind(wx.EVT_BUTTON, self.Move, self.btnMove)
+        self.all_w = wx.Bitmap("src/all_windows.png", wx.BITMAP_TYPE_PNG)
+        self.no_w = wx.Bitmap("src/no_windows.png", wx.BITMAP_TYPE_PNG)
+        self.sel_w = wx.Bitmap("src/selected_window.png", wx.BITMAP_TYPE_PNG)
+
+        self.btnView = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_VIEW,
+                                                         self.all_w,
+                                                         shortHelp='Todas las ventanas')
+        self.AddButton(self.btnView)
+        self.buttons.append(self.btnView)
+        self.Bind(wx.EVT_BUTTON, self.changeview, self.btnView)
+
 
         b1=wx.StaticText(self,0, " ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(96,46))
         b1.SetBackgroundColour((0,0,0))
@@ -272,8 +285,8 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.graph.move = False
             self.graph.zoomP.zoom = False
             self.graph.graph.resetZoom()
-            self.graph.GetSizer().GetChildren()[0].GetWindow().adjustment()
-            self.graph.GetSizer().GetChildren()[1].GetWindow().redo()
+            self.graph.channelList.adjustment()
+            self.graph.ampRuler.redo()
             self.graph.GetSizer().GetChildren()[5].GetWindow().update()
 
         event.Skip()
@@ -321,3 +334,20 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = False
         event.Skip()
+
+    def changeview(self, event):
+        self.window_s += 1
+        if self.window_s > 2:
+            self.window_s = 0
+        if self.window_s == 0:
+            self.btnView.SetBitmap(self.all_w)
+            self.graph.windowP.setWindowState(2)
+            self.btnView.SetShortHelp("Todas las ventanas")
+        if self.window_s == 1:
+            self.btnView.SetBitmap(self.sel_w)
+            self.graph.windowP.setWindowState(1)
+            self.btnView.SetShortHelp("Solo la ventana seleccionada")
+        if self.window_s == 2:
+            self.btnView.SetBitmap(self.no_w)
+            self.graph.windowP.setWindowState(0)
+            self.btnView.SetShortHelp("Ninguna ventana")

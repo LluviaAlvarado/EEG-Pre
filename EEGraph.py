@@ -37,10 +37,10 @@ class EEGraph(wx.Panel):
         half = (self.eeg.amUnits[0] - self.eeg.amUnits[1]) / 2
         values.append(self.eeg.amUnits[0] - half)
         values.append(self.eeg.amUnits[1])
-        ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
-        channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER, self.eeg.channels)
-        baseSizer.Add(channelList, 0, wx.EXPAND, 0)
-        baseSizer.Add(ampRuler, 0, wx.EXPAND, 0)
+        self.ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
+        self.channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER, self.eeg.channels)
+        baseSizer.Add(self.channelList, 0, wx.EXPAND, 0)
+        baseSizer.Add(self.ampRuler, 0, wx.EXPAND, 0)
         baseSizer.Add(self.graph, 0, wx.EXPAND, 0)
 
         baseSizer.AddSpacer(30)
@@ -114,6 +114,9 @@ class customRuler(wx.Panel):
         # Number of channels
         self.nCh = nCh
         self.increment = 0
+
+
+
         self.numReads = num
         self.t_r = self.eeg.duration / num
         self.maxPile = []
@@ -171,6 +174,8 @@ class customRuler(wx.Panel):
         newRange = nx - nm
         newV = (((v - 0) * newRange) / oldRange) + nm
         return newV
+
+
 
     def OnPaint(self, e):
         dc = wx.PaintDC(self)
