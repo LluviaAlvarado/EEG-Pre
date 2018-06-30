@@ -1,10 +1,8 @@
-#Imports
-import wx
-import wx.lib.agw.aquabutton as AB
+# Imports
 import wx.lib.scrolledpanel
 import wx.lib.agw.buttonpanel
 
-#Local Imports
+# Local Imports
 from TabManager import *
 from EEGraph import *
 
@@ -12,16 +10,16 @@ from EEGraph import *
 class WindowEditor (wx.Frame):
     title = "Edición de Ventanas"
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE^(wx.RESIZE_BORDER))
+        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Maximize(True)
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
-        #frame will contain the base container of window editor and eeg tabs
+        # frame will contain the base container of window editor and eeg tabs
         frameSizer = wx.BoxSizer(wx.VERTICAL)
         # EEG tabs
         self.eegTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]), style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE )
                                        | aui.AUI_NB_WINDOWLIST_BUTTON)
-        #filling the tabs
+        # filling the tabs
         self.fillEEGTabs()
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
@@ -29,9 +27,9 @@ class WindowEditor (wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.SetSizer(frameSizer)
-        #creating a status bar to inform user of process
+        # creating a status bar to inform user of process
         self.CreateStatusBar()
-        #setting the cursor to loading
+        # setting the cursor to loading
         self.SetStatus("Loading EEG...", 1)
         self.Centre()
         self.Show()
@@ -44,7 +42,7 @@ class WindowEditor (wx.Frame):
             if e.name == eeg.name:
                 break
             i += 1
-        #setting the selection to eeg user clicked
+        # setting the selection to eeg user clicked
         self.eegTabs.ChangeSelection(i)
 
     def loadingNew(self, event):
@@ -53,6 +51,7 @@ class WindowEditor (wx.Frame):
 
     def loadingFinished(self, event):
         # return mouse to normal after load
+        event.GetEventObject().CurrentPage.eegGraph.graph.paint = True
         event.GetEventObject().CurrentPage.Refresh()
         wx.CallLater(0, lambda: self.SetStatus("", 0))
 

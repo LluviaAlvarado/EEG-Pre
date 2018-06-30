@@ -64,11 +64,15 @@ class FilesWindow(wx.Frame):
         self.buttonSizer.Add(helpLabel, 0, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         # todo cambiar la direccion default
         self.filePicker = wx.FileDialog(self.pnl, message="Elige los archivos de EEG",
            defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
            wildcard="Todos (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq", style=wx.FD_OPEN | wx.FD_MULTIPLE)
 
+    def onClose(self, event):
+        self.GetParent().onFWClose()
+        self.Destroy()
 
     def loadFiles(self, event):
         if self.filePicker.ShowModal() == wx.ID_CANCEL:
@@ -111,7 +115,7 @@ class FilesWindow(wx.Frame):
             changed = False
             for row in reader:
                 matrix.append(row)
-                #check if equal amount of columns
+                # check if equal amount of columns
                 if row[len(row)-1] == "":
                     changed = True
             if changed or (len(matrix) != len(self.GetParent().project.EEGS)):
@@ -194,25 +198,25 @@ class FilesWindow(wx.Frame):
                     eeg.setName(name)
                     self.GetParent().project.EEGS.append(eeg)
                 else:
-                    #show error with file
+                    # show error with file
                     errorFiles.append([name, 0])
             else:
                 # show error with repeated file
                 errorFiles.append([name, 1])
-        #check if eegs of same project
+        # check if eegs of same project
         if len(self.GetParent().project.EEGS) != 0:
             self.checkProjectEEGs(errorFiles)
-        #update listbox
+        # update listbox
         if len(self.GetParent().project.EEGS) > currentAmount:
             while currentAmount < len(self.GetParent().project.EEGS):
                 self.filesList.Append(self.GetParent().project.EEGS[currentAmount].name)
                 if self.windowEditor is not None:
-                    #add the new tab
+                    # add the new tab
                     self.windowEditor.addTab(self.GetParent().project.EEGS[currentAmount])
                 currentAmount += 1
-        #showing errors that ocurred
+        # showing errors that ocurred
         self.showErrorFiles(errorFiles)
-        #returning normal cursor
+        # returning normal cursor
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
         if len(self.GetParent().project.EEGS) < 1:
@@ -224,7 +228,7 @@ class FilesWindow(wx.Frame):
     def checkProjectEEGs(self, errorFiles):
         EEGS = self.GetParent().project.EEGS
         if self.GetParent().project.frequency is None:
-            #getting the global data of the project
+            # getting the global data of the project
             matching = []
             for e in EEGS:
                 matching.append(0)
@@ -235,7 +239,7 @@ class FilesWindow(wx.Frame):
                     if diference == "":
                         matching[i] += 1
                 i += 1
-            #check which eeg got more matches
+            # check which eeg got more matches
             winner = [0, 0]
             i = 0
             for match in matching:
@@ -246,7 +250,7 @@ class FilesWindow(wx.Frame):
             self.GetParent().project.duration = EEGS[winner[0]].duration
             self.GetParent().project.numCh = len(EEGS[winner[0]].channels)
             self.GetParent().project.chLabels = EEGS[winner[0]].getChannelLabels()
-        #check if files match with the project
+        # check if files match with the project
         i = 0
         toRemove = []
         for eeg in EEGS:
@@ -288,11 +292,11 @@ class FilesWindow(wx.Frame):
 
     def removeFile(self, event):
         index = self.filesList.GetSelection()
-        #remove from the egg list
+        # remove from the egg list
         self.GetParent().project.EEGS.remove(self.GetParent().project.EEGS[index])
-        #update listbox
+        # update listbox
         self.filesList.Delete(index)
-        #if no more files left
+        # if no more files left
         if len(self.GetParent().project.EEGS) == 0:
             self.GetParent().project.reset()
             self.windowButton.Disable()
@@ -306,5 +310,5 @@ class FilesWindow(wx.Frame):
         self.windowEditor.setEEG(eeg)
 
     def onWEClose(self):
-        #so we can create another
+        # so we can create another
         self.windowEditor = None

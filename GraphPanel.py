@@ -108,8 +108,6 @@ class graphPanel(wx.Panel):
             # repainting
             self.paint = True
             self.GetParent().Refresh()
-            # refresh the window panel
-            #self.GetParent().windowP.Refresh()
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
@@ -152,16 +150,14 @@ class graphPanel(wx.Panel):
         self.msShowing = self.eeg.duration * 1000
         self.setSamplingRate()
         self.zoomPile = []
+        # repainting
         self.paint = True
-        self.Refresh()
-        # refresh the window panel
-        self.GetParent().windowP.Refresh()
+        self.GetParent().Refresh()
 
     def apply(self):
+        # repainting
         self.paint = True
-        self.Refresh()
-        # refresh the window panel
-        self.GetParent().windowP.Refresh()
+        self.GetParent().Refresh()
 
     def returnZoom(self):
         if len(self.zoomPile) > 0:
@@ -175,8 +171,6 @@ class graphPanel(wx.Panel):
             # repainting
             self.paint = True
             self.GetParent().Refresh()
-            # refresh the window panel
-            #self.GetParent().windowP.Refresh()
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
@@ -231,9 +225,7 @@ class graphPanel(wx.Panel):
         self.setSamplingRate()
         # repainting
         self.paint = True
-        self.Refresh()
-        # refresh the window panel
-        self.GetParent().windowP.Refresh()
+        self.GetParent().Refresh()
         # changing channel labels
         chil = self.GetParent().GetChildren()
         ch = self.getViewChannels()

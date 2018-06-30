@@ -19,15 +19,18 @@ class BaseWindow(wx.Frame):
         self.currentDirectory = os.getcwd()
         self.workArea = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
         self.circleMngr = CircleManager(self.workArea, width, height, self)
-        #TODO CARGAR PROYECTO SI HAY
         self.project = Project()
-        #for now
-        self.project.windowLength = 100
+        # to just open 1 files window
+        self.filesWindow = None
         # create the menu bar that we don't need yet
         self.makeMenuBar()
         # create the status bar
         self.CreateStatusBar()
         self.SetStatusText("Esperando por Archivos de EEG...")
+
+    def onFWClose(self):
+        # so we can create another
+        self.filesWindow = None
 
     def makeMenuBar(self):
         """
@@ -112,4 +115,9 @@ class BaseWindow(wx.Frame):
             path = dlg.GetPath()
             with open(path, 'rb') as input:
                 self.project = _pickle.load(input)
+        # update the file window if opened
+        if self.filesWindow is not None:
+            self.filesWindow.Destroy()
+            self.filesWindow = FilesWindow(self)
+            self.filesWindow.Show()
         dlg.Destroy()

@@ -46,7 +46,7 @@ class EEGData:
         self.windows.remove(self.windows[i])
 
     def windowOverlap(self):
-        #TODO check window overlap
+        # TODO check window overlap
         return False
 
     def concatenateWindows(self):
@@ -62,7 +62,7 @@ class EEGData:
         return new
 
     def copyChannel(self, ch, labels):
-        #making all labels 10/10 or 10/20 system
+        # making all labels 10/10 or 10/20 system
         label = self.system10_20.testLabel(labels[self.i])
         if label is None:
             '''This a label not in the system so we add
@@ -75,7 +75,7 @@ class EEGData:
         self.i += 1
 
     def fillChannels(self, labels):
-        #iterate channel matrix
+        # iterate channel matrix
         self.i = 0
         np.apply_along_axis(self.copyChannel, 1, self.channelMatrix, labels)
 

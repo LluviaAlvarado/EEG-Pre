@@ -88,8 +88,9 @@ class Circle:
 
     def onDoubleClick(self, event):
         Circle.plus.removeImg()
-        frame = FilesWindow(self.mainW)
-        frame.Show()
+        if self.mainW.filesWindow is None:
+            self.mainW.filesWindow = FilesWindow(self.mainW)
+        self.mainW.filesWindow.Show()
 
 
 class FileCircle(Circle):

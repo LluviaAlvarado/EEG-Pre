@@ -136,8 +136,6 @@ class customRuler(wx.Panel):
             self.makeTimeRuler(self.eeg.duration)
             self.Ogmax = self.eeg.duration
             self.Ogmin = 0
-
-
         else:
             self.opc = 2
             wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
@@ -153,7 +151,7 @@ class customRuler(wx.Panel):
         self.max = self.t_r*e
         self.min = self.t_r*s
 
-        self.increment = (self.max - self.min) / (self.width)
+        self.increment = (self.max - self.min) / self.width
 
         self.maxPile.append(self.max)
         self.minPile.append(self.min)
@@ -174,8 +172,6 @@ class customRuler(wx.Panel):
         newRange = nx - nm
         newV = (((v - 0) * newRange) / oldRange) + nm
         return newV
-
-
 
     def OnPaint(self, e):
         dc = wx.PaintDC(self)

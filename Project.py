@@ -13,7 +13,6 @@ class Project:
         # [0] is the csv matrix
         # [1] the path of the csv
         self.windowCSV = None
-        # TODO aqui has todo lo que necesites guardar miguel c: y ve como guardarlo en archivo o algo gg
 
     def reset(self):
         self.EEGS = []

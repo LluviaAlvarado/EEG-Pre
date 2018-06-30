@@ -112,6 +112,7 @@ class windowPanel(wx.Panel):
         msE = msS + self.GetParent().graph.msShowing
         e = window.stimulus + (window.length - window.TBE)
         if self.toShow(msS, s, e, msE):
+            path = gc.CreatePath()
             start = self.msToPixel(s, msE)
             if start < 0:
                 start = 0
@@ -121,9 +122,11 @@ class windowPanel(wx.Panel):
             w = end - start
             h = self.Size[1]
             path.AddRectangle(start, 0, w, h)
+            gc.FillPath(path)
+            gc.StrokePath(path)
 
     def drawWindows(self, gc):
-        path = gc.CreatePath()
+        path = None
         # state 0 is ignored since we wont show any windows
         if self.windowState == 1:
             # the selected window will be showed in blue
@@ -135,17 +138,21 @@ class windowPanel(wx.Panel):
             # all windows will show, it might get messy
             # windows will show in gray and selected one in blue
             windows = self.GetParent().eeg.windows
+            selected = self.windows.GetSelection()
             if gc:
+                i = 0
                 for window in windows:
-                    self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
-        return path
+                    if i == selected:
+                        self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
+                    else:
+                        self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 20), wx.GREY_PEN)
+                    i += 1
 
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self, event=None):
         dc = wx.PaintDC(self)
         gc = wx.GraphicsContext.Create(dc)
-        path = self.drawWindows(gc)
-        gc.FillPath(path)
-        gc.StrokePath(path)
+        self.drawWindows(gc)
+
 
 
