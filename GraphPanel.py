@@ -6,6 +6,7 @@ class graphPanel(wx.Panel):
     def __init__(self, parent, eeg, w, h):
         wx.Panel.__init__(self, parent, size=(w, h),
                           style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.paint = True
         self.eeg = eeg
         self.timeLapse = 0
         self.incx = 1
@@ -19,7 +20,6 @@ class graphPanel(wx.Panel):
         self.totalChan = len(eeg.channels) + len(eeg.additionalData)
         self.strMs = 0
         self.zoomPile = []
-        self.endRead = 0
         # var for moving graph
         self.move = False
         self.strMove = None
@@ -106,9 +106,10 @@ class graphPanel(wx.Panel):
                     self.strMs = 0
 
             # repainting
-            self.Refresh()
+            self.paint = True
+            self.GetParent().Refresh()
             # refresh the window panel
-            self.GetParent().windowP.Refresh()
+            #self.GetParent().windowP.Refresh()
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
@@ -151,11 +152,13 @@ class graphPanel(wx.Panel):
         self.msShowing = self.eeg.duration * 1000
         self.setSamplingRate()
         self.zoomPile = []
+        self.paint = True
         self.Refresh()
         # refresh the window panel
         self.GetParent().windowP.Refresh()
 
     def apply(self):
+        self.paint = True
         self.Refresh()
         # refresh the window panel
         self.GetParent().windowP.Refresh()
@@ -170,9 +173,10 @@ class graphPanel(wx.Panel):
             self.endCh = zoom[4]
             self.msShowing = zoom[5]
             # repainting
-            self.Refresh()
+            self.paint = True
+            self.GetParent().Refresh()
             # refresh the window panel
-            self.GetParent().windowP.Refresh()
+            #self.GetParent().windowP.Refresh()
             # changing channel labels
             chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
@@ -226,6 +230,7 @@ class graphPanel(wx.Panel):
             self.strMs = (self.eeg.duration * 1000) - self.msShowing
         self.setSamplingRate()
         # repainting
+        self.paint = True
         self.Refresh()
         # refresh the window panel
         self.GetParent().windowP.Refresh()
@@ -237,21 +242,16 @@ class graphPanel(wx.Panel):
 
     def getViewChannels(self):
         checked = self.getChecked()
-        # print(len(checked))
         channels = []
         # if there is zoom
         if self.zoom:
             i = self.strCh
             r = self.endCh - i
-            # print("I: "+str(i)+" R: "+str(r) + " E: "+str(self.endCh))
-
             if self.endCh > len(checked):
                 i -= (self.endCh - len(checked))
                 self.endCh = len(checked)
             if r > len(checked):
                 self.endCh = len(checked)
-            # print(i)
-            # print(self.endCh)
             if i < 0:
                 i = 0
             self.strCh = i
@@ -267,42 +267,40 @@ class graphPanel(wx.Panel):
 
     def OnPaint(self, event=None):
         # buffered so it doesn't paint channel per channel
-        dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
-        dc.Clear()
-        dc.SetPen(wx.Pen(wx.BLACK, 4))
-        y = 0
+        if self.paint:
+            dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
+            dc.Clear()
+            dc.SetPen(wx.Pen(wx.BLACK, 4))
+            y = 0
 
-        amUnits = self.eeg.amUnits
-        timeLapse = self.timeLapse
-        incx = self.incx
-        self.chanPosition = []
-        # defining channels to plot
-        channels = self.getViewChannels()
-        if len(channels) > 0:
-            hSpace = (self.Size[1] - 5) / len(channels)
-            w = self.w
-            dc.SetPen(wx.Pen(wx.BLACK, 1))
-            for channel in channels:
-                x = 0
-                ms = self.strMs
-                i = self.msToReading(ms)
-                self.chanPosition.append([channel.label, y])
-                while i < self.nSamp:
-                    inci = self.msToReading(ms + timeLapse)
-                    ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
-                    if inci > self.nSamp - 1:
-                        ny2 = ny
-                    else:
-                        ny2 = (((channel.readings[inci] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
-                    if abs(ny - ny2) > 3 or (x + incx) > 3:
-                        dc.DrawLine(x, ny, x + incx, ny2)
-                    else:
-                        dc.DrawPoint(x, ny)
-                    ms += timeLapse
+            amUnits = self.eeg.amUnits
+            timeLapse = self.timeLapse
+            incx = self.incx
+            self.chanPosition = []
+            # defining channels to plot
+            channels = self.getViewChannels()
+            if len(channels) > 0:
+                hSpace = (self.Size[1] - 5) / len(channels)
+                w = self.w
+                dc.SetPen(wx.Pen(wx.BLACK, 1))
+                for channel in channels:
+                    x = 0
+                    ms = self.strMs
                     i = self.msToReading(ms)
-                    x += incx
-                y += hSpace
-                self.endRead = i
-            chil = self.GetParent().GetChildren()
-            if self.zoom:
-                chil[3].zoomH(self.strMs, self.endRead, 0)
+                    self.chanPosition.append([channel.label, y])
+                    while i < self.nSamp:
+                        inci = self.msToReading(ms + timeLapse)
+                        ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                        if inci > self.nSamp - 1:
+                            ny2 = ny
+                        else:
+                            ny2 = (((channel.readings[inci] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                        if abs(ny - ny2) > 3 or (x + incx) > 3:
+                            dc.DrawLine(x, ny, x + incx, ny2)
+                        else:
+                            dc.DrawPoint(x, ny)
+                        ms += timeLapse
+                        i = self.msToReading(ms)
+                        x += incx
+                    y += hSpace
+            self.paint = False

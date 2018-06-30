@@ -22,10 +22,19 @@ class TabManager(aui.AuiNotebook):
         self.par = parent
         #this takes the global window length
         self.length = winL
+        # bind when window is changed to update window showed on graph
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.changeWindow)
         #bind when a window is deleted
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.deleteWindow)
         #filling windows if exist
         self.fillTabs()
+
+    def changeWindow(self, event):
+        # refreshing the windows panel
+        if self.par.eegGraph is not None:
+            self.par.eegGraph.windowP.update()
+            # return mouse to normal after load
+            self.par.GetParent().GetParent().SetStatus("", 0)
 
     def fillTabs(self):
         for i in range(len(self.par.eeg.windows)):

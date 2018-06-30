@@ -29,7 +29,7 @@ class zoomPanel(wx.Panel):
             self.GetParent().graph.setZoom(self.zStart, self.zEnd)
             self.OnPaint()
             # refresh the windows
-            self.GetParent().zoomP.Refresh()
+            self.GetParent().windowP.Refresh()
             self.zStart = None
             self.zEnd = None
 
@@ -39,6 +39,7 @@ class zoomPanel(wx.Panel):
 
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self):
+        self.GetParent().graph.paint = True
         self.GetParent().Refresh()
         dc = wx.ClientDC(self)
         gc = wx.GraphicsContext.Create(dc)
@@ -71,34 +72,55 @@ class windowPanel(wx.Panel):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
+    def update(self):
+        self.GetParent().graph.paint = True
+        self.GetParent().Refresh()
+        self.Refresh()
+
     def setWindowState(self, state):
         ''' state 0 = no windows will show
             state 1 = only selected window shows
             state 2 = all windows are showed'''
         self.windowState = state
-        self.Refresh()
+        self.update()
 
     def onEraseBackground(self, event):
         # Overridden to do nothing to prevent flicker
         pass
 
-    def msToPixel(self, ms):
-        freq = self.GetParent().eeg.frequency / 1000
-        reading = ms * freq
-        subS = int(self.GetParent().graph.subSampling)
-        incx = self.GetParent().graph.incx
-        return int((reading * incx) / subS)
+    def msToPixel(self, ms, msE):
+        leng = self.GetParent().graph.msShowing
+        return ((leng - (msE - ms)) * self.GetParent().graph.incx) / self.GetParent().graph.timeLapse
+
+    # checks if a window should be painted on screen
+    def toShow(self, msS, s, e, msE):
+        # checking from beginning to end of the window
+        ms = s
+        while ms <= e:
+            if msS <= ms <= msE:
+                return True
+            ms += 1
+        return False
 
     def drawWindow(self, window, gc, path, color, pen):
         # gc is graphic context, color is wx.Colour and pen a wx.Pen
         gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
         gc.SetPen(pen)
-        start = self.msToPixel(window.stimulus - window.TBE)
+        # let's check if we need to show them because of the zoom
+        s = window.stimulus - window.TBE
+        msS = self.GetParent().graph.strMs
+        msE = msS + self.GetParent().graph.msShowing
         e = window.stimulus + (window.length - window.TBE)
-        end = self.msToPixel(e)
-        w = end - start
-        h = self.Size[1]
-        path.AddRectangle(start, 0, w, h)
+        if self.toShow(msS, s, e, msE):
+            start = self.msToPixel(s, msE)
+            if start < 0:
+                start = 0
+            end = self.msToPixel(e, msE)
+            if end > self.GetParent().graph.w:
+                end = self.GetParent().graph.w
+            w = end - start
+            h = self.Size[1]
+            path.AddRectangle(start, 0, w, h)
 
     def drawWindows(self, gc):
         path = gc.CreatePath()
@@ -120,11 +142,10 @@ class windowPanel(wx.Panel):
 
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self, event=None):
-        print("pinto ventanas")
         dc = wx.PaintDC(self)
         gc = wx.GraphicsContext.Create(dc)
-        # draw the windows
         path = self.drawWindows(gc)
         gc.FillPath(path)
         gc.StrokePath(path)
+
 

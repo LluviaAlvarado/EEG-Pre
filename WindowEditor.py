@@ -53,6 +53,7 @@ class WindowEditor (wx.Frame):
 
     def loadingFinished(self, event):
         # return mouse to normal after load
+        event.GetEventObject().CurrentPage.Refresh()
         wx.CallLater(0, lambda: self.SetStatus("", 0))
 
     def SetStatus(self, st, mouse):
@@ -115,6 +116,7 @@ class EEGTab(wx.Panel):
     def __init__(self, p, e):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.eeg = e
+        self.eegGraph = None
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         # container of window information
         leftPnl = wx.Panel(self)
