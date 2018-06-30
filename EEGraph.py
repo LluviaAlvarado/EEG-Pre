@@ -1,11 +1,11 @@
 # imports
-
 from TransparentPanel import *
 from GraphPanel import *
 
+
 class EEGraph(wx.Panel):
-    '''this is a panel that displays
-    an EEG for visual examination'''
+    """this is a panel that displays
+    an EEG for visual examination"""
 
     def __init__(self, parent, eeg, selected):
         h = parent.GetParent().GetParent().Size[1]
@@ -21,7 +21,7 @@ class EEGraph(wx.Panel):
         baseSizer = wx.FlexGridSizer(2, 3, gap=(0, 0))
 
         # and to the right the eeg graph
-        w = self.Size[0] - 30
+        w = self.Size[0] - 65
         h = self.Size[1]
         self.graph = graphPanel(self, eeg, w, h)
         self.zoomP = zoomPanel(self, self.graph)
@@ -32,13 +32,12 @@ class EEGraph(wx.Panel):
 
         # left amplitud ruler side
         # creating a ruler for each channell
-        values = []
-        values.append(self.eeg.amUnits[0])
+        values = [self.eeg.amUnits[0]]
         half = (self.eeg.amUnits[0] - self.eeg.amUnits[1]) / 2
         values.append(self.eeg.amUnits[0] - half)
         values.append(self.eeg.amUnits[1])
         self.ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
-        self.channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER, self.eeg.channels)
+        self.channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER)
         baseSizer.Add(self.channelList, 0, wx.EXPAND, 0)
         baseSizer.Add(self.ampRuler, 0, wx.EXPAND, 0)
         baseSizer.Add(self.graph, 0, wx.EXPAND, 0)
@@ -61,7 +60,7 @@ class EEGraph(wx.Panel):
 
 class customList(wx.Panel):
     # List of channel labels
-    def __init__(self, parent, orientation, style, channels):
+    def __init__(self, parent, orientation, style):
         wx.Panel.__init__(self, parent, style=style, size=(30, parent.graph.Size[1]))
         self.eeg = parent.eeg
         baseSizer = wx.BoxSizer(orientation)
@@ -73,7 +72,7 @@ class customList(wx.Panel):
             channels = self.getChecked()
         self.DestroyChildren()
         if len(channels) > 0:
-            h = (self.Size[1]-5) / len(channels)
+            h = (self.Size[1] - 5) / len(channels)
             fontSize = int(h) - 3
             if h > 15:
                 fontSize = 10
@@ -95,36 +94,33 @@ class customList(wx.Panel):
             if ix < len(self.eeg.channels):
                 channels.append(self.eeg.channels[ix])
             else:
-                channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
+                channels.append(self.eeg.additionalData[ix - len(self.eeg.channels)])
         return channels
 
 
 class customRuler(wx.Panel):
-    '''this is a custom ruler where you can send the values
+    """this is a custom ruler where you can send the values
     you want to show instead of a normal count
     it also will add the zooming future for the eeg
-    values are sent in as minAmp and maxAmp'''
+    values are sent in as minAmp and maxAmp"""
 
     def __init__(self, parent, orientation, style, values, nCh, num):
+        self.lapse = values
+        self.font = wx.Font(5, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+                            wx.FONTWEIGHT_BOLD, False, 'Courier 10 Pitch')
         self.height = parent.graph.Size[1] - 3
         self.width = parent.graph.Size[0]
+        self.place = (self.width / 10)
         # Amplitude range
         self.values = values
+        self.graph = parent.graph
         self.eeg = parent.eeg
         # Number of channels
         self.nCh = nCh
         self.increment = 0
-
-
-
+        self.minTime = 0
+        self.maxTime = self.graph.msShowing + self.minTime
         self.numReads = num
-        self.t_r = self.eeg.duration / num
-        self.maxPile = []
-        self.minPile = []
-
-        self.max = 0
-        self.min = 0
-
         self.opc = 0
         self.zoom = False
         self.num = 0
@@ -132,10 +128,9 @@ class customRuler(wx.Panel):
         baseSizer = wx.BoxSizer(orientation)
         if orientation == wx.HORIZONTAL:
             self.opc = 1
-            wx.Panel.__init__(self, parent, style=style, size=(-1, 35))
-            self.makeTimeRuler(self.eeg.duration)
-            self.Ogmax = self.eeg.duration
-            self.Ogmin = 0
+            wx.Panel.__init__(self, parent, size=(self.width, 35),
+                              style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+            self.makeTimeRuler()
         else:
             self.opc = 2
             wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
@@ -143,91 +138,55 @@ class customRuler(wx.Panel):
 
         self.SetSizer(baseSizer)
 
-    def zoomH(self, s, e , n):
-        if n == 1:
-            self.Ogmax = self.t_r * e
-            self.Ogmin = self.t_r * s
+    def msToPixel(self, ms, msE):
+        length = self.graph.msShowing
+        return ((length - (msE - ms)) * self.graph.incx) / self.graph.timeLapse
 
-        self.max = self.t_r*e
-        self.min = self.t_r*s
-
-        self.increment = (self.max - self.min) / self.width
-
-        self.maxPile.append(self.max)
-        self.minPile.append(self.min)
-        self.zoom = True
-        self.Refresh()
-
-    def makeTimeRuler(self, values):
-        h = 0
-        self.font = wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                            wx.FONTWEIGHT_BOLD, False, 'Courier 10 Pitch')
-        self.lapse = values
-        self.place = (self.width / 10)
-
+    def makeTimeRuler(self):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-
-    def ChangeRange(self, v, nx, nm):
-        oldRange = (self.Size[0]-5) - 0
-        newRange = nx - nm
-        newV = (((v - 0) * newRange) / oldRange) + nm
-        return newV
 
     def OnPaint(self, e):
         dc = wx.PaintDC(self)
         dc.Clear()
-        channel = self.getChecked()
-        self.nCh = len(channel)
         dc.SetPen(wx.Pen('#000000'))
         dc.SetTextForeground('#000000')
         dc.SetFont(self.font)
         if self.opc == 1:
-            max = round(self.Ogmax, 2)
-            min = round(self.Ogmin, 2)
-            if self.zoom:
-                max = self.max
-                min = self.min
-
-            dc.DrawRectangle(0, 0, self.Size[0]-5, 30)
+            dc.DrawRectangle(0, 0, self.Size[0] - 4, 30)
             dc = wx.PaintDC(self)
-            dc.SetPen(wx.Pen('#000000'))
-            dc.SetTextForeground('#000000')
-            RM = 1
-            l = (self.Size[0]-5) / 90
-            u = 0
+
+            msS = self.graph.strMs
+            msE = msS + self.graph.msShowing
+            part = self.graph.msShowing / 100
             i = 0
-            while i < (self.Size[0]-5):
-                if (u % 10) == 0:
-                    dc.DrawLine(i + RM, 0, i + RM, 10)
-                    y = round(self.ChangeRange(i, max, min), 4)
-                    st = "s"
-                    if(y<2):
-                        st = "ms"
-                        y = y * 1000
-                        y = int(y)
+            RM = 0
+            while i < 101:
+                f = self.msToPixel((part * i) + msS, msE)
+                if (i % 10) == 0:
+                    y = int(part * i + msS)
                     w, h = dc.GetTextExtent(str(y))
-                    if(i==0): RM = w/2
-                    dc.DrawText(str(y), i + RM - w / 2, 11)
-                    dc.DrawText(st, i + RM + w / 2, 11)
-                    RM = 1
+                    if i == 0:
+                        RM = w / 2
+                        f = f + 1
+                    if i == 100:
+                        RM = w * -1
+                        f = f - 6
 
-                elif (u % 5) == 0:
-                    dc.DrawLine(i + RM, 0, i + RM, 8)
+                    dc.DrawLine(f, 0, f, 10)
+                    st = "ms"
+                    dc.DrawText(str(y), f + RM - w / 2, 11)
+                    dc.DrawText(st, f + RM + w / 2, 11)
+                    RM = 0
 
-                elif not (u % 1):
+                elif (i % 5) == 0:
+                    dc.DrawLine(f, 0, f, 8)
 
-                    dc.DrawLine(i + RM, 0, i + RM, 4)
-
-                u += 1
-                i += l
-            dc.DrawLine((self.Size[0]-5 - 2), 0, (self.Size[0]-5 - 2), 10)
-            if(max<2):
-                max = max * 1000
-                max = int(max)
-            w, h = dc.GetTextExtent(str(round(max,2)))
-            dc.DrawText(str(round(max, 2)), (self.Size[0]-5 - 2) - w, 11)
-
+                elif not (i % 1):
+                    dc.DrawLine(f, 0, f, 4)
+                i += 1
         else:
+            channel = self.getChecked()
+            self.nCh = len(channel)
             if self.nCh > 0:
                 h = self.height / self.nCh
                 if self.zoom:
@@ -250,58 +209,6 @@ class customRuler(wx.Panel):
         self.Refresh()
 
     def update(self):
-        self.maxPile = []
-        self.minPile = []
-        self.maxPile.append(self.Ogmax)
-        self.minPile.append(self.Ogmin)
-        self.max = self.maxPile[len(self.maxPile) - 1]
-        self.min = self.minPile[len(self.maxPile) - 1]
-        self.Refresh()
-
-    def zoomOut(self):
-
-        self.minPile.pop()
-        self.maxPile.pop()
-        self.max = self.maxPile[len(self.maxPile) - 1]
-        self.min = self.minPile[len(self.maxPile) - 1]
-        self.zoom = True
-        self.Refresh()
-
-    def redo(self):
-        self.Refresh()
-
-    def moveZom(self, s, e):
-        self.maxPile[len(self.minPile) - 1] = self.t_r*e
-        self.minPile[len(self.minPile) - 1] = self.t_r*s
-        self.max = self.maxPile[len(self.minPile) - 1]
-        self.min = self.minPile[len(self.minPile) - 1]
-        self.zoom = True
-        self.Refresh()
-
-
-    def moveZoom(self, dis):
-        d = 0
-        if dis < 0:
-            d = (dis * -1) * self.increment
-            if (self.minPile[len(self.minPile) - 1] - d) > 0:
-                self.minPile[len(self.minPile) - 1] -= d
-                self.maxPile[len(self.minPile) - 1] -= d
-            else:
-                self.minPile[len(self.minPile) - 1] -= self.minPile[len(self.minPile) - 1]
-                self.maxPile[len(self.minPile) - 1] -= self.minPile[len(self.minPile) - 1]
-        else:
-            d = dis * self.increment
-            if (self.maxPile[len(self.minPile) - 1] + d) < self.Ogmax:
-                self.minPile[len(self.minPile) - 1] += d
-                self.maxPile[len(self.minPile) - 1] += d
-            else:
-                r = self.Ogmax - self.maxPile[len(self.minPile) - 1]
-                self.minPile[len(self.minPile) - 1] += r
-                self.maxPile[len(self.minPile) - 1] = self.Ogmax
-
-        self.max = self.maxPile[len(self.minPile) - 1]
-        self.min = self.minPile[len(self.minPile) - 1]
-        self.zoom = True
         self.Refresh()
 
     def getChecked(self):
@@ -311,8 +218,5 @@ class customRuler(wx.Panel):
             if ix < len(self.eeg.channels):
                 channels.append(self.eeg.channels[ix])
             else:
-                channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
+                channels.append(self.eeg.additionalData[ix - len(self.eeg.channels)])
         return channels
-
-
-

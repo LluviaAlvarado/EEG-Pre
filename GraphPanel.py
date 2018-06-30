@@ -109,11 +109,10 @@ class graphPanel(wx.Panel):
             self.paint = True
             self.GetParent().Refresh()
             # changing channel labels
-            chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
-            chil[3].moveZom(self.strMs, self.endRead)
-            chil[4].zoomManager(len(ch))
-            chil[5].adjustment(ch)
+            self.GetParent().timeRuler.update()
+            self.GetParent().ampRuler.zoomManager(len(ch))
+            self.GetParent().channelList.adjustment(ch)
             self.strMove = self.endMove
 
     def setSamplingRate(self):
@@ -172,17 +171,15 @@ class graphPanel(wx.Panel):
             self.paint = True
             self.GetParent().Refresh()
             # changing channel labels
-            chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
-            chil[3].zoomOut()
-            chil[4].zoomManager(len(ch))
-            chil[5].adjustment(ch)
+            self.GetParent().timeRuler.update()
+            self.GetParent().ampRuler.zoomManager(len(ch))
+            self.GetParent().channelList.adjustment(ch)
         else:
-            chil = self.GetParent().GetChildren()
             ch = self.getViewChannels()
-            chil[3].update()
-            chil[4].zoomManager(len(ch))
-            chil[5].adjustment()
+            self.GetParent().timeRuler.update()
+            self.GetParent().ampRuler.zoomManager(len(ch))
+            self.GetParent().channelList.adjustment()
             self.resetZoom()
 
     def setZoom(self, start, end):
@@ -227,10 +224,9 @@ class graphPanel(wx.Panel):
         self.paint = True
         self.GetParent().Refresh()
         # changing channel labels
-        chil = self.GetParent().GetChildren()
         ch = self.getViewChannels()
-        chil[4].zoomManager(len(ch))
-        chil[5].adjustment(ch)
+        self.GetParent().ampRuler.zoomManager(len(ch))
+        self.GetParent().channelList.adjustment(ch)
 
     def getViewChannels(self):
         checked = self.getChecked()

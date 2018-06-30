@@ -189,8 +189,8 @@ class EEGTab(wx.Panel):
         self.electrodeList.SetCheckedItems(selected)
         self.eegGraph.changeElectrodes()
         ch = self.eegGraph.checkV()
-        self.eegGraph.GetSizer().GetChildren()[0].GetWindow().adjustment(ch)
-        self.eegGraph.GetSizer().GetChildren()[1].GetWindow().zoomManager(len(ch))
+        self.graph.channelList.adjustment(ch)
+        self.graph.ampRuler.zoomManager(len(ch))
         self.eeg.setSelected(self.electrodeList.GetCheckedItems())
         self.tabManager.GetPage(self.tabManager.GetSelection()).Refresh()
 
@@ -286,11 +286,9 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.graph.move = False
             self.graph.zoomP.zoom = False
             self.graph.graph.resetZoom()
+            self.graph.ampRuler.update()
+            self.graph.timeRuler.update()
             self.graph.channelList.adjustment()
-            self.graph.ampRuler.redo()
-            self.graph.GetSizer().GetChildren()[5].GetWindow().update()
-            # ups
-
         event.Skip()
 
 
