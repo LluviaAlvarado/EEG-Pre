@@ -72,15 +72,11 @@ class windowPanel(wx.Panel):
         self.windowTBE = 0
         self.windowLength = 0
         self.est = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(1, 2000))
-        self.beforeEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(2, 2000))
-        self.afterEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(2, 2000))
         self.fill = False
         self.fillPos = 0
         self.fillw = 0
         # Set the Color
         self.est.SetBackgroundColour((255, 0, 0))
-        self.beforeEst.SetBackgroundColour((150, 0, 0))
-        self.afterEst.SetBackgroundColour((150, 0, 0))
 
         # pointer to tab manager
         self.windows = parent.GetParent().GetParent().tabManager
@@ -181,10 +177,10 @@ class windowPanel(wx.Panel):
         msS = self.GetParent().graph.strMs
         msE = msS + self.GetParent().graph.msShowing
         posMs = self.pixelToMs(pos[0])
-        self.beforeEst.SetPosition((self.msToPixel(msS + posMs - self.windowTBE, msE), 0))
-        self.afterEst.SetPosition((self.msToPixel(msS + posMs + (self.windowLength - self.windowTBE), msE), 0))
-        self.fillPos = self.msToPixel(msS + posMs - self.windowTBE, msE)
-        self.fillw = self.afterEst.GetPosition()[0] - self.beforeEst.GetPosition()[0]
+        beforeEst = self.msToPixel(msS + posMs - self.windowTBE, msE)
+        afterEst = self.msToPixel(msS + posMs + (self.windowLength - self.windowTBE), msE)
+        self.fillPos = beforeEst
+        self.fillw = afterEst - beforeEst
         self.GetParent().Refresh()
         self.Refresh()
 
@@ -202,14 +198,11 @@ class windowPanel(wx.Panel):
     # shows the preview lines
     def show(self):
         self.est.Show()
-        self.beforeEst.Show()
-        self.afterEst.Show()
 
     # hides the preview lines
     def hide(self):
         self.est.Hide()
-        self.beforeEst.Hide()
-        self.afterEst.Hide()
+
 
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self, event=None):
