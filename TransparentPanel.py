@@ -67,6 +67,18 @@ class windowPanel(wx.Panel):
         # vars for windows
         # at the beginning we show all windows
         self.windowState = 2
+        # var for the creation of the new window
+        # The reason for using static text instead of onPaint to test the speed in difference
+        self.windowTBE = 0
+        self.windowLength = 0
+        self.est = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-1, -1), size=(1, 2000))
+        self.beforeEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-1, -1), size=(1, 2000))
+        self.afterEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-1, -1), size=(1, 2000))
+        # Set the Color
+        self.est.SetBackgroundColour((0, 0, 200))
+        self.beforeEst.SetBackgroundColour((0, 0, 100))
+        self.afterEst.SetBackgroundColour((0, 0, 100))
+
         # pointer to tab manager
         self.windows = parent.GetParent().GetParent().tabManager
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
@@ -88,10 +100,6 @@ class windowPanel(wx.Panel):
         # Overridden to do nothing to prevent flicker
         pass
 
-    def msToPixel(self, ms, msE):
-        leng = self.GetParent().graph.msShowing
-        return ((leng - (msE - ms)) * self.GetParent().graph.incx) / self.GetParent().graph.timeLapse
-
     # checks if a window should be painted on screen
     def toShow(self, msS, s, e, msE):
         # checking from beginning to end of the window
@@ -101,6 +109,10 @@ class windowPanel(wx.Panel):
                 return True
             ms += 1
         return False
+
+    def msToPixel(self, ms, msE):
+        length = self.GetParent().graph.msShowing
+        return ((length - (msE - ms)) * self.GetParent().graph.incx) / self.GetParent().graph.timeLapse
 
     def drawWindow(self, window, gc, path, color, pen):
         # gc is graphic context, color is wx.Colour and pen a wx.Pen
@@ -148,11 +160,40 @@ class windowPanel(wx.Panel):
                         self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 20), wx.GREY_PEN)
                     i += 1
 
+    def MovingMouse(self, pos):
+        pos = (pos[0], 0)
+        self.est.SetPosition(pos)
+        msS = self.GetParent().graph.strMs
+        msE = msS + self.GetParent().graph.msShowing
+        posMs = self.pixelToMs(pos[0])
+        self.beforeEst.SetPosition((self.msToPixel(msS + posMs - self.windowTBE, msE), 0))
+        self.afterEst.SetPosition((self.msToPixel(msS + posMs + (self.windowLength - self.windowTBE), msE), 0))
+        self.GetParent().Refresh()
+        self.Refresh()
+
+    def OnClickReleased(self, pos):
+        msS = self.GetParent().graph.strMs
+        ms = self.pixelToMs(self.est.GetPosition()[0]) + msS
+        self.GetParent().GetParent().GetParent().createNewWindow(ms, self.windowTBE)
+
+    def pixelToMs(self, apx):
+        ms = ((apx * self.GetParent().graph.timeLapse) / self.GetParent().graph.incx)
+        return int(ms)
+
+    # shows the preview lines
+    def show(self):
+        self.est.Show()
+        self.beforeEst.Show()
+        self.afterEst.Show()
+
+    # hides the preview lines
+    def hide(self):
+        self.est.Hide()
+        self.beforeEst.Hide()
+        self.afterEst.Hide()
+
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self, event=None):
         dc = wx.PaintDC(self)
         gc = wx.GraphicsContext.Create(dc)
         self.drawWindows(gc)
-
-
-

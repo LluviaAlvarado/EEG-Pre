@@ -5,7 +5,7 @@ import _pickle
 # Local Imports
 from CircleManager import *
 from Project import *
-
+from pathlib import Path
 
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
 
@@ -56,8 +56,6 @@ class BaseWindow(wx.Frame):
         # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(wx.ID_ABOUT)
-
-
         # Make the menu bar and add the two menus to it. The '&' defines
         # that the next letter is the "mnemonic" for the menu item. On the
         # platforms that support it those letters are underlined and can be
@@ -93,16 +91,17 @@ class BaseWindow(wx.Frame):
 
     def OnSave(self, event):
         """Save  project session"""
-        dlg = wx.FileDialog(
-            self, message="Guardar como",
-            defaultDir=self.currentDirectory,
-            defaultFile="", wildcard=wildcard, style=wx.FD_SAVE
-        )
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
+        dlg = wx.FileDialog(self, "Guardar como", self.currentDirectory, "", wildcard, \
+                            wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        result = dlg.ShowModal()
+        path = dlg.GetPath()
+        dlg.Destroy()
+        if result == wx.ID_OK:
             with open(path, 'wb') as output:
                 _pickle.dump(self.project, output, protocol=4)
-        dlg.Destroy()
+            return True
+        elif result == wx.ID_CANCEL:
+            return False
 
     def OnLoad(self, event):
         """Load project session"""

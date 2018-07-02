@@ -142,6 +142,7 @@ class customRuler(wx.Panel):
         length = self.graph.msShowing
         return ((length - (msE - ms)) * self.graph.incx) / self.graph.timeLapse
 
+
     def makeTimeRuler(self):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 

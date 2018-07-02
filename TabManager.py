@@ -91,7 +91,12 @@ class TabManager(aui.AuiNotebook):
         # delete on all eegs
         self.par.GetParent().GetParent().deleteWindow(event.Selection)
         # removing from eeg from project
-        self.par.eeg.removeWindow(event.Selection)
+        eegs = self.par.GetParent().GetParent().project.EEGS
+        length = len(eegs)
+        i = 0
+        while i < length:
+            eegs[i].removeWindow(event.Selection)
+            i += 1
         event.Veto()
 
     def renameWindows(self):
@@ -105,14 +110,16 @@ class TabManager(aui.AuiNotebook):
 class windowTab(wx.Panel):
 
     def __init__(self, p, w):
-        # calling sup init
+        # calling sup init1
         wx.Panel.__init__(self, p)
         self.SetBackgroundColour("#eff2f4")
         pageSizer = wx.BoxSizer(wx.VERTICAL)
         # the window we are working on
         self.window = p.par.eeg.windows[w]
+        # get windowThumb size
+        length = self.GetParent().Size[1] / 1.8
         # panel for the window thumb
-        self.windowThumb = WindowThumb(self, p.par.eeg, self.window, 200, 200)
+        self.windowThumb = WindowThumb(self, p.par.eeg, self.window, length, length)
         pageSizer.Add(self.windowThumb, 0, wx.CENTER | wx.ALL, 5)
         parameters = wx.Panel(self)
         paramSizer = wx.FlexGridSizer(4, 2, (5, 5))

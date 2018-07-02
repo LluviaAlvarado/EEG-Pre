@@ -5,6 +5,7 @@ import wx.lib.agw.buttonpanel
 # Local Imports
 from TabManager import *
 from EEGraph import *
+from WindowDialog import WindowDialog
 
 
 class WindowEditor (wx.Frame):
@@ -128,9 +129,6 @@ class EEGTab(wx.Panel):
         # panel for tab buttons
         tabBtnPanel = wx.Panel(leftPnl)
         tbpSizer = wx.BoxSizer(wx.HORIZONTAL)
-        newTab = wx.Button(tabBtnPanel, label="Nueva")
-        newTab.Bind(wx.EVT_BUTTON, self.createNewWindow)
-        tbpSizer.Add(newTab, 0, wx.EXPAND | wx.ALL, 5)
         tabBtnPanel.SetSizer(tbpSizer)
         leftSizer.Add(tabBtnPanel, 0, wx.EXPAND | wx.ALL, 5)
         # panel for electrode selector
@@ -175,10 +173,10 @@ class EEGTab(wx.Panel):
         self.SetSizer(baseContainer)
         self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
 
-    def createNewWindow(self, event):
+    def createNewWindow(self, e, l):
         # TODO fill window information correctly
         # creates a new window on every eeg
-        self.GetParent().GetParent().addWindow(500, 50)
+        self.GetParent().GetParent().addWindow(e, l)
 
     # redraws the eeg with the selected electrodes
     def updateElectrodes(self, event):
@@ -207,7 +205,8 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.ID_ZOOM = wx.NewId()
         self.ID_ZOOMOUT = wx.NewId()
         self.ID_MOVE = wx.NewId()
-        self.ID_VIEW =wx.NewId()
+        self.ID_VIEW = wx.NewId()
+        self.ID_NEWWIN = wx.NewId()
         self.graph = graph
         self.AddSpacer()
         self.buttons = []
@@ -243,10 +242,19 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.AddButton(self.btnMove)
         self.buttons.append(self.btnMove)
         self.Bind(wx.EVT_BUTTON, self.Move, self.btnMove)
+
+        self.btnNewwin = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_NEWWIN,
+                                                         wx.Bitmap("src/new_window.png", wx.BITMAP_TYPE_PNG), shortHelp='Nueva Ventana')
+        self.btnNewwin.SetKind(wx.ITEM_CHECK)
+        self.AddButton(self.btnNewwin)
+        self.buttons.append(self.btnNewwin)
+        self.Bind(wx.EVT_BUTTON, self.newWindow, self.btnNewwin)
+
         self.all_w = wx.Bitmap("src/all_windows.png", wx.BITMAP_TYPE_PNG)
         self.no_w = wx.Bitmap("src/no_windows.png", wx.BITMAP_TYPE_PNG)
         self.sel_w = wx.Bitmap("src/selected_window.png", wx.BITMAP_TYPE_PNG)
 
+        # button for change view
         self.btnView = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_VIEW,
                                                          self.all_w,
                                                          shortHelp='Todas las ventanas')
@@ -275,6 +283,10 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         for btn in self.buttons:
             if btn.GetId() != toggled:
                 btn.SetToggled(False)
+            if btn.GetId() == self.ID_NEWWIN and btn.GetToggled() == False:
+                self.graph.windowP.hide()
+
+
 
     def ZoomFit(self, event):
         if event.GetEventObject().GetToggled():
@@ -285,6 +297,8 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.unToggleOthers(self.ID_FIT)
             self.graph.graph.move = False
             self.graph.zoomP.zoom = False
+            self.graph.graph.newWin = False
+
             self.graph.graph.resetZoom()
             self.graph.ampRuler.update()
             self.graph.timeRuler.update()
@@ -298,6 +312,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.graph.SetCursor(myCursor)
         self.graph.graph.move = False
         self.graph.zoomP.zoom = False
+        self.graph.graph.newWin = False
         self.graph.graph.returnZoom()
         # untoggling others
         self.unToggleOthers(self.ID_ZOOMOUT)
@@ -310,6 +325,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             myCursor = wx.Cursor(wx.CURSOR_CROSS)
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = False
+            self.graph.graph.newWin = False
             self.graph.zoomP.zoom = True
             # untoggling others
             self.unToggleOthers(self.ID_ZOOM)
@@ -326,6 +342,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             myCursor = wx.Cursor(wx.CURSOR_SIZING)
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = True
+            self.graph.graph.newWin = False
             # untoggling others
             self.unToggleOthers(self.ID_MOVE)
         else:
@@ -351,3 +368,52 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.btnView.SetBitmap(self.no_w)
             self.graph.windowP.setWindowState(0)
             self.btnView.SetShortHelp("Ninguna ventana")
+
+    def newWindow(self, event):
+        if event.GetEventObject().GetToggled():
+            # Check for a window
+            dad = self.GetParent().GetParent().GetParent().GetParent()
+            if dad.project.windowTBE is None:
+                l, tbe = self.getWindowData()
+                dad.project.windowLength = l
+                dad.project.windowTBE = tbe
+
+            self.graph.windowP.windowLength = dad.project.windowLength
+            self.graph.windowP.windowTBE = dad.project.windowTBE
+            self.graph.windowP.show()
+
+            myCursor = wx.Cursor(wx.CURSOR_BULLSEYE)
+            self.graph.SetCursor(myCursor)
+            self.graph.graph.newWin = True
+            self.graph.zoomP.zoom = False
+            self.graph.graph.move = False
+            self.unToggleOthers(self.ID_NEWWIN)
+        else:
+            myCursor = wx.Cursor(wx.CURSOR_ARROW)
+            self.graph.SetCursor(myCursor)
+            self.graph.graph.newWin = False
+            self.graph.windowP.hide()
+            self.graph.windowP.update()
+
+        event.Skip()
+
+    def getWindowData(self):
+        # giving a default value in ms to avoid user errors
+        l = 50
+        tbe = 10
+        with WindowDialog(self, l, tbe) as dlg:
+            dlg.ShowModal()
+            # handle dialog being cancelled or ended by some other button
+            if dlg.length.GetValue() != "":
+                try:
+                    l = int(dlg.length.GetValue())
+                except:
+                    # it was not an integer
+                    dlg.length.SetValue(str(l))
+            if dlg.tbe.GetValue() != "":
+                try:
+                    tbe = int(dlg.tbe.GetValue())
+                except:
+                    # it was not an integer
+                    dlg.tbe.SetValue(str(tbe))
+        return l, tbe

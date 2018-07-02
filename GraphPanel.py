@@ -7,12 +7,16 @@ class graphPanel(wx.Panel):
         wx.Panel.__init__(self, parent, size=(w, h),
                           style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.paint = True
+        #var for repaint
+        self.mirror = wx.EmptyBitmap
         self.eeg = eeg
         self.timeLapse = 0
         self.incx = 1
         self.w = self.Size[0]
         # list of channels in screen and start position
         self.chanPosition = []
+        # vars for create a window
+        self.newWin = False
         # vars for zooming
         self.zoom = False
         self.strCh = 0
@@ -48,6 +52,9 @@ class graphPanel(wx.Panel):
                 self.strMove = self.endMove
         else:
             self.GetParent().zoomP.MovingMouse(event.GetPosition())
+        if self.newWin:
+            self.GetParent().windowP.MovingMouse(event.GetPosition())
+
 
     def OnClickReleased(self, event):
 
@@ -59,6 +66,10 @@ class graphPanel(wx.Panel):
                 self.endMove = None
         else:
             self.GetParent().zoomP.OnClickReleased(event.GetPosition())
+
+        if self.newWin:
+            self.GetParent().windowP.OnClickReleased(event.GetPosition())
+
 
     # moves the eeg when it is zoomed
     def moveGraph(self):
@@ -291,4 +302,8 @@ class graphPanel(wx.Panel):
                         i = self.msToReading(ms)
                         x += incx
                     y += hSpace
+            self.mirror=dc.GetAsBitmap()
             self.paint = False
+        else:
+            dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
+            dc.DrawBitmap(self.mirror, 0, 0)
