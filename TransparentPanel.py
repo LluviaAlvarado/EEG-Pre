@@ -71,11 +71,13 @@ class windowPanel(wx.Panel):
         # The reason for using static text instead of onPaint to test the speed in difference
         self.windowTBE = 0
         self.windowLength = 0
-        self.est = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-1, -1), size=(1, 2000))
+        self.est = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(1, 2000))
         self.beforeEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(2, 2000))
         self.afterEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(2, 2000))
+        self.fill = False
+        self.fillPos = 0
         # Set the Color
-        self.est.SetBackgroundColour((100, 0, 0))
+        self.est.SetBackgroundColour((255, 0, 0))
         self.beforeEst.SetBackgroundColour((150, 0, 0))
         self.afterEst.SetBackgroundColour((150, 0, 0))
 
@@ -114,7 +116,7 @@ class windowPanel(wx.Panel):
         length = self.GetParent().graph.msShowing
         return ((length - (msE - ms)) * self.GetParent().graph.incx) / self.GetParent().graph.timeLapse
 
-    def drawWindow(self, window, gc, path, color, pen):
+    def drawWindow(self, window, gc, path, color, pen , fill):
         # gc is graphic context, color is wx.Colour and pen a wx.Pen
         gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
         gc.SetPen(pen)
@@ -133,7 +135,10 @@ class windowPanel(wx.Panel):
                 end = self.GetParent().graph.w
             w = end - start
             h = self.Size[1]
-            path.AddRectangle(start, 0, w, h)
+            if fill:
+                path.AddRectangle(self.fillPos, 0, w, h)
+            else:
+                path.AddRectangle(start, 0, w, h)
             gc.FillPath(path)
             gc.StrokePath(path)
 
@@ -144,7 +149,7 @@ class windowPanel(wx.Panel):
             # the selected window will be showed in blue
             window = self.GetParent().eeg.windows[self.windows.GetSelection()]
             if gc and window is not None:
-                self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
+                self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN, False)
 
         elif self.windowState == 2:
             # all windows will show, it might get messy
@@ -155,10 +160,13 @@ class windowPanel(wx.Panel):
                 i = 0
                 for window in windows:
                     if i == selected:
-                        self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
+                        self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN, False)
                     else:
-                        self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 20), wx.GREY_PEN)
+                        self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 20), wx.GREY_PEN, False)
                     i += 1
+                if self.fill:
+                    self.drawWindow(window, gc, path, wx.Colour(255, 0, 0, 20), wx.RED_PEN , True)
+
 
     def MovingMouse(self, pos):
         pos = (pos[0], 0)
@@ -168,6 +176,7 @@ class windowPanel(wx.Panel):
         posMs = self.pixelToMs(pos[0])
         self.beforeEst.SetPosition((self.msToPixel(msS + posMs - self.windowTBE, msE), 0))
         self.afterEst.SetPosition((self.msToPixel(msS + posMs + (self.windowLength - self.windowTBE), msE), 0))
+        self.fillPos = self.msToPixel(msS + posMs - self.windowTBE, msE)
         self.GetParent().Refresh()
         self.Refresh()
 

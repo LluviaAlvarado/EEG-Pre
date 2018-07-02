@@ -299,6 +299,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.unToggleOthers(self.ID_FIT)
             self.graph.graph.move = False
             self.graph.zoomP.zoom = False
+            self.graph.windowP.fill = False
             self.graph.graph.newWin = False
 
             self.graph.graph.resetZoom()
@@ -313,6 +314,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.graph.SetCursor(myCursor)
         self.graph.graph.move = False
+        self.graph.windowP.fill = False
         self.graph.zoomP.zoom = False
         self.graph.graph.newWin = False
         self.graph.graph.returnZoom()
@@ -328,6 +330,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = False
             self.graph.graph.newWin = False
+            self.graph.windowP.fill = False
             self.graph.zoomP.zoom = True
             # untoggling others
             self.unToggleOthers(self.ID_ZOOM)
@@ -345,6 +348,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = True
             self.graph.graph.newWin = False
+            self.graph.windowP.fill = False
             # untoggling others
             self.unToggleOthers(self.ID_MOVE)
         else:
@@ -387,6 +391,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             myCursor = wx.Cursor(wx.CURSOR_BULLSEYE)
             self.graph.SetCursor(myCursor)
             self.graph.graph.newWin = True
+            self.graph.windowP.fill = True
             self.graph.zoomP.zoom = False
             self.graph.graph.move = False
             self.unToggleOthers(self.ID_NEWWIN)
@@ -394,6 +399,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             myCursor = wx.Cursor(wx.CURSOR_ARROW)
             self.graph.SetCursor(myCursor)
             self.graph.graph.newWin = False
+            self.graph.windowP.fill = False
             self.graph.windowP.hide()
             self.graph.windowP.update()
 
