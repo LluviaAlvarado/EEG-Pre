@@ -72,12 +72,12 @@ class windowPanel(wx.Panel):
         self.windowTBE = 0
         self.windowLength = 0
         self.est = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-1, -1), size=(1, 2000))
-        self.beforeEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-1, -1), size=(1, 2000))
-        self.afterEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-1, -1), size=(1, 2000))
+        self.beforeEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(2, 2000))
+        self.afterEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(2, 2000))
         # Set the Color
-        self.est.SetBackgroundColour((0, 0, 200))
-        self.beforeEst.SetBackgroundColour((0, 0, 100))
-        self.afterEst.SetBackgroundColour((0, 0, 100))
+        self.est.SetBackgroundColour((100, 0, 0))
+        self.beforeEst.SetBackgroundColour((150, 0, 0))
+        self.afterEst.SetBackgroundColour((150, 0, 0))
 
         # pointer to tab manager
         self.windows = parent.GetParent().GetParent().tabManager
@@ -175,6 +175,8 @@ class windowPanel(wx.Panel):
         msS = self.GetParent().graph.strMs
         ms = self.pixelToMs(self.est.GetPosition()[0]) + msS
         self.GetParent().GetParent().GetParent().createNewWindow(ms, self.windowTBE)
+        l = len(self.GetParent().GetParent().GetParent().tabManager.GetChildren())-4
+        self.GetParent().GetParent().GetParent().tabManager.SetSelection(l)
 
     def pixelToMs(self, apx):
         ms = ((apx * self.GetParent().graph.timeLapse) / self.GetParent().graph.incx)

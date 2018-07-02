@@ -123,6 +123,7 @@ class EEGTab(wx.Panel):
         tabLabel = wx.StaticText(leftPnl, label="Ventanas:")
         project = self.GetParent().GetParent().project
         self.tabManager = TabManager(leftPnl, self, project.windowLength)
+
         leftSizer = wx.BoxSizer(wx.VERTICAL)
         leftSizer.Add(tabLabel, 0, wx.CENTER, 5)
         leftSizer.Add(self.tabManager, 0, wx.EXPAND | wx.ALL, 5)
@@ -172,6 +173,7 @@ class EEGTab(wx.Panel):
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(baseContainer)
         self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
+
 
     def createNewWindow(self, e, l):
         # TODO fill window information correctly
