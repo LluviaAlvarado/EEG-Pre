@@ -91,6 +91,7 @@ class TabManager(aui.AuiNotebook):
         # delete on all eegs
         self.par.GetParent().GetParent().deleteWindow(event.Selection)
         # removing from eeg from project
+        # what
         eegs = self.par.GetParent().GetParent().project.EEGS
         length = len(eegs)
         i = 0
