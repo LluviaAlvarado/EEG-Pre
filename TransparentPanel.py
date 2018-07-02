@@ -76,6 +76,7 @@ class windowPanel(wx.Panel):
         self.afterEst = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(-3, -1), size=(2, 2000))
         self.fill = False
         self.fillPos = 0
+        self.fillw = 0
         # Set the Color
         self.est.SetBackgroundColour((255, 0, 0))
         self.beforeEst.SetBackgroundColour((150, 0, 0))
@@ -125,7 +126,13 @@ class windowPanel(wx.Panel):
         msS = self.GetParent().graph.strMs
         msE = msS + self.GetParent().graph.msShowing
         e = window.stimulus + (window.length - window.TBE)
-        if self.toShow(msS, s, e, msE):
+        if fill:
+            path = gc.CreatePath()
+            path.AddRectangle(self.fillPos, 0, self.fillw, 2000)
+            gc.FillPath(path)
+            gc.StrokePath(path)
+
+        elif self.toShow(msS, s, e, msE):
             path = gc.CreatePath()
             start = self.msToPixel(s, msE)
             if start < 0:
@@ -135,12 +142,12 @@ class windowPanel(wx.Panel):
                 end = self.GetParent().graph.w
             w = end - start
             h = self.Size[1]
-            if fill:
-                path.AddRectangle(self.fillPos, 0, w, h)
-            else:
-                path.AddRectangle(start, 0, w, h)
+            path.AddRectangle(start, 0, w, h)
             gc.FillPath(path)
             gc.StrokePath(path)
+
+
+
 
     def drawWindows(self, gc):
         path = None
@@ -177,6 +184,7 @@ class windowPanel(wx.Panel):
         self.beforeEst.SetPosition((self.msToPixel(msS + posMs - self.windowTBE, msE), 0))
         self.afterEst.SetPosition((self.msToPixel(msS + posMs + (self.windowLength - self.windowTBE), msE), 0))
         self.fillPos = self.msToPixel(msS + posMs - self.windowTBE, msE)
+        self.fillw = self.afterEst.GetPosition()[0] - self.beforeEst.GetPosition()[0]
         self.GetParent().Refresh()
         self.Refresh()
 
