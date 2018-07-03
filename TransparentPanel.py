@@ -39,8 +39,7 @@ class zoomPanel(wx.Panel):
 
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self):
-        self.GetParent().graph.paint = True
-        self.GetParent().Refresh()
+        # self.GetParent().graph.paint = True
         dc = wx.ClientDC(self)
         gc = wx.GraphicsContext.Create(dc)
         if self.zoom:
@@ -58,6 +57,7 @@ class zoomPanel(wx.Panel):
                 path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
                 gc.FillPath(path)
                 gc.StrokePath(path)
+            self.GetParent().Refresh()
 
 
 class windowPanel(wx.Panel):
@@ -75,6 +75,8 @@ class windowPanel(wx.Panel):
         self.fill = False
         self.fillPos = 0
         self.fillw = 0
+        self.mirror = wx.EmptyBitmap
+
         # Set the Color
         self.est.SetBackgroundColour((255, 0, 0))
 
@@ -93,7 +95,9 @@ class windowPanel(wx.Panel):
             state 1 = only selected window shows
             state 2 = all windows are showed'''
         self.windowState = state
-        self.update()
+        #self.update()
+        self.GetParent().Refresh()
+        self.Refresh()
 
     def onEraseBackground(self, event):
         # Overridden to do nothing to prevent flicker
@@ -113,7 +117,7 @@ class windowPanel(wx.Panel):
         length = self.GetParent().graph.msShowing
         return ((length - (msE - ms)) * self.GetParent().graph.incx) / self.GetParent().graph.timeLapse
 
-    def drawWindow(self, window, gc, path, color, pen , fill):
+    def drawWindow(self, window, gc, path, color, pen):
         # gc is graphic context, color is wx.Colour and pen a wx.Pen
         gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
         gc.SetPen(pen)
@@ -122,13 +126,7 @@ class windowPanel(wx.Panel):
         msS = self.GetParent().graph.strMs
         msE = msS + self.GetParent().graph.msShowing
         e = window.stimulus + (window.length - window.TBE)
-        if fill:
-            path = gc.CreatePath()
-            path.AddRectangle(self.fillPos, 0, self.fillw, 2000)
-            gc.FillPath(path)
-            gc.StrokePath(path)
-
-        elif self.toShow(msS, s, e, msE):
+        if self.toShow(msS, s, e, msE):
             path = gc.CreatePath()
             start = self.msToPixel(s, msE)
             if start < 0:
@@ -142,7 +140,15 @@ class windowPanel(wx.Panel):
             gc.FillPath(path)
             gc.StrokePath(path)
 
-
+    def drawNewWindow(self, gc, color, pen):
+        # gc is graphic context, color is wx.Colour and pen a wx.Pen
+        gc.SetBrush(wx.Brush(color, style=wx.BRUSHSTYLE_SOLID))
+        gc.SetPen(pen)
+        # let's check if we need to show them because of the zoom
+        path = gc.CreatePath()
+        path.AddRectangle(self.fillPos, 0, self.fillw, 2000)
+        gc.FillPath(path)
+        gc.StrokePath(path)
 
 
     def drawWindows(self, gc):
@@ -152,7 +158,7 @@ class windowPanel(wx.Panel):
             # the selected window will be showed in blue
             window = self.GetParent().eeg.windows[self.windows.GetSelection()]
             if gc and window is not None:
-                self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN, False)
+                self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
 
         elif self.windowState == 2:
             # all windows will show, it might get messy
@@ -163,12 +169,10 @@ class windowPanel(wx.Panel):
                 i = 0
                 for window in windows:
                     if i == selected:
-                        self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN, False)
+                        self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
                     else:
-                        self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 20), wx.GREY_PEN, False)
+                        self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 20), wx.GREY_PEN)
                     i += 1
-                if self.fill:
-                    self.drawWindow(window, gc, path, wx.Colour(255, 0, 0, 20), wx.RED_PEN , True)
 
 
     def MovingMouse(self, pos):
@@ -209,3 +213,6 @@ class windowPanel(wx.Panel):
         dc = wx.PaintDC(self)
         gc = wx.GraphicsContext.Create(dc)
         self.drawWindows(gc)
+        if self.fill:
+            self.drawNewWindow(gc, wx.Colour(255, 0, 0, 20), wx.RED_PEN)
+
