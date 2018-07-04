@@ -189,7 +189,7 @@ class windowPanel(wx.Panel):
 
     def OnClickReleased(self, pos):
         msS = self.GetParent().graph.strMs
-        ms = self.pixelToMs(self.est.GetPosition()[0]) + msS
+        ms = int(self.pixelToMs(self.est.GetPosition()[0]) + msS)
         self.GetParent().GetParent().GetParent().createNewWindow(ms, self.windowTBE)
         l = len(self.GetParent().GetParent().GetParent().tabManager.GetChildren())-4
         self.GetParent().GetParent().GetParent().tabManager.SetSelection(l)

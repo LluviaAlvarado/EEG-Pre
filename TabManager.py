@@ -110,22 +110,23 @@ class windowTab(wx.Panel):
         # the window we are working on
         self.window = p.par.eeg.windows[w]
         # get windowThumb size
-        length = self.GetParent().Size[1] / 1.8
+        length = self.GetParent().Size[1] / 2
         # panel for the window thumb
         self.windowThumb = WindowThumb(self, p.par.eeg, self.window, length, length)
         pageSizer.Add(self.windowThumb, 0, wx.CENTER | wx.ALL, 5)
         parameters = wx.Panel(self)
-        paramSizer = wx.FlexGridSizer(4, 2, (5, 5))
+        paramSizer = wx.FlexGridSizer(5, 2, (5, 5))
         self._start = self.window.stimulus - self.window.TBE
         self._l = self.window.length
         self._end = self._start + self._l
-        self.stimulus = self.window.stimulus
+        self._stimulus = self.window.stimulus
         self._tbe = self.window.TBE
         # Data to show of the window
         # Time Before Estimulus (TBE)
         TBELabel = wx.StaticText(parameters, label="TAE (ms):")
         lthLabel = wx.StaticText(parameters, label="Longitud (ms):")
         strLabel = wx.StaticText(parameters, label="Inicio (ms):")
+        stmLabel = wx.StaticText(parameters, label="Estímulo (ms):")
         endLabel = wx.StaticText(parameters, label="Fin (ms):")
         self.tbe = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
         self.tbe.SetValue(str(self._tbe))
@@ -133,6 +134,8 @@ class windowTab(wx.Panel):
         self.length.SetValue(str(self._l))
         self.start = wx.TextCtrl(parameters, style=wx.TE_READONLY)
         self.start.SetValue(str(self._start))
+        self.stm = wx.TextCtrl(parameters, style=wx.TE_READONLY)
+        self.stm.SetValue(str(self._stimulus))
         self.end = wx.TextCtrl(parameters, style=wx.TE_READONLY)
         self.end.SetValue(str(self._end))
         # binding for changes by user
@@ -140,7 +143,8 @@ class windowTab(wx.Panel):
         self.length.Bind(wx.EVT_TEXT_ENTER, self.changeLength)
         paramSizer.AddMany(
             [(TBELabel, 1, wx.EXPAND), (self.tbe, 1, wx.EXPAND), lthLabel, (self.length, 1, wx.EXPAND),
-             strLabel, (self.start, 1, wx.EXPAND), endLabel, (self.end, 1, wx.EXPAND)])
+             strLabel, (self.start, 1, wx.EXPAND), stmLabel, (self.stm, 1, wx.EXPAND),
+             endLabel, (self.end, 1, wx.EXPAND)])
         parameters.SetSizer(paramSizer)
         pageSizer.Add(parameters, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(pageSizer)
@@ -181,7 +185,7 @@ class windowTab(wx.Panel):
         self._end = int(end)
         self.end.SetValue(str(self._end))
         # now we can change the TBE
-        start = self.stimulus - tbe
+        start = self._stimulus - tbe
         self._tbe = tbe
         self._start = int(start)
         self.start.SetValue(str(self._start))
@@ -206,12 +210,12 @@ class windowTab(wx.Panel):
             return
         # modify the other parameters if valid
         tbe = float(self.tbe.GetValue())
-        start = self.stimulus - tbe
+        start = self._stimulus - tbe
         end = start + self._l
         # valid start
-        if start <= self.stimulus and start >= 0:
+        if start <= self._stimulus and start >= 0:
             # valid end
-            if end >= self.stimulus and end <= duration:
+            if end >= self._stimulus and end <= duration:
                 self.updateStatic(self._l, tbe)
         # return to valid TBE to make sure
         self.tbe.SetValue(str(self._tbe))
