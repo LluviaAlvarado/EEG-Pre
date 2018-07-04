@@ -112,13 +112,10 @@ class FilesWindow(wx.Frame):
         matrix = []
         with open(path, newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            changed = False
             for row in reader:
                 matrix.append(row)
-                # check if equal amount of columns
-                if row[len(row)-1] == "":
-                    changed = True
-            if changed or (len(matrix) != len(self.GetParent().project.EEGS)):
+            if (len(matrix) != len(self.GetParent().project.EEGS)):
+                # this csv does not match with the loaded files
                 return []
         return matrix
 

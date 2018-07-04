@@ -39,8 +39,10 @@ class EEGData:
     # adds windows loaded by a csv
     def addMultipleWindows(self, windows, l, tbe):
         for st in windows:
-            window = WindowEEG(int(st), int(l), int(tbe))
-            self.windows.append(window)
+            # avoid white space
+            if st != '':
+                window = WindowEEG(int(st), int(l), int(tbe))
+                self.windows.append(window)
 
     def removeWindow(self, i):
         self.windows.remove(self.windows[i])

@@ -7,7 +7,6 @@ from TabManager import *
 from EEGraph import *
 from WindowDialog import WindowDialog
 
-
 class WindowEditor (wx.Frame):
     title = "Edición de Ventanas"
     def __init__(self, parent):
@@ -84,26 +83,20 @@ class WindowEditor (wx.Frame):
             i += 1
         self.eegTabs.SetSelection(currentSelection)
 
-    # since each eeg must have the same windows
     def addWindow(self, st, tbe):
-        i = 0
-        # to reset selection since notebook changes it with this
-        currentSelection = self.eegTabs.GetSelection()
-        while i < self.eegTabs.GetPageCount():
-            self.eegTabs.GetPage(i).tabManager.addWindow(st, self.project.windowLength, tbe)
-            i += 1
-        self.eegTabs.SetSelection(currentSelection)
+        currentTab = self.eegTabs.GetPage(self.eegTabs.GetSelection())
+        currentTab.tabManager.addWindow(st, self.project.windowLength, tbe)
 
-    # since each eeg must have the same windows
-    def deleteWindow(self, index):
+    def updateDataAllWindows(self, tbe, l):
         i = 0
-        # to reset selection since notebook changes it with this
-        currentSelection = self.eegTabs.GetSelection()
         while i < self.eegTabs.GetPageCount():
-            self.eegTabs.GetPage(i).tabManager.DeletePage(index)
-            self.eegTabs.GetPage(i).tabManager.renameWindows()
+            tab = self.eegTabs.GetPage(i)
+            tab.tabManager.updateAll(l, tbe)
             i += 1
-        self.eegTabs.SetSelection(currentSelection)
+        # update on project
+        self.GetParent().GetParent().project.updateWindowInfo(l, tbe)
+        # refresh graph
+        self.eegTabs.GetPage(self.eegTabs.GetSelection()).eegGraph.Refresh()
 
     def onClose(self, event):
         self.GetParent().onWEClose()
@@ -176,7 +169,6 @@ class EEGTab(wx.Panel):
 
 
     def createNewWindow(self, e, l):
-        # TODO fill window information correctly
         # creates a new window on every eeg
         self.GetParent().GetParent().addWindow(e, l)
 
@@ -277,7 +269,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         r1.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
         r2.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
         r3.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-
         self.AddSpacer()
         self.DoLayout()
 
@@ -404,7 +395,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.windowP.update()
 
         event.Skip()
-
 
     def getWindowData(self):
         # giving a default value in ms to avoid user errors

@@ -14,6 +14,10 @@ class Project:
         # [1] the path of the csv
         self.windowCSV = None
 
+    def updateWindowInfo(self, l, tbe):
+        self.windowLength = l
+        self.windowTBE = tbe
+
     def reset(self):
         self.EEGS = []
         self.frequency = None

@@ -137,8 +137,10 @@ class windowPanel(wx.Panel):
             w = end - start
             h = self.Size[1]
             path.AddRectangle(start, 0, w, h)
-            gc.FillPath(path)
-            gc.StrokePath(path)
+            #drawing stimulus
+            sx = self.msToPixel(window.stimulus, msE)
+            gc.StrokeLine(sx, 0, sx, h)
+            gc.DrawPath(path)
 
     def drawNewWindow(self, gc, color, pen):
         # gc is graphic context, color is wx.Colour and pen a wx.Pen
@@ -147,9 +149,7 @@ class windowPanel(wx.Panel):
         # let's check if we need to show them because of the zoom
         path = gc.CreatePath()
         path.AddRectangle(self.fillPos, 0, self.fillw, 2000)
-        gc.FillPath(path)
-        gc.StrokePath(path)
-
+        gc.DrawPath(path)
 
     def drawWindows(self, gc):
         path = None
@@ -171,9 +171,8 @@ class windowPanel(wx.Panel):
                     if i == selected:
                         self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
                     else:
-                        self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 20), wx.GREY_PEN)
+                        self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 40), wx.GREY_PEN)
                     i += 1
-
 
     def MovingMouse(self, pos):
         pos = (pos[0], 0)

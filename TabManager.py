@@ -1,6 +1,7 @@
 # Imports
 import wx
 import wx.aui as aui
+import wx.lib.dialogs as DL
 
 # Local imports
 from WindowEEG import *
@@ -25,7 +26,7 @@ class TabManager(aui.AuiNotebook):
         # bind when window is changed to update window showed on graph
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.changeWindow)
         # bind when a window is deleted
-        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.deleteWindow)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.deleteWindow)
         # filling windows if exist
         self.fillTabs()
 
@@ -68,37 +69,28 @@ class TabManager(aui.AuiNotebook):
         for tab in self:
             tab.length.SetValue(str(l))
             tab.end.SetValue(str(float(tab.start.GetValue()) + l))
-            # changing marker pos to middle of new values if not between them
-            if tab._marker > tab._end or tab._marker < tab._start:
-                half = round(tab._start + (l / 2), 2)
-                tab.marker.SetValue(str(half))
-                tab.SetSliderValue(half)
 
     # this is called on new button
-    def addWindow(self, est, len, tbe):
+    def addWindow(self, est, leng, tbe):
         if self.GetPageCount() == 1 and self.GetPageText(0) == "":
             # there only was the info tab so remove it
             self.DeletePage(0)
         # adding to eeg from project
-        window = WindowEEG(est, len, tbe)
+        window = WindowEEG(est, leng, tbe)
         self.par.eeg.addWindow(window)
         page = windowTab(self, self.GetPageCount())
         self.AddPage(page, str(self.GetPageCount()+1))
 
+    # to update length and tbe since it is the same to all windows
+    def updateAll(self, l, tbe):
+        for window in self:
+            window.updateStatic(l, tbe)
 
     # called on delete button delete selected tab
     def deleteWindow(self, event):
-        # delete on all eegs
-        self.par.GetParent().GetParent().deleteWindow(event.Selection)
-        # removing from eeg from project
-        # what ???
-        eegs = self.par.GetParent().GetParent().project.EEGS
-        length = len(eegs)
-        i = 0
-        while i < length:
-            eegs[i].removeWindow(event.Selection)
-            i += 1
-        event.Veto()
+        # removing the window from eeg
+        self.par.eeg.removeWindow(event.Selection)
+        self.renameWindows()
 
     def renameWindows(self):
         if self.GetPageCount() == 0:
@@ -137,14 +129,15 @@ class windowTab(wx.Panel):
         endLabel = wx.StaticText(parameters, label="Fin (ms):")
         self.tbe = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER)
         self.tbe.SetValue(str(self._tbe))
-        self.length = wx.TextCtrl(parameters, style=wx.TE_READONLY, name="length")
+        self.length = wx.TextCtrl(parameters, style=wx.TE_PROCESS_ENTER, name="length")
         self.length.SetValue(str(self._l))
         self.start = wx.TextCtrl(parameters, style=wx.TE_READONLY)
         self.start.SetValue(str(self._start))
         self.end = wx.TextCtrl(parameters, style=wx.TE_READONLY)
         self.end.SetValue(str(self._end))
-        # binding for changes by user on the TBE
+        # binding for changes by user
         self.tbe.Bind(wx.EVT_TEXT_ENTER, self.changeTBE)
+        self.length.Bind(wx.EVT_TEXT_ENTER, self.changeLength)
         paramSizer.AddMany(
             [(TBELabel, 1, wx.EXPAND), (self.tbe, 1, wx.EXPAND), lthLabel, (self.length, 1, wx.EXPAND),
              strLabel, (self.start, 1, wx.EXPAND), endLabel, (self.end, 1, wx.EXPAND)])
@@ -152,11 +145,53 @@ class windowTab(wx.Panel):
         pageSizer.Add(parameters, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(pageSizer)
 
+    def checkLengthOnAll(self, nL):
+        if nL > 0:
+            eegs = self.GetParent().par.GetParent().GetParent().eegTabs
+            duration = self.toMilis(self.GetParent().par.eeg.duration)
+            i = 0
+            while i < eegs.GetPageCount():
+                tab = eegs.GetPage(i)
+                for tab in tab.tabManager:
+                    if tab._start + nL > duration:
+                        # this length cant apply to all windows
+                        message = "La longitud excede la duración del eeg."
+                        DL.alertDialog(parent=None, message=message, title='¡Error!')
+                        return False
+                i += 1
+            return True
+        return False
+
+    def changeLength(self, event):
+        try:
+            # make sure it is a valid value
+            if not self.checkLengthOnAll(int(self.length.GetValue())):
+                self.length.SetValue(str(self._l))
+        except:
+            # not a numeric number return to last value and finish
+            self.length.SetValue(str(self._l))
+            return
+        # modify the other parameters on all windows
+        self.GetParent().par.GetParent().GetParent().updateDataAllWindows(self._tbe, int(self.length.GetValue()))
+
+    def updateStatic(self, l, tbe):
+        end = self._start + l
+        self._l = l
+        self.length.SetValue(str(self._l))
+        self._end = int(end)
+        self.end.SetValue(str(self._end))
+        # now we can change the TBE
+        start = self.stimulus - tbe
+        self._tbe = tbe
+        self._start = int(start)
+        self.start.SetValue(str(self._start))
+        self.window.modify(self._tbe, self._l)
+        # refresh window graph
+        self.windowThumb.setDelimiters(self.window)
+        self.windowThumb.Refresh()
+
     def toMilis(self, seconds):
         return seconds * 1000
-
-    def toSeconds(self, milis):
-        return milis / 1000
 
     def changeTBE(self, event):
         duration = self.toMilis(self.GetParent().par.eeg.duration)
@@ -177,17 +212,7 @@ class windowTab(wx.Panel):
         if start <= self.stimulus and start >= 0:
             # valid end
             if end >= self.stimulus and end <= duration:
-                # now we can change the TBE
-                self._tbe = int(tbe)
-                self._start = int(start)
-                self.start.SetValue(str(self._start))
-                self._end = int(end)
-                self.end.SetValue(str(self._end))
-                # modify window data
-                self.window.modifyTBE(self._tbe)
-                # refresh window graph
-                self.windowThumb.setDelimiters(self.window)
-                self.windowThumb.Refresh()
+                self.updateStatic(self._l, tbe)
         # return to valid TBE to make sure
         self.tbe.SetValue(str(self._tbe))
 
