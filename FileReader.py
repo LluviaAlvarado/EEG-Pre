@@ -45,7 +45,7 @@ class FileReader:
                                     "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
                                     style=wx.YES_NO | wx.CENTRE)
                 if msg.ShowModal() == wx.ID_NO:
-                    return # we dont to anything
+                    return # we don't to anything
                 else:
                     # deleting the prev file
                     os.remove(name)

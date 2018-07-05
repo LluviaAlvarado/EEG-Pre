@@ -22,9 +22,9 @@ class EEGData:
         self.amUnits = [np.amax(self.channelMatrix), np.amin(self.channelMatrix)]
         self.additionalData = []
         self.channels = []
+        self.selectedCh = []
         self.fillChannels(labels)
         self. windows = []
-        self.selectedCh = []
 
     def setSelected(self, sel):
         self.selectedCh = sel
@@ -83,6 +83,7 @@ class EEGData:
         else:
             channel = Channel(label, ch)
             self.channels.append(channel)
+            self.selectedCh.append(self.i)
         self.i += 1
 
     def fillChannels(self, labels):
