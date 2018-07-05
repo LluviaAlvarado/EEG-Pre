@@ -1,5 +1,5 @@
 '''
-FileReader can read the next EEG formats:
+FileReader can read and create the next EEG formats:
 .mat
 .gdf/.edf
 .acq
@@ -7,7 +7,7 @@ It returns a EEGData object.
 '''
 # lib imports
 import os
-
+import wx
 import bioread
 import h5py
 import mne.io as mne
@@ -29,22 +29,59 @@ class FileReader:
             print("The file could not be opened.")
         elif t == 1:
             print("File not supported.")
+        elif t == 2:
+            print("The file could not be created.")
         else:
             print("An Unknown error has occurred")
         self.__error = True
 
+    def writeFile(self, eeg, project, path):
+        try:
+            name = path + "\\" + eeg.name + "_" + project + ".edf"
+            if os.path.isfile(name):
+                # it already exists
+                f = eeg.name + "_" + project + ".edf"
+                msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
+                                    "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
+                                    style=wx.YES_NO | wx.CENTRE)
+                if msg.ShowModal() == wx.ID_NO:
+                    return # we dont to anything
+                else:
+                    # deleting the prev file
+                    os.remove(name)
+            file = pyedflib.EdfWriter(name, len(eeg.selectedCh))
+            labels = eeg.getLabels()
+            samples = []
+            j = 0
+            for i in eeg.selectedCh:
+                chanInfo = {u'label': labels[i], u'dimension': 'mV', u'sample_rate': int(eeg.frequency),
+                            u'physical_max': float(eeg.amUnits[0]), u'physical_min': float(eeg.amUnits[1]),
+                            u'digital_max': int(eeg.amUnits[0]), u'digital_min': int(eeg.amUnits[1]),
+                            u'prefilter': 'pre1', u'transducer': 'trans1'}
+                file.setSignalHeader(j, chanInfo)
+                ch = eeg.getChannel(i)
+                samples.append(ch.readings)
+                j += 1
+            # needs to be in microseconds
+            duration = int(eeg.duration * 100000)
+            file.setDatarecordDuration(duration)
+            file.writeSamples(samples)
+            file.close()
+        except:
+            self.setError(2)
+
     def readFile(self, fileAddress):
-        #restarting the error
+        # restarting the error
         self.__error = False
         try:
-            #opening the eeg file
+            # opening the eeg file
             eegFile = open(fileAddress, 'r')
         except:
             self.setError(0)
             return None
-        #extracting basic data of the eeg file
+        # extracting basic data of the eeg file
         fileName, fileExt = os.path.splitext(fileAddress)
-        #reading the important data depending on the extension
+        # reading the important data depending on the extension
         if fileExt == ".mat":
             eeg = self.readMAT(fileAddress)
         elif fileExt == ".edf":
@@ -59,7 +96,6 @@ class FileReader:
         return eeg
 
     def readMAT(self, fileAddress):
-        #TODO .mat is gay
         new = False
         try:
             matfile = sio.loadmat(fileAddress)
@@ -77,7 +113,7 @@ class FileReader:
             data = channelinfo.items()
             print(sio.whosmat(fileAddress))
         return None
-        #return EEGData(sData, channels, units, filtr, add)
+        # return EEGData(sData, channels, units, filtr, add)
 
     def read_EDF(self, fileAddress):
         try:
@@ -88,11 +124,11 @@ class FileReader:
             for i in np.arange(n):
                 signals[i, :] = _dfFile.readSignal(i)
         except:
-            self.setError(2)
+            self.setError(3)
             return None
-        #getting how many samples per second
+        # getting how many samples per second
         frecuency = signals.shape[1]/_dfFile.datarecord_duration
-        #getting if the signals where prefiltered
+        # getting if the signals where prefiltered
         try:
             filtr = _dfFile.getPrefilter()
         except:
@@ -110,7 +146,7 @@ class FileReader:
             for i in np.arange(n):
                 signals[i] = d[i]
         except:
-            self.setError(2)
+            self.setError(3)
             return None
         #getting how many samples per second
         frecuency = _dfFile.info['sfreq']
@@ -120,14 +156,6 @@ class FileReader:
         except:
             filtr = None
         return EEGData(frecuency, np.amax(_dfFile.times), signals, filtr, labels)
-
-    def readREC(self, eegFile):
-
-        return None
-
-    def readBCI(self, eegFile):
-
-        return None
 
     def readACQ(self, fileAddress):
         '''
@@ -144,7 +172,7 @@ class FileReader:
                 signals.append(np.zeros(channels[i].data.size))
                 signals[i] = channels[i].data
         except:
-            self.setError(2)
+            self.setError(3)
             return None
         frequency = channels[0].samples_per_second
         time = np.amax(acq.time_index)
@@ -153,7 +181,3 @@ class FileReader:
         except:
             filtr = None
         return EEGData(frequency, time, signals, filtr, labels)
-
-    def readEEG(self, eegFile):
-
-        return None

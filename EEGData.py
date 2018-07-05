@@ -29,6 +29,15 @@ class EEGData:
     def setSelected(self, sel):
         self.selectedCh = sel
 
+    def getChannel(self, i):
+        if i < len(self.channels):
+            return self.channels[i]
+        else:
+            try:
+                return self.additionalData[i]
+            except:
+                return None
+
     def setName(self, na):
         self.name = na
 

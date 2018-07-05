@@ -50,8 +50,6 @@ class FilesWindow(wx.Frame):
             name = str(self.GetParent().project.windowCSV[1]).split("\\")
             name = name[len(name) - 1].split(".")[0]
             self.windowCSV.SetLabel(name)
-            # TODO aqui encargate de cargar las ventanas si no se han cargado aun
-            # osea si se acaba de cargar un proyecto que ya tenia esta info
         removeButton.Bind(wx.EVT_BUTTON, self.removeFile)
         self.buttonSizer.Add(addButton, 0, wx.EXPAND | wx.ALL, 5)
         self.buttonSizer.Add(removeButton, 0, wx.EXPAND | wx.ALL, 5)
@@ -62,6 +60,13 @@ class FilesWindow(wx.Frame):
         helpLabel = wx.StaticText(self.pnl, label="De doble clic sobre un archivo\npara abrir el 'Editor de Ventanas'.")
         self.buttonSizer.AddSpacer(100)
         self.buttonSizer.Add(helpLabel, 0, wx.EXPAND | wx.ALL, 5)
+        # button to save modified eegs
+        self.saveButton = wx.Button(self.pnl, label="Exportar")
+        self.saveButton.Bind(wx.EVT_BUTTON, self.exportar)
+        if len(self.GetParent().project.EEGS) == 0:
+            self.saveButton.Disable()
+        self.buttonSizer.AddSpacer(50)
+        self.buttonSizer.Add(self.saveButton, 0, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
         self.Bind(wx.EVT_CLOSE, self.onClose)
@@ -69,6 +74,14 @@ class FilesWindow(wx.Frame):
         self.filePicker = wx.FileDialog(self.pnl, message="Elige los archivos de EEG",
            defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
            wildcard="Todos (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq", style=wx.FD_OPEN | wx.FD_MULTIPLE)
+
+    def exportar(self, event):
+        pathPicker = wx.DirDialog(None, "Exportar en:", "D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
+                    wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        if pathPicker.ShowModal() != wx.ID_CANCEL:
+            writer = FileReader()
+            for eeg in self.GetParent().project.EEGS:
+                writer.writeFile(eeg, self.GetParent().project.name, pathPicker.GetPath())
 
     def onClose(self, event):
         self.GetParent().onFWClose()
@@ -220,6 +233,7 @@ class FilesWindow(wx.Frame):
             self.GetParent().SetStatusText("Esperando por Archivos de EEG...")
         else:
             self.windowButton.Enable()
+            self.saveButton.Enable()
             self.GetParent().SetStatusText("")
 
     def checkProjectEEGs(self, errorFiles):
@@ -297,6 +311,7 @@ class FilesWindow(wx.Frame):
         if len(self.GetParent().project.EEGS) == 0:
             self.GetParent().project.reset()
             self.windowButton.Disable()
+            self.saveButton.Disable()
             self.windowCSV.SetLabel("No se ha cargado un archivo .csv")
 
     def openWindowEditor(self, event):

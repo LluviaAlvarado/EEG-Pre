@@ -97,6 +97,10 @@ class BaseWindow(wx.Frame):
         path = dlg.GetPath()
         dlg.Destroy()
         if result == wx.ID_OK:
+            # Saving the new name for the project
+            name = str(path).split("\\")
+            name = name[len(name) - 1].split(".")[0]
+            self.project.name = name
             with open(path, 'wb') as output:
                 _pickle.dump(self.project, output, protocol=4)
             return True
