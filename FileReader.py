@@ -96,24 +96,36 @@ class FileReader:
         return eeg
 
     def readMAT(self, fileAddress):
-        new = False
         try:
             matfile = sio.loadmat(fileAddress)
         except:
             try:
                 matfile = h5py.File(fileAddress, 'r')
-                new = True
             except:
                 self.setError(1)
                 return None
-        if new:
-            print(matfile.keys())
-            eegDSet = matfile['EEG']
-            channelinfo = eegDSet. get('chaninfo', default=None, getclass=False, getlink=False)
-            data = channelinfo.items()
-            print(sio.whosmat(fileAddress))
-        return None
-        # return EEGData(sData, channels, units, filtr, add)
+
+        signals = matfile['Data']
+        duracion = matfile['duration'].item(0)
+        channels = matfile['channels'].item(0)
+        channelsName = matfile['channelsName']
+        prefilt = matfile['prefilt'].item(0)
+        if prefilt == 0:
+            prefilt = None
+        sampleRate = matfile['sampleRate'].item(0)
+        records = matfile['records'].item(0)
+        i = 0
+        chN = []
+        matrix = []
+        while i < channels:
+            chN.append(channelsName.item(i)[0][0])
+            matrix.append([])
+            i+=1
+        signa = np.zeros((channels, records))
+        for i in np.arange(channels):
+            signa[i, :] = signals[i]
+        return EEGData(sampleRate, duracion, signa, prefilt, chN)
+
 
     def read_EDF(self, fileAddress):
         try:

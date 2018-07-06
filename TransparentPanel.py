@@ -206,7 +206,6 @@ class windowPanel(wx.Panel):
     def hide(self):
         self.est.Hide()
 
-
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self, event=None):
         dc = wx.PaintDC(self)

@@ -3,6 +3,7 @@ class Project:
     with eegs and parameters'''
     def __init__(self):
         self.EEGS = []
+        self.name = "new"
         self.frequency = None
         self.duration = None
         self.numCh = None
@@ -13,7 +14,6 @@ class Project:
         # [0] is the csv matrix
         # [1] the path of the csv
         self.windowCSV = None
-        self.name = "new"
 
     def updateWindowInfo(self, l, tbe):
         self.windowLength = l

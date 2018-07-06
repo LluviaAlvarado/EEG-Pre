@@ -5,6 +5,7 @@ import _pickle
 # Local Imports
 from CircleManager import *
 from Project import *
+# from BandpassFilter import *
 from pathlib import Path
 
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
@@ -64,7 +65,6 @@ class BaseWindow(wx.Frame):
         menuBar.Append(fileMenu, "&Proyecto")
         menuBar.Append(helpMenu, "&Ayuda")
 
-
         # Give the menu bar to the frame
         self.SetMenuBar(menuBar)
 
@@ -75,6 +75,8 @@ class BaseWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnLoad, loadSessionItem)
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
+
+        # self.Bind(wx.EVT_MENU, self.OnTest, testItem)
 
     def OnExit(self, event):
         """Close the frame, terminating the application."""
@@ -124,3 +126,5 @@ class BaseWindow(wx.Frame):
             self.filesWindow = FilesWindow(self)
             self.filesWindow.Show()
         dlg.Destroy()
+
+

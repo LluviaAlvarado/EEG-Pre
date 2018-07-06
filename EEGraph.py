@@ -169,12 +169,18 @@ class customRuler(wx.Panel):
                     if i == 0:
                         RM = w / 2
                         f = f + 1
+                    st = "ms"
                     if i == 100:
+                        y = int(y / 1000)
+                        w, h = dc.GetTextExtent(str(y))
                         RM = w * -1
                         f = f - 6
+                        st = "s"
+
+
 
                     dc.DrawLine(f, 0, f, 10)
-                    st = "ms"
+
                     dc.DrawText(str(y), f + RM - w / 2, 11)
                     dc.DrawText(st, f + RM + w / 2, 11)
                     RM = 0

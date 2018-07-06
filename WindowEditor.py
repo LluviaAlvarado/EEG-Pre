@@ -262,9 +262,9 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         b2 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(3, 3), size=(94, 44))
 
         r1= wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(5, 4), size=(-1, -1))
-        r2=wx.StaticText(self, -1, "Máxima:  " + str(self.graph.eeg.amUnits[0]), style=wx.ALIGN_CENTER, pos=(5, 18),
+        r2=wx.StaticText(self, -1, "Máxima:  " + str(round(self.graph.eeg.amUnits[0], 3)), style=wx.ALIGN_CENTER, pos=(5, 18),
                       size=(-1, -1))
-        r3=wx.StaticText(self, -1, "Mínima:  " + str(self.graph.eeg.amUnits[1]), style=wx.ALIGN_CENTER, pos=(5, 32),
+        r3=wx.StaticText(self, -1, "Mínima:  " + str(round(self.graph.eeg.amUnits[1],3)), style=wx.ALIGN_CENTER, pos=(5, 32),
                       size=(-1, -1))
         r1.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
         r2.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))

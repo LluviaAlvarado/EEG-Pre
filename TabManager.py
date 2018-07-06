@@ -110,7 +110,7 @@ class windowTab(wx.Panel):
         # the window we are working on
         self.window = p.par.eeg.windows[w]
         # get windowThumb size
-        length = self.GetParent().Size[1] / 2
+        length = self.GetParent().Size[1] / 2.2
         # panel for the window thumb
         self.windowThumb = WindowThumb(self, p.par.eeg, self.window, length, length)
         pageSizer.Add(self.windowThumb, 0, wx.CENTER | wx.ALL, 5)
