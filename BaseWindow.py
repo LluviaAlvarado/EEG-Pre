@@ -27,7 +27,7 @@ class BaseWindow(wx.Frame):
         self.makeMenuBar()
         # create the status bar
         self.CreateStatusBar()
-        self.SetStatusText("Esperando por Archivos de EEG...")
+        self.SetStatusText("")
 
     def onFWClose(self):
         # so we can create another
@@ -78,6 +78,15 @@ class BaseWindow(wx.Frame):
 
         # self.Bind(wx.EVT_MENU, self.OnTest, testItem)
 
+    def setStatus(self, st, mouse):
+        self.SetStatusText(st)
+        if mouse == 0:
+            myCursor = wx.Cursor(wx.CURSOR_ARROW)
+            self.SetCursor(myCursor)
+        elif mouse == 1:
+            myCursor = wx.Cursor(wx.CURSOR_WAIT)
+            self.SetCursor(myCursor)
+
     def OnExit(self, event):
         """Close the frame, terminating the application."""
         self.Close(True)
@@ -99,12 +108,14 @@ class BaseWindow(wx.Frame):
         path = dlg.GetPath()
         dlg.Destroy()
         if result == wx.ID_OK:
+            self.setStatus("Guardando...", 1)
             # Saving the new name for the project
             name = str(path).split("\\")
             name = name[len(name) - 1].split(".")[0]
             self.project.name = name
             with open(path, 'wb') as output:
                 _pickle.dump(self.project, output, protocol=4)
+            self.setStatus("", 0)
             return True
         elif result == wx.ID_CANCEL:
             return False
@@ -117,6 +128,7 @@ class BaseWindow(wx.Frame):
             defaultFile="", wildcard=wildcard, style=wx.FD_OPEN
         )
         if dlg.ShowModal() == wx.ID_OK:
+            self.setStatus("Cargando...", 1)
             path = dlg.GetPath()
             with open(path, 'rb') as input:
                 self.project = _pickle.load(input)
@@ -126,5 +138,6 @@ class BaseWindow(wx.Frame):
             self.filesWindow = FilesWindow(self)
             self.filesWindow.Show()
         dlg.Destroy()
+        self.setStatus("", 0)
 
 

@@ -83,7 +83,6 @@ class EEGData:
         else:
             channel = Channel(label, ch)
             self.channels.append(channel)
-            self.selectedCh.append(self.i)
         self.i += 1
 
     def fillChannels(self, labels):

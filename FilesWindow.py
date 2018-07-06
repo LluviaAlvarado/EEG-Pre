@@ -80,8 +80,49 @@ class FilesWindow(wx.Frame):
                     wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if pathPicker.ShowModal() != wx.ID_CANCEL:
             writer = FileReader()
+            windows = []
+            windowsExist = False
             for eeg in self.GetParent().project.EEGS:
                 writer.writeFile(eeg, self.GetParent().project.name, pathPicker.GetPath())
+                if len(eeg.windows) > 0:
+                    windowsExist = True
+                windows.append([eeg.name, eeg.windows])
+            # exporting csv with window information and a txt with the TBE and length in ms
+            if windowsExist:
+                self.writeWindowFiles(windows, pathPicker.GetPath())
+
+    def writeWindowFiles(self, windows, path):
+        # setting cursor to wait to inform user
+        self.GetParent().setStatus("Exportando...", 1)
+        file = path + "\\" + self.GetParent().project.name + "_windows.csv"
+        txt = path + "\\" + self.GetParent().project.name + "_windows.txt"
+        if os.path.isfile(file):
+            # it already exists
+            f = self.GetParent().project.name + "_windows.csv"
+            msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
+                                    "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
+                                   style=wx.YES_NO | wx.CENTRE)
+            if msg.ShowModal() == wx.ID_NO:
+                return  # we don't to anything
+            else:
+                # deleting the prev file and txt
+                os.remove(file)
+                os.remove(txt)
+        with open(file, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='"',
+                                quoting=csv.QUOTE_MINIMAL)
+            matrix = []
+            for row in windows:
+                s = [row[0]]
+                for w in row[1]:
+                    s.append(w.stimulus)
+                matrix.append(s)
+            writer.writerows(matrix)
+        # writing the txt
+        with open(txt, 'w', newline='') as txtfile:
+            txtfile.write("Longitud: " + str(self.GetParent().project.windowLength) +
+                           " TAE: " + str(self.GetParent().project.windowTBE))
+        self.GetParent().setStatus("", 0)
 
     def onClose(self, event):
         self.GetParent().onFWClose()
@@ -99,9 +140,15 @@ class FilesWindow(wx.Frame):
                 return True
         return False
 
+    def thereIsWindows(self):
+        for eeg in self.GetParent().project.EEGS:
+            if len(eeg.windows) > 0:
+                return True
+        return False
+
     def loadCSVFile(self, event):
-        # check if there's a file already loaded
-        if self.windowCSV.GetLabel() != "No se ha cargado un archivo .csv":
+        # check if there's windows already loaded
+        if self.thereIsWindows():
             alerta = wx.MessageDialog(self, "Al cargar un nuevo archivo se eliminarán todas "
                                             "las ventanas actuales.\n¿Desea continuar?", caption="¡Alerta!",
                           style=wx.YES_NO)
