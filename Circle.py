@@ -42,26 +42,17 @@ class AddCircle:
                 res = i[1]
         new = None
         #Todo: Hacer un diccionario con las funciones
-        if res == 'Coherencia':
-            new = CoherenceCircle([self.parent.x + self.separation, self.parent.y], self.parent.diametro)
+        if res == 'Filtrado':
+            new = FilterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
-        elif res == 'PDC/DTF':
-            new = PDC_DTFCircle([self.parent.x + self.separation, self.parent.y], self.parent.diametro)
+        elif res == 'Artefacto':
+            new = ArtifactCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
         if new is not None:
             self.parent.hijos.append(new)
         print(res)
 
 class Circle:
-
-    #Todo: Convertir esto en un diccionario
-    menu_options = [
-        [wx.NewId(),'Coherencia'],
-        [wx.NewId(),'PDC/DTF']#,
-        #[wx.NewId(),'Artefacto']
-    ]
-    childs = []
-    plus = None
 
     def __init__(self, pos, diameter, mainW):
         self.x, self.y = pos
@@ -70,6 +61,16 @@ class Circle:
         self.img = wx.Image(diameter, diameter)
         if Circle.plus is None:
             Circle.plus = AddCircle(diameter)
+
+    #Todo: Convertir esto en un diccionario
+    menu_options = [
+        #[wx.NewId(),'Coherencia'],
+        #[wx.NewId(),'PDC/DTF'],
+        [wx.NewId(), 'Filtrado'],
+        [wx.NewId(), 'Artefacto']
+    ]
+    childs = []
+    plus = None
 
     def addImg(self, panel):
         self.imgCtrl = wx.StaticBitmap(panel, wx.ID_ANY, wx.Bitmap(self.img), pos=[self.x, self.y])
@@ -100,6 +101,20 @@ class FileCircle(Circle):
         self.img = wx.Image('./Images/ArchivoIMG.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
 
+class FilterCircle(Circle):
+
+    def __init__(self, pos, diameter, mainW):
+        super().__init__(pos, diameter, mainW)
+        # TODO get another image
+        self.img = wx.Image('./Images/ArchivoIMG.png', wx.BITMAP_TYPE_ANY)
+        self.img = self.img.Scale(diameter, diameter)
+
+    # TODO open the correct frame
+    def onDoubleClick(self, event):
+        Circle.plus.removeImg()
+        if self.mainW.filesWindow is None:
+            self.mainW.filesWindow = FilesWindow(self.mainW)
+        self.mainW.filesWindow.Show()
 
 class CoherenceCircle(Circle):
 
@@ -120,7 +135,7 @@ class PDC_DTFCircle(Circle):
 
 class ArtifactCircle(Circle):
 
-    def __init__(self, pos, diameter):
-        super().__init__(pos, diameter)
+    def __init__(self, pos, diameter, mainW):
+        super().__init__(pos, diameter, mainW)
         self.img = wx.Image('./Images/Grafica.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
