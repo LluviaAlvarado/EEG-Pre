@@ -5,6 +5,7 @@ from copy import deepcopy
 # local imports
 from WindowDialog import *
 from WindowEditor import *
+# local imports
 from Channel import *
 
 
@@ -20,7 +21,7 @@ class frequencyBand:
         while i < 10:
             blank =  blank + " "
             i+=1
-        s = self.name +blank+" Low:  "+str(self.lowFrequency)+"Hz    High:  "+str(self.hiFrequency)+"Hz"
+        s = self.name +blank+" Baja:  "+str(self.lowFrequency)+"Hz    Alta:  "+str(self.hiFrequency)+"Hz"
         return s
 
 
@@ -34,7 +35,7 @@ class PreBPFW (wx.Frame):
         wx.Frame.__init__(self, parent, -1, "Pre configuración del filtrado", )
         self.SetSize(500, 500)
         self.Centre()
-
+        self.BPFwindow = None
         self.waves = self.defaultWaves()
         self.customWaves = []
         # create base panel in the frame
@@ -68,12 +69,15 @@ class PreBPFW (wx.Frame):
         self.buttonSizer.Add(addButton, -1, wx.EXPAND | wx.ALL, 5)
         self.buttonSizer.Add(delButton, -1, wx.EXPAND | wx.ALL, 5)
 
-        self.buttonSizer.AddSpacer(70)
+        self.buttonSizer.AddSpacer(30)
         applyButton = wx.Button(self.pnl, label="Aplicar Filtrado")
         applyButton.Bind(wx.EVT_BUTTON, self.applyFilter)
         viewButton = wx.Button(self.pnl, label="Visualizar")
+        exportButton = wx.Button(self.pnl, label="Exportar")
+
         self.buttonSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
         self.buttonSizer.Add(viewButton, -1, wx.EXPAND | wx.ALL, 5)
+        self.buttonSizer.Add(exportButton, -1, wx.EXPAND | wx.ALL, 5)
 
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
@@ -176,6 +180,16 @@ class PreBPFW (wx.Frame):
                 new.append(neweeg)
         self.GetParent().project.addMany(new)
         self.GetParent().setStatus("", 0)
+
+
+
+
+
+
+
+
+
+
 
 
 

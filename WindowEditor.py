@@ -106,11 +106,12 @@ class WindowEditor (wx.Frame):
 class EEGTab(wx.Panel):
     '''Panel that contains graph of an EEG
     and window tools'''
-    def __init__(self, p, e):
+    def __init__(self, p, e, edit = True):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.eeg = e
         self.eegGraph = None
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
+
         # container of window information
         leftPnl = wx.Panel(self)
         tabLabel = wx.StaticText(leftPnl, label="Ventanas:")
@@ -142,15 +143,16 @@ class EEGTab(wx.Panel):
             # fill checklist with the saved selection
             for i in self.eeg.selectedCh:
                 self.electrodeList.Check(i, check=True)
-        elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
-        # button to apply changes from electrode selector
-        applyChanges = wx.Button(electrodePanel, label="Aplicar")
-
-        elecSizer.Add(applyChanges, 0, wx.CENTER | wx.ALL, 5)
-        electrodePanel.SetSizer(elecSizer)
-        leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
-        leftPnl.SetSizer(leftSizer)
-        baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
+        if edit:
+            elecSizer.Add(self.electrodeList, 1, wx.EXPAND | wx.ALL, 5)
+            # button to apply changes from electrode selector
+            applyChanges = wx.Button(electrodePanel, label="Aplicar")
+            elecSizer.Add(applyChanges, 0, wx.CENTER | wx.ALL, 5)
+            electrodePanel.SetSizer(elecSizer)
+            leftSizer.Add(electrodePanel, 0, wx.EXPAND | wx.ALL, 5)
+            leftPnl.SetSizer(leftSizer)
+            baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
+            self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
         # eeg graphic information right side
         rightPnl = wx.Panel(self)
         graphContainer = wx.BoxSizer(wx.VERTICAL)
@@ -165,7 +167,7 @@ class EEGTab(wx.Panel):
         rightPnl.SetSizer(graphContainer)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(baseContainer)
-        self.Bind(wx.EVT_BUTTON, self.updateElectrodes, applyChanges)
+
 
 
     def createNewWindow(self, e, l):

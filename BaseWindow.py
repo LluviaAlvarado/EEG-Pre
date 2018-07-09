@@ -47,11 +47,7 @@ class BaseWindow(wx.Frame):
                 elif dlg.opc == 2:
                     self.Destroy()
         else:
-            confi = wx.MessageBox(
-                '¿Seguro que quiere salir?', 'Salir',
-                wx.YES_NO | wx.ICON_INFORMATION)
-            if confi == wx.YES:
-                self.Destroy()
+            self.Destroy()
 
     def setAux(self, p):
         self.aux = deepcopy(p)
@@ -213,13 +209,13 @@ class BaseWindow(wx.Frame):
         )
         if dlg.ShowModal() == wx.ID_OK:
             if len(self.project.EEGS) > 0:
-                confi = wx.MessageBox('Al cargar un proyecto nuevo se perderá todo\nel progreso sin guardar ¿Desea continuar?', 'Aviso', wx.YES_NO | wx.ICON_INFORMATION)
-                if confi == wx.YES:
-                    self.setStatus("Cargando...", 1)
-                    path = dlg.GetPath()
-                    with open(path, 'rb') as input:
-                        self.project = _pickle.load(input)
-                        self.setAux(self.project)
+                opc = 0
+                with WindowSaveOnExit(self, opc) as dl:
+                    dl.ShowModal()
+                    if dl.opc == 1:
+                        self.OnSave(0)
+                    elif dl.opc == 3:
+                        return
             else:
                 self.setStatus("Cargando...", 1)
                 path = dlg.GetPath()
