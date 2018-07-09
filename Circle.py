@@ -1,4 +1,5 @@
 from FilesWindow import *
+from BandpassFilter import *
 
 class AddCircle:
 
@@ -106,15 +107,15 @@ class FilterCircle(Circle):
     def __init__(self, pos, diameter, mainW):
         super().__init__(pos, diameter, mainW)
         # TODO get another image
-        self.img = wx.Image('./Images/ArchivoIMG.png', wx.BITMAP_TYPE_ANY)
+        self.img = wx.Image('./Images/FiltradoIMG.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
 
     # TODO open the correct frame
     def onDoubleClick(self, event):
         Circle.plus.removeImg()
-        if self.mainW.filesWindow is None:
-            self.mainW.filesWindow = FilesWindow(self.mainW)
-        self.mainW.filesWindow.Show()
+        if self.mainW.preBPFW is None:
+            self.mainW.preBPFW = PreBPFW(self.mainW)
+        self.mainW.preBPFW.Show()
 
 class CoherenceCircle(Circle):
 

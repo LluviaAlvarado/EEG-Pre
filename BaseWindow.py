@@ -3,9 +3,12 @@ import wx
 import _pickle
 
 # Local Imports
+from copy import deepcopy
+
 from CircleManager import *
 from Project import *
-# from BandpassFilter import *
+from WindowDialog import *
+from BandpassFilter import *
 from pathlib import Path
 
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
@@ -21,13 +24,89 @@ class BaseWindow(wx.Frame):
         self.workArea = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
         self.circleMngr = CircleManager(self.workArea, width, height, self)
         self.project = Project()
+        self.aux = Project()
+
         # to just open 1 files window
         self.filesWindow = None
+        self.preBPFW = None
         # create the menu bar that we don't need yet
         self.makeMenuBar()
         # create the status bar
         self.CreateStatusBar()
         self.SetStatusText("")
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def OnClose(self, event):
+        if self.__eq__() == False:
+            opc = 0
+            with WindowSaveOnExit(self, opc) as dlg:
+                dlg.ShowModal()
+                if dlg.opc == 1:
+                    self.OnSave(0)
+                    self.Destroy()
+                elif dlg.opc == 2:
+                    self.Destroy()
+        else:
+            confi = wx.MessageBox(
+                '¿Seguro que quiere salir?', 'Salir',
+                wx.YES_NO | wx.ICON_INFORMATION)
+            if confi == wx.YES:
+                self.Destroy()
+
+    def setAux(self, p):
+        self.aux = deepcopy(p)
+
+    def __eq__(self):
+
+        firstCheck = True
+        key = self.project.__dict__.keys()
+        for i in key:
+            if i != 'EEGS':
+                if self.project.__dict__[i] != self.aux.__dict__[i]:
+                    firstCheck = False
+        secondCheck = True
+        len1 = len(self.project.EEGS)
+        len2 = len(self.aux.EEGS)
+        if len1 != len2:
+            secondCheck = False
+        else:
+            u = 0
+            while u < len1:
+                if self.project.EEGS[u].system10_20.__dict__ != self.project.EEGS[u].system10_20.__dict__:
+                    secondCheck = False
+                ch1 = len(self.project.EEGS[u].channels)
+                ch2 = len(self.aux.EEGS[u].channels)
+                if ch1 != ch2:
+                    secondCheck = False
+                else:
+                    p = 0
+                    while p < ch1:
+                        if self.project.EEGS[u].channels[p].__dict__ != self.project.EEGS[u].channels[p].__dict__:
+                            secondCheck = False
+                        p+=1
+                wn1 = len(self.project.EEGS[u].windows)
+                wn2 = len(self.aux.EEGS[u].windows)
+                if wn1 != wn2:
+                    secondCheck = False
+                else:
+                    p = 0
+                    while p < wn1:
+                        if self.project.EEGS[u].windows[p].__dict__ != self.project.EEGS[u].windows[p].__dict__:
+                            secondCheck = False
+                        p += 1
+                keys = self.project.EEGS[u].__dict__.keys()
+                # print(self.project.EEGS[u].__dict__)
+                # print(self.aux.EEGS[u].__dict__)
+                for k in keys:
+                    if k != 'system10_20' and k != 'channels' and k != 'windows' and k != 'channelMatrix':
+
+                        if self.project.EEGS[u].__dict__[k] != self.aux.EEGS[u].__dict__[k]:
+                            secondCheck = False
+                u += 1
+        if secondCheck and firstCheck :
+            return True
+        else:
+            return False
 
     def onFWClose(self):
         # so we can create another
@@ -76,7 +155,6 @@ class BaseWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
-        # self.Bind(wx.EVT_MENU, self.OnTest, testItem)
 
     def setStatus(self, st, mouse):
         self.SetStatusText(st)
@@ -116,8 +194,10 @@ class BaseWindow(wx.Frame):
             with open(path, 'wb') as output:
                 _pickle.dump(self.project, output, protocol=4)
             self.setStatus("", 0)
+            self.setAux(self.project)
             return True
         elif result == wx.ID_CANCEL:
+            self.setAux(self.project)
             return False
 
     def OnLoad(self, event):
@@ -125,9 +205,23 @@ class BaseWindow(wx.Frame):
         dlg = wx.FileDialog(
             self, message="Cargar",
             defaultDir=self.currentDirectory,
-            defaultFile="", wildcard=wildcard, style=wx.FD_OPEN
+            defaultFile="", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_MULTIPLE
         )
         if dlg.ShowModal() == wx.ID_OK:
+            if len(self.project.EEGS) > 0:
+                confi = wx.MessageBox('Al cargar un proyecto nuevo se perderá todo\nel progreso sin guardar ¿Desea continuar?', 'Aviso', wx.YES_NO | wx.ICON_INFORMATION)
+                if confi == wx.YES:
+                    self.setStatus("Cargando...", 1)
+                    path = dlg.GetPath()
+                    with open(path, 'rb') as input:
+                        self.project = _pickle.load(input)
+                        self.setAux(self.project)
+            else:
+                self.setStatus("Cargando...", 1)
+                path = dlg.GetPath()
+                with open(path, 'rb') as input:
+                    self.project = _pickle.load(input)
+                    self.setAux(self.project)
             self.setStatus("Cargando...", 1)
             path = dlg.GetPath()
             with open(path, 'rb') as input:
@@ -137,6 +231,7 @@ class BaseWindow(wx.Frame):
             self.filesWindow.Destroy()
             self.filesWindow = FilesWindow(self)
             self.filesWindow.Show()
+            self.setAux(self.project)
         dlg.Destroy()
         self.setStatus("", 0)
 
