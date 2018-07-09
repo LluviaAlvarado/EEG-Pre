@@ -14,7 +14,6 @@ class EEGraph(wx.Panel):
         w = w - (w / 5)
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.eeg = eeg
-        num = len(self.eeg.channelMatrix[0])
         self.selected = selected
         self.toolbar = None
         # baseSizer
@@ -28,7 +27,7 @@ class EEGraph(wx.Panel):
         self.windowP = windowPanel(self, self.graph)
         # bottom is reserved just for the time ruler
         values = [0, self.eeg.duration]
-        self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
+        self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels))
 
         # left amplitud ruler side
         # creating a ruler for each channell
@@ -36,7 +35,7 @@ class EEGraph(wx.Panel):
         half = (self.eeg.amUnits[0] - self.eeg.amUnits[1]) / 2
         values.append(self.eeg.amUnits[0] - half)
         values.append(self.eeg.amUnits[1])
-        self.ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels), num)
+        self.ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.eeg.channels))
         self.channelList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER)
         baseSizer.Add(self.channelList, 0, wx.EXPAND, 0)
         baseSizer.Add(self.ampRuler, 0, wx.EXPAND, 0)
@@ -104,7 +103,7 @@ class customRuler(wx.Panel):
     it also will add the zooming future for the eeg
     values are sent in as minAmp and maxAmp"""
 
-    def __init__(self, parent, orientation, style, values, nCh, num):
+    def __init__(self, parent, orientation, style, values, nCh):
         self.lapse = values
         self.font = wx.Font(5, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
                             wx.FONTWEIGHT_BOLD, False, 'Courier 10 Pitch')
@@ -120,7 +119,6 @@ class customRuler(wx.Panel):
         self.increment = 0
         self.minTime = 0
         self.maxTime = self.graph.msShowing + self.minTime
-        self.numReads = num
         self.opc = 0
         self.zoom = False
         self.num = 0
@@ -134,7 +132,7 @@ class customRuler(wx.Panel):
         else:
             self.opc = 2
             wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
-            self.makeAmpRuler(nCh, values)
+            self.makeAmpRuler()
 
         self.SetSizer(baseSizer)
 
@@ -206,7 +204,7 @@ class customRuler(wx.Panel):
                     i += 1
             self.zoom = False
 
-    def makeAmpRuler(self, nCh, values):
+    def makeAmpRuler(self):
         self.font = wx.Font(5, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 

@@ -112,6 +112,10 @@ class BaseWindow(wx.Frame):
         # so we can create another
         self.filesWindow = None
 
+    def onBPClose(self):
+        # so we can create another
+        self.preBPFW = None
+
     def makeMenuBar(self):
         """
         A menu bar is composed of menus, which are composed of menu items.

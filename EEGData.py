@@ -18,12 +18,11 @@ class EEGData:
         self.frequency = freq
         self.duration = time
         self.filterHz = f
-        self.channelMatrix = chM
-        self.amUnits = [np.amax(self.channelMatrix), np.amin(self.channelMatrix)]
+        self.amUnits = [np.amax(chM), np.amin(chM)]
         self.additionalData = []
         self.channels = []
         self.selectedCh = []
-        self.fillChannels(labels)
+        self.fillChannels(labels, chM)
         self. windows = []
 
     def setSelected(self, sel):
@@ -85,10 +84,10 @@ class EEGData:
             self.channels.append(channel)
         self.i += 1
 
-    def fillChannels(self, labels):
+    def fillChannels(self, labels, chM):
         # iterate channel matrix
         self.i = 0
-        np.apply_along_axis(self.copyChannel, 1, self.channelMatrix, labels)
+        np.apply_along_axis(self.copyChannel, 1, chM, labels)
 
     def getLabels(self):
         lbls = []

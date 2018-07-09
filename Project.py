@@ -29,3 +29,7 @@ class Project:
         self.windowTBE = None
         self.windowCSV = None
         self.name = "new"
+
+    def addMany(self, eegs):
+        for e in eegs:
+            self.EEGS.append(e)

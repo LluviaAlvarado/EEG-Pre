@@ -1,9 +1,14 @@
 # Imports
+import numpy as np
+from copy import deepcopy
+
+# local imports
 from WindowDialog import *
 from WindowEditor import *
-# local imports
+from Channel import *
 
-class brainWave:
+
+class frequencyBand:
     def __init__(self, name,lowFrequency,  hiFrequency ):
         self.name = name
         self.hiFrequency = hiFrequency
@@ -37,9 +42,9 @@ class PreBPFW (wx.Frame):
         # base vbox
         self.baseSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.leftSizer = wx.BoxSizer(wx.VERTICAL)
-        infoLabel = wx.StaticText(self.pnl, label="Listado de canales:")
-        extraCannels = wx.StaticText(self.pnl, label="Canales personalizados:")
-        info = wx.StaticText(self.pnl, label="De doble clic sobre un canal\npara editar la frecuencias")
+        infoLabel = wx.StaticText(self.pnl, label="Listado de Bandas:")
+        extraCannels = wx.StaticText(self.pnl, label="Bandas personalizadas:")
+        info = wx.StaticText(self.pnl, label="De doble clic sobre una Banda\npara editar las Frecuencias")
         self.waveList = wx.CheckListBox(self.pnl, choices=self.wavestoString(self.waves))
         self.extraList = wx.CheckListBox(self.pnl,choices=self.wavestoString(self.customWaves), style=wx.LB_SINGLE | wx.LB_HSCROLL | wx.LB_NEEDED_SB)
         self.waveList.Bind(wx.EVT_LISTBOX_DCLICK, lambda event: self.onEdit(self.waves, self.waveList))
@@ -64,17 +69,31 @@ class PreBPFW (wx.Frame):
         self.buttonSizer.Add(delButton, -1, wx.EXPAND | wx.ALL, 5)
 
         self.buttonSizer.AddSpacer(70)
-        appliyButton = wx.Button(self.pnl, label="Aplicar Filtrado")
+        applyButton = wx.Button(self.pnl, label="Aplicar Filtrado")
+        applyButton.Bind(wx.EVT_BUTTON, self.applyFilter)
         viewButton = wx.Button(self.pnl, label="Visualizar")
-        self.buttonSizer.Add(appliyButton, -1, wx.EXPAND | wx.ALL, 5)
+        self.buttonSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
         self.buttonSizer.Add(viewButton, -1, wx.EXPAND | wx.ALL, 5)
 
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+    def onClose(self, event):
+        self.GetParent().onBPClose()
+        self.Destroy()
+
+    def GetSelected(self):
+        bands = []
+        for i in self.waveList.GetCheckedItems():
+            bands.append(self.waves[i])
+        for i in self.extraList.GetCheckedItems():
+            bands.append(self.customWaves[i])
+        return bands
 
     def defaultWaves(self):
-        w = [brainWave("Gamma", 40, 100), brainWave("Beta", 12, 40), brainWave("Alpha", 8, 12),
-             brainWave("Theta", 4, 8), brainWave("Delta", 0, 4)]
+        w = [frequencyBand("Gamma", 40, 100), frequencyBand("Beta", 12, 40), frequencyBand("Alpha", 8, 12),
+             frequencyBand("Theta", 4, 8), frequencyBand("Delta", 0, 4)]
         return w
 
     def wavestoString(self, w):
@@ -86,17 +105,15 @@ class PreBPFW (wx.Frame):
     def addCustom(self, event):
         name, lowF, higF, flag = self.getWaveData()
         if flag:
-            w = brainWave(name, lowF, higF)
+            w = frequencyBand(name, lowF, higF)
             self.customWaves.append(w)
             self.extraList.Append(w.getFormat())
-
 
     def delCustom(self, event):
         index = self.extraList.GetSelection()
         if self.extraList.GetCount() > 0 and index > -1:
             self.extraList.Delete(index)
             self.customWaves.pop(index)
-
 
     def onEdit(self, waves, waveList):
         index = waveList.GetSelection()
@@ -107,8 +124,6 @@ class PreBPFW (wx.Frame):
             waves[index].hiFrequency = higF
             waveList.Clear()
             waveList.Append(self.wavestoString(waves))
-
-
 
     def getWaveData(self,name="Nuevo", lowF = 1, higF = 10):
         # giving a default value in ms to avoid user errors
@@ -134,6 +149,33 @@ class PreBPFW (wx.Frame):
             else:
                 falg = False
         return name, lowF, higF, falg
+
+    def applyFilter(self, event):
+        self.GetParent().setStatus("Filtrando...", 1)
+        eegs = self.GetParent().project.EEGS
+        new = []
+        for eeg in eegs:
+            # applying for each band
+            timestep = 1 / eeg.frequency
+            bands = self.GetSelected()
+            for band in bands:
+                channels = eeg.channels
+                neweeg = deepcopy(eeg)
+                neweeg.channels = []
+                for ch in channels:
+                    fourier = np.fft.rfft(ch.readings, len(ch.readings))
+                    for i in range(len(fourier)):
+                        if i < band.lowFrequency or i > band.hiFrequency:
+                           fourier[i] = 0.0
+                    # adding new filtered channel
+                    filtered = np.fft.irfft(fourier)
+                    fl = Channel(ch.label, filtered)
+                    neweeg.channels.append(fl)
+                # adding band limits to name
+                neweeg.name += "_" + str(band.lowFrequency) + "-" + str(band.hiFrequency)
+                new.append(neweeg)
+        self.GetParent().project.addMany(new)
+        self.GetParent().setStatus("", 0)
 
 
 
