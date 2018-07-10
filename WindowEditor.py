@@ -168,8 +168,6 @@ class EEGTab(wx.Panel):
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(baseContainer)
 
-
-
     def createNewWindow(self, e, l):
         # creates a new window on every eeg
         self.GetParent().GetParent().addWindow(e, l)
@@ -189,13 +187,54 @@ class EEGTab(wx.Panel):
         self.tabManager.GetPage(self.tabManager.GetSelection()).Refresh()
 
 
+class EEGTabV(wx.Panel):
+    '''Panel that contains graph of an EEG
+    and window tools'''
+    def __init__(self, p, e):
+        wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size))
+        self.eeg = e
+        self.eegGraph = None
+        baseContainer = wx.BoxSizer(wx.HORIZONTAL)
+        project = self.GetParent().GetParent().project
+        leftPnl = wx.Panel(self)
+        self.tabManager = TabManager(leftPnl, self, project.windowLength)
+        self.electrodeList = wx.CheckListBox(leftPnl, choices=self.eeg.getLabels())
+        # select all the channel items to view
+        if len(self.eeg.selectedCh) == 0:
+            # let's fill them with all the channels
+            for i in range(len(self.eeg.channels)):
+                self.electrodeList.Check(i, check=True)
+            self.eeg.setSelected(self.electrodeList.GetCheckedItems())
+        else:
+            # fill checklist with the saved selection
+            for i in self.eeg.selectedCh:
+                self.electrodeList.Check(i, check=True)
+        # button to apply changes from electrode selector
+
+        #baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
+        # eeg graphic information right side
+        rightPnl = wx.Panel(self, size=self.Size)
+        graphContainer = wx.BoxSizer(wx.VERTICAL)
+        # panel for eeg graph
+        self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList, True)
+        # creation of toolbar
+        self.toolbar = Toolbar(rightPnl, self.eegGraph, False)
+        # sending toolbar to graph to bind
+        self.eegGraph.setToolbar(self.toolbar)
+        graphContainer.Add(self.toolbar, 0, wx.EXPAND | wx.ALL, 0)
+        graphContainer.Add(self.eegGraph, 1, wx.EXPAND | wx.ALL, 0)
+        rightPnl.SetSizer(graphContainer)
+        baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 0)
+        self.SetSizer(baseContainer)
+
+
 class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
     """
        Create small toolbar which is added to the main panel
        par:  parent
        """
 
-    def __init__(self, par, graph):
+    def __init__(self, par, graph, edit = True):
         wx.lib.agw.buttonpanel.ButtonPanel.__init__(self, par)
         self.ID_FIT = wx.NewId()
         self.ID_ZOOM = wx.NewId()
@@ -239,12 +278,13 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.buttons.append(self.btnMove)
         self.Bind(wx.EVT_BUTTON, self.Move, self.btnMove)
 
-        self.btnNewwin = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_NEWWIN,
-                                                         wx.Bitmap("src/new_window.png", wx.BITMAP_TYPE_PNG), shortHelp='Nueva Ventana')
-        self.btnNewwin.SetKind(wx.ITEM_CHECK)
-        self.AddButton(self.btnNewwin)
-        self.buttons.append(self.btnNewwin)
-        self.Bind(wx.EVT_BUTTON, self.newWindow, self.btnNewwin)
+        if edit:
+            self.btnNewwin = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_NEWWIN,
+                                                             wx.Bitmap("src/new_window.png", wx.BITMAP_TYPE_PNG), shortHelp='Nueva Ventana')
+            self.btnNewwin.SetKind(wx.ITEM_CHECK)
+            self.AddButton(self.btnNewwin)
+            self.buttons.append(self.btnNewwin)
+            self.Bind(wx.EVT_BUTTON, self.newWindow, self.btnNewwin)
 
         self.all_w = wx.Bitmap("src/all_windows.png", wx.BITMAP_TYPE_PNG)
         self.no_w = wx.Bitmap("src/no_windows.png", wx.BITMAP_TYPE_PNG)

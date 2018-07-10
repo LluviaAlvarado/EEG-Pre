@@ -7,6 +7,9 @@ from WindowDialog import *
 from WindowEditor import *
 from FileReader import *
 from FilesWindow import *
+# local imports
+from Channel import *
+from BPFWindow import *
 
 
 class frequencyBand:
@@ -72,12 +75,15 @@ class PreBPFW (wx.Frame):
         self.buttonSizer.AddSpacer(30)
         applyButton = wx.Button(self.pnl, label="Aplicar Filtrado")
         applyButton.Bind(wx.EVT_BUTTON, self.applyFilter)
-        viewButton = wx.Button(self.pnl, label="Visualizar")
-        exportButton = wx.Button(self.pnl, label="Exportar")
-        exportButton.Bind(wx.EVT_BUTTON, self.exportar)
+        self.viewButton = wx.Button(self.pnl, label="Visualizar")
+        self.viewButton.Bind(wx.EVT_BUTTON, self.openView)
+        self.viewButton.Disable()
+        self.exportButton = wx.Button(self.pnl, label="Exportar")
+        self.exportButton.Bind(wx.EVT_BUTTON, self.exportar)
+        self.exportButton.Disable()
         self.buttonSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
-        self.buttonSizer.Add(viewButton, -1, wx.EXPAND | wx.ALL, 5)
-        self.buttonSizer.Add(exportButton, -1, wx.EXPAND | wx.ALL, 5)
+        self.buttonSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
+        self.buttonSizer.Add(self.exportButton, -1, wx.EXPAND | wx.ALL, 5)
 
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
@@ -112,6 +118,7 @@ class PreBPFW (wx.Frame):
             w = frequencyBand(name, lowF, higF)
             self.customWaves.append(w)
             self.extraList.Append(w.getFormat())
+            self.extraList.Check(self.extraList.GetCount()-1, True)
 
     def delCustom(self, event):
         index = self.extraList.GetSelection()
@@ -126,8 +133,9 @@ class PreBPFW (wx.Frame):
             waves[index].name = name
             waves[index].lowFrequency = lowF
             waves[index].hiFrequency = higF
-            waveList.Clear()
-            waveList.Append(self.wavestoString(waves))
+            waveList.Delete(index)
+            waveList.InsertItems([waves[index].getFormat()],index)
+            waveList.Check(index, True)
 
     def getWaveData(self,name="Nuevo", lowF = 1, higF = 10):
         # giving a default value in ms to avoid user errors
@@ -173,11 +181,14 @@ class PreBPFW (wx.Frame):
     def applyFilter(self, event):
         self.GetParent().setStatus("Filtrando...", 1)
         eegs = self.GetParent().project.EEGS
+        flag = False
         new = []
         for eeg in eegs:
             # applying for each band
             timestep = 1 / eeg.frequency
             bands = self.GetSelected()
+            if len(bands) > 0:
+                flag = True
             for band in bands:
                 channels = eeg.channels
                 neweeg = deepcopy(eeg)
@@ -196,8 +207,14 @@ class PreBPFW (wx.Frame):
                 new.append(neweeg)
         self.GetParent().project.addMany(new)
         self.GetParent().setStatus("", 0)
+        if flag:
+            self.viewButton.Enable()
+            self.exportButton.Enable()
         # refresh file window if it is opened
         if self.GetParent().filesWindow is not None:
             self.GetParent().filesWindow.Destroy()
             self.GetParent().filesWindow = FilesWindow(self.GetParent())
             self.GetParent().filesWindow.Show()
+
+    def openView(self, event):
+        self.BPFwindow = BFPWindow(self)

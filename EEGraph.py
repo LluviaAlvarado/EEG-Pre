@@ -7,11 +7,14 @@ class EEGraph(wx.Panel):
     """this is a panel that displays
     an EEG for visual examination"""
 
-    def __init__(self, parent, eeg, selected):
+    def __init__(self, parent, eeg, selected, v=False):
         h = parent.GetParent().GetParent().Size[1]
-        h = h - 187
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w / 5)
+        if v:
+            h = parent.Size[1]
+            w = parent.Size[0]
+        h = h - 187
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.eeg = eeg
         self.selected = selected
