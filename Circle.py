@@ -110,7 +110,6 @@ class FilterCircle(Circle):
         self.img = wx.Image('./Images/FiltradoIMG.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
 
-    # TODO open the correct frame
     def onDoubleClick(self, event):
         Circle.plus.removeImg()
         if self.mainW.preBPFW is None:

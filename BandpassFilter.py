@@ -5,8 +5,8 @@ from copy import deepcopy
 # local imports
 from WindowDialog import *
 from WindowEditor import *
-# local imports
-from Channel import *
+from FileReader import *
+from FilesWindow import *
 
 
 class frequencyBand:
@@ -74,7 +74,7 @@ class PreBPFW (wx.Frame):
         applyButton.Bind(wx.EVT_BUTTON, self.applyFilter)
         viewButton = wx.Button(self.pnl, label="Visualizar")
         exportButton = wx.Button(self.pnl, label="Exportar")
-
+        exportButton.Bind(wx.EVT_BUTTON, self.exportar)
         self.buttonSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
         self.buttonSizer.Add(viewButton, -1, wx.EXPAND | wx.ALL, 5)
         self.buttonSizer.Add(exportButton, -1, wx.EXPAND | wx.ALL, 5)
@@ -154,6 +154,22 @@ class PreBPFW (wx.Frame):
                 falg = False
         return name, lowF, higF, falg
 
+    def exportar(self, event):
+        pathPicker = wx.DirDialog(None, "Exportar en:", "D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
+                                  wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        if pathPicker.ShowModal() != wx.ID_CANCEL:
+            writer = FileReader()
+            windows = []
+            windowsExist = False
+            for eeg in self.GetParent().project.EEGS:
+                writer.writeFile(eeg, self.GetParent().project.name, pathPicker.GetPath())
+                if len(eeg.windows) > 0:
+                    windowsExist = True
+                windows.append([eeg.name, eeg.windows])
+            # exporting csv with window information and a txt with the TBE and length in ms
+            if windowsExist:
+                self.writeWindowFiles(windows, pathPicker.GetPath())
+
     def applyFilter(self, event):
         self.GetParent().setStatus("Filtrando...", 1)
         eegs = self.GetParent().project.EEGS
@@ -180,21 +196,8 @@ class PreBPFW (wx.Frame):
                 new.append(neweeg)
         self.GetParent().project.addMany(new)
         self.GetParent().setStatus("", 0)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        # refresh file window if it is opened
+        if self.GetParent().filesWindow is not None:
+            self.GetParent().filesWindow.Destroy()
+            self.GetParent().filesWindow = FilesWindow(self.GetParent())
+            self.GetParent().filesWindow.Show()
