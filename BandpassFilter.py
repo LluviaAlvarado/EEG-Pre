@@ -178,6 +178,39 @@ class PreBPFW (wx.Frame):
             if windowsExist:
                 self.writeWindowFiles(windows, pathPicker.GetPath())
 
+    def writeWindowFiles(self, windows, path):
+        # setting cursor to wait to inform user
+        self.GetParent().setStatus("Exportando...", 1)
+        file = path + "\\" + self.GetParent().project.name + "_windows.csv"
+        txt = path + "\\" + self.GetParent().project.name + "_windows.txt"
+        if os.path.isfile(file):
+            # it already exists
+            f = self.GetParent().project.name + "_windows.csv"
+            msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
+                                    "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
+                                   style=wx.YES_NO | wx.CENTRE)
+            if msg.ShowModal() == wx.ID_NO:
+                return  # we don't to anything
+            else:
+                # deleting the prev file and txt
+                os.remove(file)
+                os.remove(txt)
+        with open(file, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='"',
+                                quoting=csv.QUOTE_MINIMAL)
+            matrix = []
+            for row in windows:
+                s = [row[0]]
+                for w in row[1]:
+                    s.append(w.stimulus)
+                matrix.append(s)
+            writer.writerows(matrix)
+        # writing the txt
+        with open(txt, 'w', newline='') as txtfile:
+            txtfile.write("Longitud: " + str(self.GetParent().project.windowLength) +
+                           " TAE: " + str(self.GetParent().project.windowTBE))
+        self.GetParent().setStatus("", 0)
+
     def applyFilter(self, event):
         self.GetParent().setStatus("Filtrando...", 1)
         eegs = self.GetParent().project.EEGS
