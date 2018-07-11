@@ -250,4 +250,6 @@ class PreBPFW (wx.Frame):
             self.GetParent().filesWindow.Show()
 
     def openView(self, event):
+        if self.BPFwindow != None:
+            self.BPFwindow.Hide()
         self.BPFwindow = BFPWindow(self)

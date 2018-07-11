@@ -245,6 +245,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.graph = graph
         self.AddSpacer()
         self.buttons = []
+        self.edit = edit
         self.window_s =0
         # button to fit graph to screen
         self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
@@ -399,6 +400,8 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.btnView.SetBitmap(self.all_w)
             self.graph.windowP.setWindowState(2)
             self.btnView.SetShortHelp("Todas las ventanas")
+        if not self.edit and self.window_s == 1:
+            self.window_s+=1
         if self.window_s == 1:
             self.btnView.SetBitmap(self.sel_w)
             self.graph.windowP.setWindowState(1)

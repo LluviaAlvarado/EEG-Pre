@@ -168,7 +168,7 @@ class windowPanel(wx.Panel):
             if gc:
                 i = 0
                 for window in windows:
-                    if i == selected:
+                    if i == selected and not self.GetParent().v:
                         self.drawWindow(window, gc, path, wx.Colour(0, 0, 255, 10), wx.BLUE_PEN)
                     else:
                         self.drawWindow(window, gc, path, wx.Colour(150, 150, 150, 40), wx.GREY_PEN)

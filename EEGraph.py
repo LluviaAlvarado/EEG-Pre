@@ -11,6 +11,7 @@ class EEGraph(wx.Panel):
         h = parent.GetParent().GetParent().Size[1]
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w / 5)
+        self.v = v
         if v:
             h = parent.Size[1]
             w = parent.Size[0]

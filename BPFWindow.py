@@ -64,7 +64,7 @@ class BFPWindow (wx.Frame):
         self.navigationTabs.AddPage(page, e.name)
 
     def onClose(self, event):
-        self.Destroy()
+        self.Hide()
 
 
 class tab(wx.Panel):
