@@ -14,6 +14,10 @@ class Project:
         # [0] is the csv matrix
         # [1] the path of the csv
         self.windowCSV = None
+        self.windowAUC = None
+        self.windowFFT = None
+        self.windowMaxVolt = None
+
 
     def updateWindowInfo(self, l, tbe):
         self.windowLength = l
