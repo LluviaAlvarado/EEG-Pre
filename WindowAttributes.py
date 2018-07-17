@@ -58,9 +58,9 @@ class WindowAttributes(wx.Frame):
                 ffts = []
                 for ch in w.readings:
                     fourier = np.fft.rfft(ch, len(ch))
-                    index = len(ch) - self.amountHF
+                    index = int((len(ch)/2) - self.amountHF)
                     group = []
-                    for i in range(index, len(ch)):
+                    for i in range(index, int(len(ch)/2)):
                         group.append(fourier[i])
                     ffts.append(group)
                 # getting the average frequency for the selected group per window
@@ -130,4 +130,3 @@ class WindowAttributes(wx.Frame):
                 self.applyAUC()
             elif opc == "Voltaje maximo":
                 self.applyMV()
-        print("Done")

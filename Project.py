@@ -18,7 +18,6 @@ class Project:
         self.windowFFT = None
         self.windowMaxVolt = None
 
-
     def updateWindowInfo(self, l, tbe):
         self.windowLength = l
         self.windowTBE = tbe
