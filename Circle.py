@@ -1,6 +1,6 @@
 from FilesWindow import *
 from BandpassFilter import *
-from characterWindow import *
+from WindowAttributes import *
 
 
 class AddCircle:
@@ -48,7 +48,7 @@ class AddCircle:
         if res == 'Filtrado':
             new = FilterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
-        elif res == 'Artefacto':
+        elif res == 'Artefactos':
             new = ArtifactCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
         elif res == 'Caracterizar':
@@ -74,7 +74,7 @@ class Circle:
         #[wx.NewId(),'Coherencia'],
         #[wx.NewId(),'PDC/DTF'],
         [wx.NewId(), 'Filtrado'],
-        [wx.NewId(), 'Artefacto'],
+        [wx.NewId(), 'Artefactos'],
         [wx.NewId(), 'Caracterizar']
     ]
     childs = []
@@ -137,7 +137,7 @@ class characterCircle(Circle):
     def onDoubleClick(self, event):
         Circle.plus.removeImg()
         if self.mainW.characterWindow is None:
-            self.mainW.characterWindow = characterWindow(self.mainW)
+            self.mainW.characterWindow = WindowAttributes(self.mainW)
         self.mainW.characterWindow.Show()
 
 

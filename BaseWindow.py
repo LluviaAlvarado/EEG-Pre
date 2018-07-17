@@ -100,7 +100,7 @@ class BaseWindow(wx.Frame):
                         if self.project.EEGS[u].__dict__[k] != self.aux.EEGS[u].__dict__[k]:
                             secondCheck = False
                 u += 1
-        if secondCheck and firstCheck :
+        if secondCheck and firstCheck:
             return True
         else:
             return False

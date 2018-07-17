@@ -76,7 +76,7 @@ class TabManager(aui.AuiNotebook):
             # there only was the info tab so remove it
             self.DeletePage(0)
         # adding to eeg from project
-        window = WindowEEG(est, leng, tbe)
+        window = WindowEEG(est, leng, tbe, self.par.eeg)
         self.par.eeg.addWindow(window)
         page = windowTab(self, self.GetPageCount())
         self.AddPage(page, str(self.GetPageCount()+1))
@@ -189,7 +189,7 @@ class windowTab(wx.Panel):
         self._tbe = tbe
         self._start = int(start)
         self.start.SetValue(str(self._start))
-        self.window.modify(self._tbe, self._l)
+        self.window.modify(self._tbe, self._l, self.GetParent().par.eeg)
         # refresh window graph
         self.windowThumb.setDelimiters(self.window)
         self.windowThumb.Refresh()

@@ -15,6 +15,7 @@ class EEGData:
         self.name = ""
         self.system10_20 = System10_20()
         self.i = 0
+        # sample frequency
         self.frequency = freq
         self.duration = time
         self.filterHz = f
@@ -49,7 +50,7 @@ class EEGData:
         for st in windows:
             # avoid white space
             if st != '':
-                window = WindowEEG(int(st), int(l), int(tbe))
+                window = WindowEEG(int(st), int(l), int(tbe), self)
                 self.windows.append(window)
 
     def removeWindow(self, i):
