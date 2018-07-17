@@ -55,7 +55,6 @@ class graphPanel(wx.Panel):
         if self.newWin:
             self.GetParent().windowP.MovingMouse(event.GetPosition())
 
-
     def OnClickReleased(self, event):
 
         if self.move:
@@ -69,7 +68,6 @@ class graphPanel(wx.Panel):
 
         if self.newWin:
             self.GetParent().windowP.OnClickReleased(event.GetPosition())
-
 
     # moves the eeg when it is zoomed
     def moveGraph(self):

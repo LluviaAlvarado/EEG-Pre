@@ -29,6 +29,7 @@ class BaseWindow(wx.Frame):
         # to just open 1 files window
         self.filesWindow = None
         self.preBPFW = None
+        self.characterWindow = None
         # create the menu bar that we don't need yet
         self.makeMenuBar()
         # create the status bar
@@ -112,6 +113,10 @@ class BaseWindow(wx.Frame):
         # so we can create another
         self.preBPFW = None
 
+    def onCHClose(self):
+        # so we can create another
+        self.characterWindow = None
+
     def makeMenuBar(self):
         """
         A menu bar is composed of menus, which are composed of menu items.
@@ -154,7 +159,6 @@ class BaseWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnLoad, loadSessionItem)
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
-
 
     def setStatus(self, st, mouse):
         self.SetStatusText(st)

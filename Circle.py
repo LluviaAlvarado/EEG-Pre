@@ -1,5 +1,7 @@
 from FilesWindow import *
 from BandpassFilter import *
+from characterWindow import *
+
 
 class AddCircle:
 
@@ -49,9 +51,13 @@ class AddCircle:
         elif res == 'Artefacto':
             new = ArtifactCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
+        elif res == 'Caracterizar':
+            new = characterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
+            new.addImg(self.parent.imgCtrl.GetParent())
         if new is not None:
             self.parent.hijos.append(new)
-        print(res)
+        # print(res)
+
 
 class Circle:
 
@@ -68,7 +74,8 @@ class Circle:
         #[wx.NewId(),'Coherencia'],
         #[wx.NewId(),'PDC/DTF'],
         [wx.NewId(), 'Filtrado'],
-        [wx.NewId(), 'Artefacto']
+        [wx.NewId(), 'Artefacto'],
+        [wx.NewId(), 'Caracterizar']
     ]
     childs = []
     plus = None
@@ -101,20 +108,38 @@ class FileCircle(Circle):
         super().__init__(pos, diameter, mainW)
         self.img = wx.Image('./Images/ArchivoIMG.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
+        self.hijos = []
+
 
 class FilterCircle(Circle):
-
     def __init__(self, pos, diameter, mainW):
         super().__init__(pos, diameter, mainW)
         # TODO get another image
         self.img = wx.Image('./Images/FiltradoIMG.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
+        self.hijos = []
 
     def onDoubleClick(self, event):
         Circle.plus.removeImg()
         if self.mainW.preBPFW is None:
             self.mainW.preBPFW = PreBPFW(self.mainW)
         self.mainW.preBPFW.Show()
+
+
+class characterCircle(Circle):
+
+    def __init__(self, pos, diameter, mainW):
+        super().__init__(pos, diameter, mainW)
+        # TODO get another image
+        self.img = wx.Image('./Images/CaracteristicasIMG.png', wx.BITMAP_TYPE_ANY)
+        self.img = self.img.Scale(diameter, diameter)
+
+    def onDoubleClick(self, event):
+        Circle.plus.removeImg()
+        if self.mainW.characterWindow is None:
+            self.mainW.characterWindow = characterWindow(self.mainW)
+        self.mainW.characterWindow.Show()
+
 
 class CoherenceCircle(Circle):
 
@@ -130,7 +155,6 @@ class PDC_DTFCircle(Circle):
         super().__init__(pos, diameter)
         self.img = wx.Image('./Images/PDCDTF.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
-
 
 
 class ArtifactCircle(Circle):

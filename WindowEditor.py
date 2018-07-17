@@ -7,8 +7,10 @@ from TabManager import *
 from EEGraph import *
 from WindowDialog import WindowDialog
 
+
 class WindowEditor (wx.Frame):
     title = "Edición de Ventanas"
+
     def __init__(self, parent):
         wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Maximize(True)
