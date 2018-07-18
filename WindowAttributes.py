@@ -21,7 +21,7 @@ class WindowAttributes(wx.Frame):
         leftPnl = wx.Panel(self, size=(300, 600))
         leftSizer = wx.BoxSizer(wx.VERTICAL)
         opcLabel = wx.StaticText(leftPnl, label="Opciones: ")
-        self.choices = ["Transformada rápida de Fourier", "Area bajo la curva", "Voltaje maximo"]
+        self.choices = ["Transformada rápida de Fourier", "Area bajo la curva", "Voltaje má ximo"]
         checkSizer = wx.BoxSizer(wx.HORIZONTAL)
         bmp = wx.Bitmap("src/config.png", wx.BITMAP_TYPE_PNG)
         configButton = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=bmp,
@@ -159,8 +159,9 @@ class GridTab(wx.Panel):
         project = self.GetParent().GetParent().GetParent().GetParent().project
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         table = wx.grid.Grid(self, size=(600,600))
+        table.EnableEditing(False)
         table.CreateGrid(len(self.eeg.windows), len(selected))
-        ch = ["Transformada rápida de Fourier", "Area bajo la curva", "Voltaje maximo"]
+        ch = ["Transformada rápida de Fourier", "Area bajo la curva", "Voltaje máximo"]
         windowSize = []
         add = 0
         eegs = project.EEGS
