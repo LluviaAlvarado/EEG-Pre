@@ -1,7 +1,7 @@
 # Imports
 import numpy as np
+import wx.grid
 
-# local imports
 from WindowEditor import *
 from WindowDialog import *
 
@@ -39,7 +39,14 @@ class WindowAttributes(wx.Frame):
         leftSizer.Add(applyButton, 0, wx.EXPAND | wx.ALL, 20)
         leftPnl.SetSizer(leftSizer)
         rightPnl = wx.Panel(self, size=(600, 600))
+        # EEG tabs
+        self.eegTabs = aui.AuiNotebook(rightPnl, size=(rightPnl.Size),
+                                              style=aui.AUI_NB_DEFAULT_STYLE ^ (
+                                                          aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
+                                                    | aui.AUI_NB_WINDOWLIST_BUTTON)
+        # filling the tabs
         rightSizer = wx.BoxSizer(wx.VERTICAL)
+        rightSizer.Add(self.eegTabs, 0, wx.EXPAND | wx.ALL, 1)
         rightPnl.SetSizer(rightSizer)
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 3)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 3)
@@ -118,15 +125,68 @@ class WindowAttributes(wx.Frame):
         self.GetParent().project.windowMaxVolt = MV
 
     def apply(self, event):
-        selected = []
-        for i in self.optionsList.GetCheckedItems():
-            selected.append( self.choices[i])
-
+        selected = self.optionsList.GetCheckedItems()
         for opc in selected:
-
-            if opc == "Transformada rápida de Fourier":
+            if opc == 0:
+                # Transformada rápida de Fourier
                 self.applyFFT()
-            elif opc == "Area bajo la curva":
+            elif opc == 1:
+                # Area bajo la curva
                 self.applyAUC()
-            elif opc == "Voltaje maximo":
+            elif opc == 2:
+                # Voltaje maximo
                 self.applyMV()
+        self.fillEEGTabs(selected)
+
+    def fillEEGTabs(self, selected):
+        self.eegTabs.DeleteAllPages()
+        eegs = self.GetParent().project.EEGS
+        num = 0
+        for eeg in eegs:
+            self.addTab(eeg, selected, num)
+            num += 1
+
+    def addTab(self, e, selected, num):
+        page = GridTab(self.eegTabs, e, selected, num)
+        self.eegTabs.AddPage(page, e.name)
+
+
+class GridTab(wx.Panel):
+
+    def __init__(self, p, e, selected, num):
+        wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size))
+        self.eeg = e
+        project = self.GetParent().GetParent().GetParent().GetParent().project
+        baseContainer = wx.BoxSizer(wx.HORIZONTAL)
+        table = wx.grid.Grid(self, size=(600,600))
+        table.CreateGrid(len(self.eeg.windows), len(selected))
+        ch = ["Transformada rápida de Fourier", "Area bajo la curva", "Voltaje maximo"]
+        windowSize = []
+        add = 0
+        eegs = project.EEGS
+        for eeg in eegs:
+            windowSize.append(add)
+            add += len(eeg.windows)
+        col = 0
+        row = 0
+        while col < len(selected):
+            table.SetColLabelValue(col, ch[selected[col]])
+            col += 1
+        data = []
+        while row < len(self.eeg.windows):
+            table.SetRowLabelValue(row, str(row+1))
+            col=0
+            while col < len(selected):
+                if selected[col] == 0:
+                    data = project.windowFFT
+                if selected[col] == 1:
+                    data = project.windowAUC
+                if selected[col] == 2:
+                    data = project.windowMaxVolt
+                table.SetCellValue(row, col, str(data[row + windowSize[num]]))
+                col += 1
+            row += 1
+        table.AutoSize()
+        baseContainer.Add(table, 0, wx.EXPAND | wx.ALL, 0)
+        self.SetSizer(baseContainer)
+

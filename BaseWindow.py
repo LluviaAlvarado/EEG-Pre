@@ -238,5 +238,3 @@ class BaseWindow(wx.Frame):
             self.setAux(self.project)
         dlg.Destroy()
         self.setStatus("", 0)
-
-

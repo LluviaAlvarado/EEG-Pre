@@ -1,38 +1,34 @@
 # Imports
-import numpy as np
 from copy import deepcopy
 
 # local imports
-from WindowDialog import *
-from WindowEditor import *
-from FileReader import *
 from FilesWindow import *
-# local imports
 from Channel import *
 from BPFWindow import *
 
 
 class frequencyBand:
-    def __init__(self, name,lowFrequency,  hiFrequency ):
+    def __init__(self, name, lowFrequency, hiFrequency):
         self.name = name
         self.hiFrequency = hiFrequency
         self.lowFrequency = lowFrequency
 
     def getFormat(self):
-        blank =""
+        blank = ""
         i = len(self.name)
         while i < 10:
-            blank =  blank + " "
-            i+=1
-        s = self.name +blank+" Baja:  "+str(self.lowFrequency)+"Hz    Alta:  "+str(self.hiFrequency)+"Hz"
+            blank = blank + " "
+            i += 1
+        s = self.name + blank + " Baja:  " + str(self.lowFrequency) + "Hz    Alta:  " + str(self.hiFrequency) + "Hz"
         return s
 
 
-class PreBPFW (wx.Frame):
+class PreBPFW(wx.Frame):
     """
         window that contains the Bandpass Filter configuration and
         open visualisation window
         """
+
     def __init__(self, parent):
 
         wx.Frame.__init__(self, parent, -1, "Pre configuración del filtrado", )
@@ -50,7 +46,8 @@ class PreBPFW (wx.Frame):
         extraCannels = wx.StaticText(self.pnl, label="Bandas personalizadas:")
         info = wx.StaticText(self.pnl, label="De doble clic sobre una Banda\npara editar las Frecuencias")
         self.waveList = wx.CheckListBox(self.pnl, choices=self.wavestoString(self.waves))
-        self.extraList = wx.CheckListBox(self.pnl,choices=self.wavestoString(self.customWaves), style=wx.LB_SINGLE | wx.LB_HSCROLL | wx.LB_NEEDED_SB)
+        self.extraList = wx.CheckListBox(self.pnl, choices=self.wavestoString(self.customWaves),
+                                         style=wx.LB_SINGLE | wx.LB_HSCROLL | wx.LB_NEEDED_SB)
         self.waveList.Bind(wx.EVT_LISTBOX_DCLICK, lambda event: self.onEdit(self.waves, self.waveList))
         self.extraList.Bind(wx.EVT_LISTBOX_DCLICK, lambda event: self.onEdit(self.customWaves, self.extraList))
 
@@ -118,7 +115,7 @@ class PreBPFW (wx.Frame):
             w = frequencyBand(name, lowF, higF)
             self.customWaves.append(w)
             self.extraList.Append(w.getFormat())
-            self.extraList.Check(self.extraList.GetCount()-1, True)
+            self.extraList.Check(self.extraList.GetCount() - 1, True)
 
     def delCustom(self, event):
         index = self.extraList.GetSelection()
@@ -128,23 +125,24 @@ class PreBPFW (wx.Frame):
 
     def onEdit(self, waves, waveList):
         index = waveList.GetSelection()
-        name, lowF, higF, flag = self.getWaveData(waves[index].name, waves[index].lowFrequency, waves[index].hiFrequency)
+        name, lowF, higF, flag = self.getWaveData(waves[index].name, waves[index].lowFrequency,
+                                                  waves[index].hiFrequency)
         if flag:
             waves[index].name = name
             waves[index].lowFrequency = lowF
             waves[index].hiFrequency = higF
             waveList.Delete(index)
-            waveList.InsertItems([waves[index].getFormat()],index)
+            waveList.InsertItems([waves[index].getFormat()], index)
             waveList.Check(index, True)
 
-    def getWaveData(self,name="Nuevo", lowF = 1, higF = 10):
+    def getWaveData(self, name="Nuevo", lowF=1, higF=10):
         # giving a default value in ms to avoid user errors
-        falg = True
+        flag = True
         with WindowCustomWave(self, name, lowF, higF) as dlg:
             dlg.ShowModal()
             if dlg.flag:
-            # handle dialog being cancelled or ended by some other button
-                if dlg.name.GetValue() !="":
+                # handle dialog being cancelled or ended by some other button
+                if dlg.name.GetValue() != "":
                     name = str(dlg.name.GetValue())
                 if dlg.lowF.GetValue() != "":
                     try:
@@ -159,8 +157,8 @@ class PreBPFW (wx.Frame):
                         # it was not an integer
                         dlg.higF.SetValue(str(higF))
             else:
-                falg = False
-        return name, lowF, higF, falg
+                flag = False
+        return name, lowF, higF, flag
 
     def exportar(self, event):
         pathPicker = wx.DirDialog(None, "Exportar en:", "D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
@@ -187,7 +185,7 @@ class PreBPFW (wx.Frame):
             # it already exists
             f = self.GetParent().project.name + "_windows.csv"
             msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
-                                    "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
+                                                              "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
                                    style=wx.YES_NO | wx.CENTRE)
             if msg.ShowModal() == wx.ID_NO:
                 return  # we don't to anything
@@ -208,7 +206,7 @@ class PreBPFW (wx.Frame):
         # writing the txt
         with open(txt, 'w', newline='') as txtfile:
             txtfile.write("Longitud: " + str(self.GetParent().project.windowLength) +
-                           " TAE: " + str(self.GetParent().project.windowTBE))
+                          " TAE: " + str(self.GetParent().project.windowTBE))
         self.GetParent().setStatus("", 0)
 
     def applyFilter(self, event):
@@ -230,7 +228,7 @@ class PreBPFW (wx.Frame):
                     fourier = np.fft.rfft(ch.readings, len(ch.readings))
                     for i in range(len(fourier)):
                         if i < band.lowFrequency or i > band.hiFrequency:
-                           fourier[i] = 0.0
+                            fourier[i] = 0.0
                     # adding new filtered channel
                     filtered = np.fft.irfft(fourier)
                     fl = Channel(ch.label, filtered)
@@ -250,6 +248,6 @@ class PreBPFW (wx.Frame):
             self.GetParent().filesWindow.Show()
 
     def openView(self, event):
-        if self.BPFwindow != None:
+        if self.BPFwindow is not None:
             self.BPFwindow.Hide()
         self.BPFwindow = BFPWindow(self)

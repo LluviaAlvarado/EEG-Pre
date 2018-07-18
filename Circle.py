@@ -33,7 +33,8 @@ class AddCircle:
         menu = wx.Menu()
         for (id, nombre) in Circle.menu_options:
             menu.Append(id, nombre)
-            wx.EVT_MENU(menu, id, self.seleccionMenu)
+            menu.Bind(wx.EVT_MENU, self.seleccionMenu, id=id)
+            # wx.EVT_MENU(menu, id, self.seleccionMenu)
         panel = self.imgCtrl.GetParent()
         panel.PopupMenu(menu, [self.x, self.y])
         menu.Destroy()
