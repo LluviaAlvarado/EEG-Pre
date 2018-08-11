@@ -1,11 +1,11 @@
 class WindowEEG:
-    '''Contains basic info of a window inside and EEG
+    """Contains basic info of a window inside and EEG
     that is the length in ms, the Time Before Estimulus
     indicates were the start ms should be calculated also
-    in ms and the time of the stimulus in ms as well'''
+    in ms and the time of the stimulus in ms as well"""
 
-    def __init__(self, st, len, tbe, eeg):
-        self.length = len
+    def __init__(self, st, length, tbe, eeg):
+        self.length = length
         self.TBE = tbe
         self.stimulus = st
         # contains the readings of the selected channels just for this window

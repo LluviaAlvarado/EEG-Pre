@@ -1,4 +1,3 @@
-
 from BaseWindow import *
 
 app = wx.App()

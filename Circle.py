@@ -4,7 +4,6 @@ from WindowAttributes import *
 
 
 class AddCircle:
-
     imgCtrl = None
 
     def __init__(self, diameter):
@@ -42,18 +41,21 @@ class AddCircle:
     def seleccionMenu(self, event):
         res = 'Nada'
         for i in Circle.menu_options:
-            if(i[0]==event.GetId()):
+            if (i[0] == event.GetId()):
                 res = i[1]
         new = None
-        #Todo: Hacer un diccionario con las funciones
+        # Todo: Hacer un diccionario con las funciones
         if res == 'Filtrado':
-            new = FilterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
+            new = FilterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
+                               self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
         elif res == 'Artefactos':
-            new = ArtifactCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
+            new = ArtifactCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
+                                 self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
         elif res == 'Caracterizar':
-            new = characterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter, self.parent.mainW)
+            new = characterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
+                                  self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
         if new is not None:
             self.parent.hijos.append(new)
@@ -70,10 +72,10 @@ class Circle:
         if Circle.plus is None:
             Circle.plus = AddCircle(diameter)
 
-    #Todo: Convertir esto en un diccionario
+    # Todo: Convertir esto en un diccionario
     menu_options = [
-        #[wx.NewId(),'Coherencia'],
-        #[wx.NewId(),'PDC/DTF'],
+        # [wx.NewId(),'Coherencia'],
+        # [wx.NewId(),'PDC/DTF'],
         [wx.NewId(), 'Filtrado'],
         [wx.NewId(), 'Artefactos'],
         [wx.NewId(), 'Caracterizar']

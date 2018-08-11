@@ -10,6 +10,7 @@ class WindowAttributes(wx.Frame):
     """
     window that contains the list of
     """
+
     def __init__(self, parent):
         wx.Frame.__init__(self, parent, -1, "Caracterizar")
         self.SetSize(900, 600)
@@ -41,9 +42,9 @@ class WindowAttributes(wx.Frame):
         rightPnl = wx.Panel(self, size=(600, 600))
         # EEG tabs
         self.eegTabs = aui.AuiNotebook(rightPnl, size=(rightPnl.Size),
-                                              style=aui.AUI_NB_DEFAULT_STYLE ^ (
-                                                          aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
-                                                    | aui.AUI_NB_WINDOWLIST_BUTTON)
+                                       style=aui.AUI_NB_DEFAULT_STYLE ^ (
+                                               aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
+                                             | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
         rightSizer = wx.BoxSizer(wx.VERTICAL)
         rightSizer.Add(self.eegTabs, 0, wx.EXPAND | wx.ALL, 1)
@@ -65,9 +66,9 @@ class WindowAttributes(wx.Frame):
                 ffts = []
                 for ch in w.readings:
                     fourier = np.fft.rfft(ch, len(ch))
-                    index = int((len(ch)/2) - self.amountHF)
+                    index = int((len(ch) / 2) - self.amountHF)
                     group = []
-                    for i in range(index, int(len(ch)/2)):
+                    for i in range(index, int(len(ch) / 2)):
                         group.append(fourier[i])
                     ffts.append(group)
                 # getting the average frequency for the selected group per window
@@ -106,7 +107,7 @@ class WindowAttributes(wx.Frame):
                 # getting the average area per window
                 area = np.average(areas)
                 AUC.append(area)
-    # setting AUC to the project
+        # setting AUC to the project
         self.GetParent().project.windowAUC = AUC
 
     def applyMV(self):
@@ -158,7 +159,7 @@ class GridTab(wx.Panel):
         self.eeg = e
         project = self.GetParent().GetParent().GetParent().GetParent().project
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
-        table = wx.grid.Grid(self, size=(600,600))
+        table = wx.grid.Grid(self, size=(600, 600))
         table.EnableEditing(False)
         table.CreateGrid(len(self.eeg.windows), len(selected))
         ch = ["Transformada rápida de Fourier", "Area bajo la curva", "Voltaje máximo"]
@@ -175,8 +176,8 @@ class GridTab(wx.Panel):
             col += 1
         data = []
         while row < len(self.eeg.windows):
-            table.SetRowLabelValue(row, str(row+1))
-            col=0
+            table.SetRowLabelValue(row, str(row + 1))
+            col = 0
             while col < len(selected):
                 if selected[col] == 0:
                     data = project.windowFFT
@@ -190,4 +191,3 @@ class GridTab(wx.Panel):
         table.AutoSize()
         baseContainer.Add(table, 0, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(baseContainer)
-

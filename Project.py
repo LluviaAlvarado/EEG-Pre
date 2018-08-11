@@ -1,6 +1,7 @@
 class Project:
     '''Saves the state of a Project
     with eegs and parameters'''
+
     def __init__(self):
         self.EEGS = []
         self.name = "new"

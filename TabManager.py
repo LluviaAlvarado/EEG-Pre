@@ -5,6 +5,7 @@ import wx.lib.dialogs as DL
 
 # Local imports
 from WindowEEG import *
+
 '''custom tab manager that contains
     the information of the selected
     windows'''
@@ -17,7 +18,7 @@ class TabManager(aui.AuiNotebook):
         w = parent.GetParent().Size[0] / 6
         h = parent.GetParent().Size[1] / 2.1
         aui.AuiNotebook.__init__(self, p, size=(w, h),
-                                 style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE )
+                                 style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                        | aui.AUI_NB_WINDOWLIST_BUTTON)
         # parameters for window size
         self.par = parent
@@ -47,7 +48,7 @@ class TabManager(aui.AuiNotebook):
     def showInfoTab(self):
         infoTab = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.AddSpacer(self.Size[1]/3)
+        sizer.AddSpacer(self.Size[1] / 3)
         info = wx.StaticText(infoTab, label='No hay Ventanas que mostrar.')
         sizer.Add(info, 0, wx.CENTER | wx.ALL, 5)
         info = wx.StaticText(infoTab, label='Cree una con la herramienta de "Ventana".')
@@ -79,7 +80,7 @@ class TabManager(aui.AuiNotebook):
         window = WindowEEG(est, leng, tbe, self.par.eeg)
         self.par.eeg.addWindow(window)
         page = windowTab(self, self.GetPageCount())
-        self.AddPage(page, str(self.GetPageCount()+1))
+        self.AddPage(page, str(self.GetPageCount() + 1))
 
     # to update length and tbe since it is the same to all windows
     def updateAll(self, l, tbe):
@@ -98,7 +99,8 @@ class TabManager(aui.AuiNotebook):
         else:
             # renaming all tabs
             for i in range(self.GetPageCount()):
-                self.SetPageText(i, str(i+1))
+                self.SetPageText(i, str(i + 1))
+
 
 class windowTab(wx.Panel):
 
@@ -223,10 +225,12 @@ class windowTab(wx.Panel):
 
 '''this panel shows a thumbnail of
     the window for viewing purposes'''
+
+
 class WindowThumb(wx.Panel):
     def __init__(self, parent, eeg, window, w, h):
         wx.Panel.__init__(self, parent, size=(w, h),
-            style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+                          style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.eeg = eeg
         self.subSampling = 0
         self.incx = 1
@@ -242,6 +246,7 @@ class WindowThumb(wx.Panel):
 
     '''sets the how many readings will we skip
     and how many pixels'''
+
     def setSamplingRate(self, nSamp):
         if nSamp < self.Size[0]:
             self.incx = int(self.Size[0] / nSamp)
@@ -267,7 +272,6 @@ class WindowThumb(wx.Panel):
         self.setSamplingRate(nsamp)
         self.stimulusReading = self.milisToReading(window.stimulus)
 
-
     # gets the selected electrodes to graph
     def getChecked(self):
         checked = self.GetParent().GetParent().par.electrodeList.GetCheckedItems()
@@ -276,7 +280,7 @@ class WindowThumb(wx.Panel):
             if ix < len(self.eeg.channels):
                 channels.append(self.eeg.channels[ix])
             else:
-                channels.append(self.eeg.additionalData[ix-len(self.eeg.channels)])
+                channels.append(self.eeg.additionalData[ix - len(self.eeg.channels)])
         return channels
 
     # changes the value for printable porpuses
@@ -293,7 +297,7 @@ class WindowThumb(wx.Panel):
         dc.SetPen(wx.Pen(wx.BLACK, 4))
         y = 0
         amUnits = self.eeg.amUnits
-        subSampling=self.subSampling
+        subSampling = self.subSampling
         incx = self.incx
         self.chanPosition = []
         # defining channels to plot

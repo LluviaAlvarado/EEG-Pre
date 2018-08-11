@@ -7,7 +7,7 @@ class graphPanel(wx.Panel):
         wx.Panel.__init__(self, parent, size=(w, h),
                           style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.paint = True
-        #var for repaint
+        # var for repaint
         self.mirror = wx.EmptyBitmap
         self.eeg = eeg
         self.timeLapse = 0
@@ -291,7 +291,8 @@ class graphPanel(wx.Panel):
                         if inci > self.nSamp - 1:
                             ny2 = ny
                         else:
-                            ny2 = (((channel.readings[inci] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
+                            ny2 = (((channel.readings[inci] - amUnits[1]) * ((y + hSpace) - y)) / (
+                                        amUnits[0] - amUnits[1])) + y
                         if abs(ny - ny2) > 3 or (x + incx) > 3:
                             dc.DrawLine(x, ny, x + incx, ny2)
                         else:
@@ -300,7 +301,7 @@ class graphPanel(wx.Panel):
                         i = self.msToReading(ms)
                         x += incx
                     y += hSpace
-            self.mirror=dc.GetAsBitmap()
+            self.mirror = dc.GetAsBitmap()
             self.paint = False
         else:
             dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)

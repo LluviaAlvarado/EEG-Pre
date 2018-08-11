@@ -1,39 +1,40 @@
 # Imports
-import wx.lib.scrolledpanel
 import wx.lib.agw.buttonpanel
+import wx.lib.scrolledpanel
 
 # Local Imports
 from WindowEditor import *
 
 
-class BFPWindow (wx.Frame):
+class BFPWindow(wx.Frame):
     title = "Visualizar"
 
     def __init__(self, parent):
-            wx.Frame.__init__(self, parent, -1, "Filtrado", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
-            self.Maximize(True)
-            self.SetMinSize((self.Size[0], self.Size[1]))
-            self.project = parent.GetParent().project
-            # frame will contain the base container of window editor and eeg tabs
-            frameSizer = wx.BoxSizer(wx.VERTICAL)
-            # EEG tabs
-            self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
-                                           style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
-                                                 | aui.AUI_NB_WINDOWLIST_BUTTON)
-            # filling the tabs
-            # self.fillEEGTabs()
-            self.fillnavigationTabs()
-            self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
-            self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
-            frameSizer.Add(self.navigationTabs, 0, wx.EXPAND, 3)
-            self.Bind(wx.EVT_CLOSE, self.onClose)
-            self.SetSizer(frameSizer)
-            # creating a status bar to inform user of process
-            self.CreateStatusBar()
-            # setting the cursor to loading
-            self.SetStatus("", 0)
-            self.Centre()
-            self.Show()
+        wx.Frame.__init__(self, parent, -1, "Filtrado", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
+        self.Maximize(True)
+        self.SetMinSize((self.Size[0], self.Size[1]))
+        self.project = parent.GetParent().project
+        # frame will contain the base container of window editor and eeg tabs
+        frameSizer = wx.BoxSizer(wx.VERTICAL)
+        # EEG tabs
+        self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
+                                              style=aui.AUI_NB_DEFAULT_STYLE ^ (
+                                                          aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
+                                                    | aui.AUI_NB_WINDOWLIST_BUTTON)
+        # filling the tabs
+        # self.fillEEGTabs()
+        self.fillnavigationTabs()
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
+        frameSizer.Add(self.navigationTabs, 0, wx.EXPAND, 3)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.SetSizer(frameSizer)
+        # creating a status bar to inform user of process
+        self.CreateStatusBar()
+        # setting the cursor to loading
+        self.SetStatus("", 0)
+        self.Centre()
+        self.Show()
 
     def loadingNew(self, event):
         # set loading status when eeg is changed
@@ -70,8 +71,9 @@ class BFPWindow (wx.Frame):
 class tab(wx.Panel):
     '''Panel that contains graph of an EEG
     and window tools'''
+
     def __init__(self, p, project, name):
-        wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size[0]-10 ,p.Size[1]-10 ))
+        wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size[0] - 10, p.Size[1] - 10))
         self.project = project
         self.name = name
         # frame will contain the base container of window editor and eeg tabs

@@ -1,11 +1,10 @@
 # Imports
-import wx.lib.dialogs as DL
 import csv
 
 # local imports
 from FileReader import *
-from WindowEditor import *
 from WindowDialog import *
+from WindowEditor import *
 
 
 class FilesWindow(wx.Frame):
@@ -13,6 +12,7 @@ class FilesWindow(wx.Frame):
     window that contains the list of EEG files and let's you
     open the window editor
     """
+
     def __init__(self, parent):
         wx.Frame.__init__(self, parent, -1, "Editor de EEGs", )
         self.SetSize(500, 500)
@@ -21,7 +21,7 @@ class FilesWindow(wx.Frame):
         self.windowEditor = None
         # create base panel in the frame
         self.pnl = wx.Panel(self,
-                   style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+                            style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         # base vbox
         self.baseSizer = wx.BoxSizer(wx.HORIZONTAL)
         # list for loaded files
@@ -72,12 +72,13 @@ class FilesWindow(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.onClose)
         # todo cambiar la direccion default
         self.filePicker = wx.FileDialog(self.pnl, message="Elige los archivos de EEG",
-           defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
-           wildcard="Todos (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq", style=wx.FD_OPEN | wx.FD_MULTIPLE)
+                                        defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
+                                        wildcard="Todos (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq",
+                                        style=wx.FD_OPEN | wx.FD_MULTIPLE)
 
     def exportar(self, event):
         pathPicker = wx.DirDialog(None, "Exportar en:", "D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
-                    wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+                                  wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if pathPicker.ShowModal() != wx.ID_CANCEL:
             writer = FileReader()
             windows = []
@@ -100,7 +101,7 @@ class FilesWindow(wx.Frame):
             # it already exists
             f = self.GetParent().project.name + "_windows.csv"
             msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
-                                    "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
+                                                              "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
                                    style=wx.YES_NO | wx.CENTRE)
             if msg.ShowModal() == wx.ID_NO:
                 return  # we don't to anything
@@ -121,7 +122,7 @@ class FilesWindow(wx.Frame):
         # writing the txt
         with open(txt, 'w', newline='') as txtfile:
             txtfile.write("Longitud: " + str(self.GetParent().project.windowLength) +
-                           " TAE: " + str(self.GetParent().project.windowTBE))
+                          " TAE: " + str(self.GetParent().project.windowTBE))
         self.GetParent().setStatus("", 0)
 
     def onClose(self, event):
@@ -151,7 +152,7 @@ class FilesWindow(wx.Frame):
         if self.thereIsWindows():
             alerta = wx.MessageDialog(self, "Al cargar un nuevo archivo se eliminarán todas "
                                             "las ventanas actuales.\n¿Desea continuar?", caption="¡Alerta!",
-                          style=wx.YES_NO)
+                                      style=wx.YES_NO)
             if alerta.ShowModal() == wx.ID_NO:
                 # do nothing
                 return
@@ -160,9 +161,9 @@ class FilesWindow(wx.Frame):
                 for eeg in self.GetParent().project.EEGS:
                     eeg.windows = []
         picker = wx.FileDialog(self.pnl, message="Elige el archivo de Tiempos",
-                                  defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
-                                  wildcard="CSV (*.csv)|*.csv",
-                                  style=wx.FD_OPEN)
+                               defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
+                               wildcard="CSV (*.csv)|*.csv",
+                               style=wx.FD_OPEN)
         if picker.ShowModal() == wx.ID_CANCEL:
             return  # the user changed their mind
         # fill the windows with the file

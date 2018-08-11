@@ -42,10 +42,10 @@ class FileReader:
                 # it already exists
                 f = eeg.name + "_" + project + ".edf"
                 msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
-                                    "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
-                                    style=wx.YES_NO | wx.CENTRE)
+                                                                  "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
+                                       style=wx.YES_NO | wx.CENTRE)
                 if msg.ShowModal() == wx.ID_NO:
-                    return # we don't to anything
+                    return  # we don't to anything
                 else:
                     # deleting the prev file
                     os.remove(name)
@@ -120,12 +120,11 @@ class FileReader:
         while i < channels:
             chN.append(channelsName.item(i)[0][0])
             matrix.append([])
-            i+=1
+            i += 1
         signa = np.zeros((channels, records))
         for i in np.arange(channels):
             signa[i, :] = signals[i]
         return EEGData(sampleRate, duracion, signa, prefilt, chN)
-
 
     def read_EDF(self, fileAddress):
         try:
@@ -139,7 +138,7 @@ class FileReader:
             self.setError(3)
             return None
         # getting how many samples per second
-        frecuency = signals.shape[1]/_dfFile.datarecord_duration
+        frecuency = signals.shape[1] / _dfFile.datarecord_duration
         # getting if the signals where prefiltered
         try:
             filtr = _dfFile.getPrefilter()
@@ -149,7 +148,7 @@ class FileReader:
 
     def read_GDF(self, fileAddress):
         try:
-            _dfFile=mne.read_raw_edf(fileAddress)
+            _dfFile = mne.read_raw_edf(fileAddress)
             n = len(_dfFile.ch_names)
             labels = _dfFile.ch_names
             d = _dfFile.get_data()
@@ -160,9 +159,9 @@ class FileReader:
         except:
             self.setError(3)
             return None
-        #getting how many samples per second
+        # getting how many samples per second
         frecuency = _dfFile.info['sfreq']
-        #getting if the signals where prefiltered
+        # getting if the signals where prefiltered
         try:
             filtr = _dfFile.getPrefilter()
         except:

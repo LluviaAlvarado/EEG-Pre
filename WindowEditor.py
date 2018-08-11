@@ -8,19 +8,20 @@ from EEGraph import *
 from WindowDialog import WindowDialog
 
 
-class WindowEditor (wx.Frame):
+class WindowEditor(wx.Frame):
     title = "Edición de Ventanas"
 
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
+        wx.Frame.__init__(self, parent, -1, "Editor de Ventanas", style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
         self.Maximize(True)
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
         # frame will contain the base container of window editor and eeg tabs
         frameSizer = wx.BoxSizer(wx.VERTICAL)
         # EEG tabs
-        self.eegTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]), style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE )
-                                       | aui.AUI_NB_WINDOWLIST_BUTTON)
+        self.eegTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
+                                       style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
+                                             | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
         self.fillEEGTabs()
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
@@ -108,7 +109,8 @@ class WindowEditor (wx.Frame):
 class EEGTab(wx.Panel):
     '''Panel that contains graph of an EEG
     and window tools'''
-    def __init__(self, p, e, edit = True):
+
+    def __init__(self, p, e, edit=True):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.eeg = e
         self.eegGraph = None
@@ -192,6 +194,7 @@ class EEGTab(wx.Panel):
 class EEGTabV(wx.Panel):
     '''Panel that contains graph of an EEG
     and window tools'''
+
     def __init__(self, p, e):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size))
         self.eeg = e
@@ -213,7 +216,7 @@ class EEGTabV(wx.Panel):
                 self.electrodeList.Check(i, check=True)
         # button to apply changes from electrode selector
 
-        #baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
+        # baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
         # eeg graphic information right side
         rightPnl = wx.Panel(self, size=self.Size)
         graphContainer = wx.BoxSizer(wx.VERTICAL)
@@ -236,7 +239,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
        par:  parent
        """
 
-    def __init__(self, par, graph, edit = True):
+    def __init__(self, par, graph, edit=True):
         wx.lib.agw.buttonpanel.ButtonPanel.__init__(self, par)
         self.ID_FIT = wx.NewId()
         self.ID_ZOOM = wx.NewId()
@@ -248,25 +251,27 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.AddSpacer()
         self.buttons = []
         self.edit = edit
-        self.window_s =0
+        self.window_s = 0
         # button to fit graph to screen
-        self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT, wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Reiniciar Zoom')
+        self.btnRestart = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_FIT,
+                                                            wx.Bitmap("src/restart.png", wx.BITMAP_TYPE_PNG),
+                                                            shortHelp='Reiniciar Zoom')
         self.btnRestart.SetKind(wx.ITEM_CHECK)
         self.AddButton(self.btnRestart)
         self.buttons.append(self.btnRestart)
         self.Bind(wx.EVT_BUTTON, self.ZoomFit, self.btnRestart)
         # button for zooming out
         self.btnZoomO = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOMOUT,
-                                                         wx.Bitmap("src/zoom_out.png", wx.BITMAP_TYPE_PNG),
-                                                         shortHelp='Alejar')
+                                                          wx.Bitmap("src/zoom_out.png", wx.BITMAP_TYPE_PNG),
+                                                          shortHelp='Alejar')
         self.AddButton(self.btnZoomO)
         self.buttons.append(self.btnZoomO)
         self.Bind(wx.EVT_BUTTON, self.ZoomO, self.btnZoomO)
 
         # button for zooming in
-        self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM, wx.Bitmap("src/zoom_in.png", wx.BITMAP_TYPE_PNG),
-                             shortHelp='Acercar')
+        self.btnZoom = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_ZOOM,
+                                                         wx.Bitmap("src/zoom_in.png", wx.BITMAP_TYPE_PNG),
+                                                         shortHelp='Acercar')
         self.btnZoom.SetKind(wx.ITEM_CHECK)
         self.AddButton(self.btnZoom)
         self.buttons.append(self.btnZoom)
@@ -283,7 +288,8 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
 
         if edit:
             self.btnNewwin = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_NEWWIN,
-                                                             wx.Bitmap("src/new_window.png", wx.BITMAP_TYPE_PNG), shortHelp='Nueva Ventana')
+                                                               wx.Bitmap("src/new_window.png", wx.BITMAP_TYPE_PNG),
+                                                               shortHelp='Nueva Ventana')
             self.btnNewwin.SetKind(wx.ITEM_CHECK)
             self.AddButton(self.btnNewwin)
             self.buttons.append(self.btnNewwin)
@@ -301,16 +307,17 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.buttons.append(self.btnView)
         self.Bind(wx.EVT_BUTTON, self.changeview, self.btnView)
 
-
-        b1=wx.StaticText(self,0, " ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(96,46))
-        b1.SetBackgroundColour((0,0,0))
+        b1 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(96, 46))
+        b1.SetBackgroundColour((0, 0, 0))
         b2 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(3, 3), size=(94, 44))
 
-        r1= wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(5, 4), size=(-1, -1))
-        r2=wx.StaticText(self, -1, "Máxima:  " + str(round(self.graph.eeg.amUnits[0], 3)), style=wx.ALIGN_CENTER, pos=(5, 18),
-                      size=(-1, -1))
-        r3=wx.StaticText(self, -1, "Mínima:  " + str(round(self.graph.eeg.amUnits[1],3)), style=wx.ALIGN_CENTER, pos=(5, 32),
-                      size=(-1, -1))
+        r1 = wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(5, 4), size=(-1, -1))
+        r2 = wx.StaticText(self, -1, "Máxima:  " + str(round(self.graph.eeg.amUnits[0], 3)), style=wx.ALIGN_CENTER,
+                           pos=(5, 18),
+                           size=(-1, -1))
+        r3 = wx.StaticText(self, -1, "Mínima:  " + str(round(self.graph.eeg.amUnits[1], 3)), style=wx.ALIGN_CENTER,
+                           pos=(5, 32),
+                           size=(-1, -1))
         r1.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
         r2.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
         r3.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
@@ -323,8 +330,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
                 btn.SetToggled(False)
             if btn.GetId() == self.ID_NEWWIN and btn.GetToggled() == False:
                 self.graph.windowP.hide()
-
-
 
     def ZoomFit(self, event):
         if event.GetEventObject().GetToggled():
@@ -344,7 +349,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.channelList.adjustment()
         event.Skip()
 
-
     def ZoomO(self, event):
         # setting to zoom cursor in graph
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
@@ -357,7 +361,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         # untoggling others
         self.unToggleOthers(self.ID_ZOOMOUT)
         event.Skip()
-
 
     def Zoom(self, event):
         if event.GetEventObject().GetToggled():
@@ -403,7 +406,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.windowP.setWindowState(2)
             self.btnView.SetShortHelp("Todas las ventanas")
         if not self.edit and self.window_s == 1:
-            self.window_s+=1
+            self.window_s += 1
         if self.window_s == 1:
             self.btnView.SetBitmap(self.sel_w)
             self.graph.windowP.setWindowState(1)

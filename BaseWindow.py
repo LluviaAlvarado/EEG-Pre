@@ -1,15 +1,8 @@
-import os
-import wx
 import _pickle
 
-# Local Imports
-from copy import deepcopy
-
+from BandpassFilter import *
 from CircleManager import *
 from Project import *
-from WindowDialog import *
-from BandpassFilter import *
-from pathlib import Path
 
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
 
@@ -80,7 +73,7 @@ class BaseWindow(wx.Frame):
                     while p < ch1:
                         if self.project.EEGS[u].channels[p].__dict__ != self.project.EEGS[u].channels[p].__dict__:
                             secondCheck = False
-                        p+=1
+                        p += 1
                 wn1 = len(self.project.EEGS[u].windows)
                 wn2 = len(self.aux.EEGS[u].windows)
                 if wn1 != wn2:
@@ -129,7 +122,7 @@ class BaseWindow(wx.Frame):
         # The "\t..." syntax defines an accelerator key that also triggers
         # the same event
         loadSessionItem = fileMenu.Append(-1, "&Cargar Proyecto...\tCtrl-A",
-                "Carga un Proyecto anterior.")
+                                          "Carga un Proyecto anterior.")
         saveSessionItem = fileMenu.Append(-1, "&Guardar Proyecto...\tCtrl-S",
                                           "Guarda el Proyecto actual.")
         fileMenu.AppendSeparator()
@@ -157,7 +150,7 @@ class BaseWindow(wx.Frame):
         # activated then the associated handler function will be called.
         self.Bind(wx.EVT_MENU, self.OnSave, saveSessionItem)
         self.Bind(wx.EVT_MENU, self.OnLoad, loadSessionItem)
-        self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
+        self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def setStatus(self, st, mouse):
@@ -180,7 +173,7 @@ class BaseWindow(wx.Frame):
                       "Para añadir Procesos a los archivos de clic sobre 'Archivo'.\n"
                       "Dentro del Editor de archivos puedes abrir el Editor de Ventanas.",
                       "Como usar el Programa.",
-                      wx.OK|wx.ICON_INFORMATION)
+                      wx.OK | wx.ICON_INFORMATION)
 
     def OnSave(self, event):
         """Save  project session"""
