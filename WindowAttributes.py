@@ -59,7 +59,7 @@ class WindowAttributes(wx.Frame):
         self.Destroy()
 
     def applyFFT(self):
-        FFT = []
+        MagFase = []
         eegs = self.GetParent().project.EEGS
         for eeg in eegs:
             for w in eeg.windows:
@@ -72,16 +72,18 @@ class WindowAttributes(wx.Frame):
                         group.append(fourier[i])
                     ffts.append(group)
                 # getting the average frequency for the selected group per window
-                group = []
+                MF = []
                 for i in range(self.amountHF):
                     aux = []
                     for fft in ffts:
                         aux.append(fft[i])
                     fft = np.average(aux)
-                    group.append(fft)
-                FFT.append(group)
+                    # getting the magnitude and fase for each value of fft
+                    magnitude = np.sqrt(np.exp2(fft.real)+np.exp2(fft.imag))
+                    fase = np.arctan((np.exp2(fft.imag)/np.exp2(fft.real)))
+                    MagFase.append([magnitude, fase])
         # setting MV to the project
-        self.GetParent().project.windowFFT = FFT
+        self.GetParent().project.windowMagFase = MagFase
 
     def confFFT(self, event):
         dlg = wx.TextEntryDialog(self, 'Numero de salidas: ', 'Configuración FFT')
@@ -115,15 +117,19 @@ class WindowAttributes(wx.Frame):
         eegs = self.GetParent().project.EEGS
         for eeg in eegs:
             for w in eeg.windows:
-                mvs = []
+                maxs = []
+                mins = []
                 for ch in w.readings:
-                    mv = np.amax(ch)
-                    mvs.append(mv)
+                    max = np.amax(ch)
+                    min = np.amin(ch)
+                    maxs.append(max)
+                    mins.append(min)
                 # getting the average max voltage per window
-                mv = np.average(mvs)
-                MV.append(mv)
+                max = np.average(maxs)
+                min = np.average(mins)
+                MV.append([min, max])
         # setting MV to the project
-        self.GetParent().project.windowMaxVolt = MV
+        self.GetParent().project.windowMinMaxVolt = MV
 
     def apply(self, event):
         selected = self.optionsList.GetCheckedItems()
@@ -180,10 +186,12 @@ class GridTab(wx.Panel):
             col = 0
             while col < len(selected):
                 if selected[col] == 0:
+                    # TODO acomodar esto ahora es windowMagFase y cada elemento es una tupla [magnitud, fase]
                     data = project.windowFFT
                 if selected[col] == 1:
                     data = project.windowAUC
                 if selected[col] == 2:
+                    # TODO ahora es windowMinMaxVolt igual es una tupla en ese orden
                     data = project.windowMaxVolt
                 table.SetCellValue(row, col, str(data[row + windowSize[num]]))
                 col += 1
