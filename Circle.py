@@ -1,6 +1,7 @@
 from FilesWindow import *
 from BandpassFilter import *
 from WindowAttributes import *
+from ArtifactEliminationWindow import *
 
 
 class AddCircle:
@@ -166,3 +167,9 @@ class ArtifactCircle(Circle):
         super().__init__(pos, diameter, mainW)
         self.img = wx.Image('./Images/Grafica.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
+
+    def onDoubleClick(self, event):
+        Circle.plus.removeImg()
+        if self.mainW.artifactW is None:
+            self.mainW.artifactW = ArtifactEliminationWindow(self.mainW)
+        self.mainW.artifactW.Show()
