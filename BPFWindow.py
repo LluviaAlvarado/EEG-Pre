@@ -8,7 +8,6 @@ from WindowEditor import *
 
 class BFPWindow(wx.Frame):
     title = "Visualizar"
-
     def __init__(self, parent):
         wx.Frame.__init__(self, parent, -1, "Filtrado", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Maximize(True)
@@ -22,7 +21,6 @@ class BFPWindow(wx.Frame):
                                                           aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                                     | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
-        # self.fillEEGTabs()
         self.fillnavigationTabs()
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
@@ -57,8 +55,7 @@ class BFPWindow(wx.Frame):
     def fillnavigationTabs(self):
         eegs = self.GetParent().GetParent().project.EEGS
         for eeg in eegs:
-            if "_" not in eeg.name:
-                self.addNav(eeg)
+            self.addNav(eeg)
 
     def addNav(self, e):
         page = tab(self.navigationTabs, self.project, e.name)

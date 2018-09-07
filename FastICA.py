@@ -34,11 +34,21 @@ class FastICA():
 
     # recreates signals with the independent components selected
     def recreateSignals(self):
-        components = []
-        for selected in self.selectedComponents:
-            components.append(self.components[selected])
-        self.signals = self.ica.transform(components)
+        # modify the mixing matrix so it only adds the selected components
+        for i in range(len(self.ica.mixing_)):
+            if not self.isSelected(i):
+                # turn to 0 all this row
+                for j in range(len(self.ica.mixing_[i])):
+                    self.ica.mixing_[j][i] = 0
+        self.signals = self.ica.inverse_transform(np.matrix.transpose(np.array(self.components)))
+        # transposing
+        self.signals = np.matrix.transpose(self.signals)
 
+    def isSelected(self, i):
+        for selected in self.selectedComponents:
+            if i == selected:
+                return True
+        return False
     # returns the components so user can see them and select manually
     def getComponents(self):
         return self.components

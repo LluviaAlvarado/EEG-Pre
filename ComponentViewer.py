@@ -16,8 +16,15 @@ class ComponentViewer(wx.Frame):
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
         self.icas = icas
-        # frame will contain the base container of window editor and eeg tabs
+        # frame will contain the base container of window editor and eeg tabs9
         frameSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer = wx.BoxSizer(wx.HORIZONTAL)
+        # button to eliminate artifacts
+        eliminate = wx.Button(self, label="Eliminar Artefactos")
+        topSizer.AddSpacer(self.Size[1] )
+        topSizer.Add(eliminate, 0, wx.EXPAND | wx.ALL, 1)
+        eliminate.Bind(wx.EVT_BUTTON, self.Eliminate)
+        frameSizer.Add(topSizer, 0, wx.EXPAND | wx.ALL, 1)
         # EEG tabs
         self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
                                               style=aui.AUI_NB_DEFAULT_STYLE ^ (
@@ -26,7 +33,7 @@ class ComponentViewer(wx.Frame):
         self.fillnavigationTabs()
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
-        frameSizer.Add(self.navigationTabs, 0, wx.EXPAND, 3)
+        frameSizer.Add(self.navigationTabs, 0, wx.EXPAND | wx.ALL, 3)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.SetSizer(frameSizer)
         # creating a status bar to inform user of process
@@ -35,6 +42,11 @@ class ComponentViewer(wx.Frame):
         self.SetStatus("", 0)
         self.Centre()
         self.Show()
+
+    def Eliminate(self, e):
+        # calls the elimination function of his parent
+        self.GetParent().EliminateComponents()
+        self.Close()
 
     def loadingNew(self, event):
         # set loading status when eeg is changed

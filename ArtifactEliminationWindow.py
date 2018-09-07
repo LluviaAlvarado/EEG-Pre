@@ -5,7 +5,7 @@ from WindowDialog import *
 from ComponentViewer import *
 from FastICA import *
 import numpy as np
-from scipy import signal
+from wx.adv import NotificationMessage
 
 class ArtifactEliminationWindow(wx.Frame):
     """
@@ -15,7 +15,7 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def __init__(self, parent):
 
-        wx.Frame.__init__(self, parent, -1, "Eliminación de Artefactos", )
+        wx.Frame.__init__(self, parent, -1, "Eliminación de Artefactos con FastICA", )
         self.SetSize(250, 250)
         self.Centre()
         self.viewer = None
@@ -98,11 +98,11 @@ class ArtifactEliminationWindow(wx.Frame):
         self.GetParent().setStatus("", 0)
 
     def applyFastICA(self, event):
-        self.GetParent().setStatus("Eliminando Artefactos...", 1)
+        self.GetParent().setStatus("Buscando Componentes...", 1)
         eegs = self.GetParent().project.EEGS
-        matrix = []
         self.icas = []
         for eeg in eegs:
+            matrix = []
             for channel in eeg.channels:
                 matrix.append(channel.readings)
             for extra in eeg.additionalData:
@@ -127,6 +127,18 @@ class ArtifactEliminationWindow(wx.Frame):
         if apply:
             # TODO aqui el metodo automático, artifactSelected = (0,1,2) tiene el listado de los artefactos
             pass
+
+    def EliminateComponents(self):
+        self.GetParent().setStatus("Eliminando Artefactos...", 1)
+        eegs = self.GetParent().project.EEGS
+        i = 0
+        for ica in self.icas:
+            ica.recreateSignals()
+            eegs[i].SetChannels(ica.getSignals())
+            i += 1
+
+        self.GetParent().setStatus("", 0)
+        NotificationMessage(title="¡Exito!", message="Se han eliminado los componentes\ncon artefactos.").Show()
 
     def getSelectedA(self):
         artifactSelected = []

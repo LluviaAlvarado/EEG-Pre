@@ -144,4 +144,12 @@ class EEGData:
         if not self.sameLabels(test.channels):
             return "Channel Names"
         return ""
-
+    # sets channels after applying fastICA
+    def SetChannels(self, signals):
+        i = 0
+        for signal in signals:
+            if i < len(self.channels):
+                self.channels[i].readings = signal
+            else:
+                self.additionalData[i].readings = signal
+            i += 1
