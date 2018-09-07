@@ -30,7 +30,7 @@ class WindowEditor(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.SetSizer(frameSizer)
-        # creating a status bar to inform user of process
+        # creating a status bar to inform user of process.
         self.CreateStatusBar()
         # setting the cursor to loading.
         self.SetStatus("Loading EEG...", 1)
