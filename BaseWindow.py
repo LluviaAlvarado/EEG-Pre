@@ -1,6 +1,6 @@
 import _pickle
+import gzip
 
-from BandpassFilter import *
 from CircleManager import *
 from Project import *
 
@@ -193,8 +193,9 @@ class BaseWindow(wx.Frame):
             name = str(path).split("\\")
             name = name[len(name) - 1].split(".")[0]
             self.project.name = name
-            with open(path, 'wb') as output:
-                _pickle.dump(self.project, output, protocol=4)
+            f = gzip.open(path, 'wb')
+            _pickle.dump(self.project, f, protocol=4)
+            f.close()
             self.setStatus("", 0)
             self.setAux(self.project)
             return True
@@ -221,13 +222,15 @@ class BaseWindow(wx.Frame):
             else:
                 self.setStatus("Cargando...", 1)
                 path = dlg.GetPath()
-                with open(path, 'rb') as input:
-                    self.project = _pickle.load(input)
-                    self.setAux(self.project)
+                f = gzip.open(path, 'rb')
+                self.project = _pickle.load(f)
+                f.close()
+                self.setAux(self.project)
             self.setStatus("Cargando...", 1)
             path = dlg.GetPath()
-            with open(path, 'rb') as input:
-                self.project = _pickle.load(input)
+            f = gzip.open(path, 'rb')
+            self.project = _pickle.load(f)
+            f.close()
         # update the file window if opened
         if self.filesWindow is not None:
             self.filesWindow.Destroy()

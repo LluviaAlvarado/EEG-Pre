@@ -10,7 +10,8 @@ from CGraphPanel import *
 class ComponentViewer(wx.Frame):
 
     def __init__(self, parent, icas):
-        wx.Frame.__init__(self, parent, -1, "Visor de Componentes Independientes", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
+        wx.Frame.__init__(self, parent, -1, "Visor de Componentes Independientes",
+                          style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Maximize(True)
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
@@ -20,10 +21,8 @@ class ComponentViewer(wx.Frame):
         # EEG tabs
         self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
                                               style=aui.AUI_NB_DEFAULT_STYLE ^ (
-                                                          aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
+                                                      aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                                     | aui.AUI_NB_WINDOWLIST_BUTTON)
-        # filling the tabs
-        # self.fillEEGTabs()
         self.fillnavigationTabs()
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
@@ -63,7 +62,7 @@ class ComponentViewer(wx.Frame):
             i += 1
 
     def addNav(self, e, ica):
-        page = ComponentTab(self.navigationTabs, e.name, ica)
+        page = ComponentTab(self.navigationTabs, e, ica)
         self.navigationTabs.AddPage(page, e.name)
 
     def onClose(self, event):
@@ -77,6 +76,7 @@ class ComponentTab(wx.Panel):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size))
         self.eeg = e
         self.graph = None
+        self.eegGraph = None
         self.ica = ica
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         leftPnl = wx.Panel(self)
@@ -84,6 +84,10 @@ class ComponentTab(wx.Panel):
         for i in range(len(self.ica.components)):
             labels.append("C" + str(i))
         self.componentList = wx.CheckListBox(leftPnl, choices=labels)
+        project = self.GetParent().GetParent().project
+        self.tabManager = TabManager(leftPnl, self, project.windowLength)
+        self.tabManager.Hide()
+
         # select all the components to view
         if len(self.ica.selectedComponents) == 0:
             # let's fill them with all the components
@@ -97,6 +101,16 @@ class ComponentTab(wx.Panel):
         # button to apply changes from electrode selector
         applyChanges = wx.Button(leftPnl, label="Aplicar")
         applyChanges.Bind(wx.EVT_BUTTON, self.setSelected)
+        labelComponent = wx.StaticText(self, -1, "  Selección de Componentes", style=wx.ALIGN_CENTER, size=(-1, -1))
+        componentContainer = wx.BoxSizer(wx.VERTICAL)
+        componentContainer.AddSpacer(20)
+        componentContainer.Add(labelComponent, 0, wx.EXPAND | wx.ALL, 0)
+        componentContainer.AddSpacer(10)
+        componentContainer.Add(self.componentList, 0, wx.EXPAND | wx.ALL, 0)
+        componentContainer.AddSpacer(4)
+        componentContainer.Add(applyChanges, 0, wx.EXPAND | wx.ALL, 0)
+        leftPnl.SetSizer(componentContainer)
+
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
         # component graphic information right side
         rightPnl = wx.Panel(self, size=self.Size)
@@ -110,12 +124,15 @@ class ComponentTab(wx.Panel):
         graphContainer.Add(self.toolbar, 0, wx.EXPAND | wx.ALL, 0)
         graphContainer.Add(self.graph, 1, wx.EXPAND | wx.ALL, 0)
         rightPnl.SetSizer(graphContainer)
+
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(baseContainer)
 
     def setSelected(self, event):
         self.ica.setComponents(self.componentList.GetCheckedItems())
         self.graph.changeComponents()
+        self.graph.componentList.adjustment(self.componentList.GetCheckedItems())
+
 
 class CGraph(wx.Panel):
     """this is a panel that displays
@@ -133,17 +150,18 @@ class CGraph(wx.Panel):
         h = h - 187
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.ica = ica
+
+        self.eeg = ica
         self.selected = selected
         self.toolbar = None
         # baseSizer
-        baseSizer = wx.FlexGridSizer(2, 3, gap=(0, 0))
-
+        # baseSizer = wx.FlexGridSizer(1, 3, gap=(0, 0))
+        baseSizer = wx.BoxSizer(wx.HORIZONTAL)
         # and to the right the eeg graph
         w = self.Size[0] - 65
         h = self.Size[1]
         self.graph = CgraphPanel(self, ica, w, h)
         self.zoomP = zoomPanel(self, self.graph)
-        self.windowP = windowPanel(self, self.graph)
         # bottom is reserved just for the time ruler
         values = [0, len(self.ica.components)]
         self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.ica.components))
@@ -154,15 +172,11 @@ class CGraph(wx.Panel):
         half = (self.ica.amUnits[0] - self.ica.amUnits[1]) / 2
         values.append(self.ica.amUnits[0] - half)
         values.append(self.ica.amUnits[1])
-        self.ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.ica.channels))
+        self.ampRuler = customRuler(self, wx.VERTICAL, wx.SUNKEN_BORDER, values, len(self.ica.components))
         self.componentList = customList(self, wx.VERTICAL, wx.SUNKEN_BORDER)
         baseSizer.Add(self.componentList, 0, wx.EXPAND, 0)
         baseSizer.Add(self.ampRuler, 0, wx.EXPAND, 0)
         baseSizer.Add(self.graph, 0, wx.EXPAND, 0)
-
-        baseSizer.AddSpacer(30)
-        baseSizer.AddSpacer(30)
-        baseSizer.Add(self.timeRuler, 0, wx.EXPAND, 0)
         self.SetSizer(baseSizer)
 
     def setToolbar(self, toolbar):
@@ -179,26 +193,26 @@ class CGraph(wx.Panel):
 class customList(wx.Panel):
     # List of channel labels
     def __init__(self, parent, orientation, style):
-        wx.Panel.__init__(self, parent, style=style, size=(30, parent.graph.Size[1]))
+        wx.Panel.__init__(self, parent, style=style, size=(30, parent.Size[1]))
         self.ica = parent.ica
         baseSizer = wx.BoxSizer(orientation)
         self.adjustment(-1)
         self.SetSizer(baseSizer)
 
-    def adjustment(self, channels=-1):
-        if channels == -1:
-            channels = self.getChecked()
+    def adjustment(self, components=-1):
+        if components == -1:
+            components = self.getChecked()
         self.DestroyChildren()
-        if len(channels) > 0:
-            h = (self.Size[1] - 5) / len(channels)
+        if len(components) > 0:
+            h = (590) / len(components)
             fontSize = int(h) - 3
             if h > 15:
                 fontSize = 10
             i = 0
             posy = 0
-            while i < len(channels):
+            while i < len(components):
                 center = posy + (h / 2) - (fontSize / 2)
-                rule = wx.StaticText(self, i, "C" + str(i), style=wx.ALIGN_CENTER,
+                rule = wx.StaticText(self, i, "C" + str(components[i]), style=wx.ALIGN_CENTER,
                                      pos=(0, center),
                                      size=(30, h))
                 rule.SetFont(wx.Font(fontSize, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
@@ -209,11 +223,9 @@ class customList(wx.Panel):
         checked = self.GetParent().selected.GetCheckedItems()
         channels = []
         for ix in checked:
-            if ix < len(self.ica.channels):
-                channels.append(self.ica.channels[ix])
-            else:
-                channels.append(self.ica.additionalData[ix - len(self.ica.channels)])
-        return channels
+            if ix < len(self.ica.components):
+                channels.append(self.ica.components[ix])
+        return checked
 
 
 class customRuler(wx.Panel):
@@ -237,26 +249,20 @@ class customRuler(wx.Panel):
         self.nCh = nCh
         self.increment = 0
         self.minTime = 0
-        self.maxTime = self.graph.msShowing + self.minTime
+        self.maxTime = self.graph.clShowing + self.minTime
         self.opc = 0
         self.zoom = False
         self.num = 0
 
         baseSizer = wx.BoxSizer(orientation)
-        if orientation == wx.HORIZONTAL:
-            self.opc = 1
-            wx.Panel.__init__(self, parent, size=(self.width, 35),
-                              style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
-            self.makeTimeRuler()
-        else:
-            self.opc = 2
-            wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
-            self.makeAmpRuler()
+        self.opc = 2
+        wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
+        self.makeAmpRuler()
 
         self.SetSizer(baseSizer)
 
     def msToPixel(self, ms, msE):
-        length = self.graph.msShowing
+        length = self.graph.clShowing
         return ((length - (msE - ms)) * self.graph.incx) / self.graph.timeLapse
 
     def makeTimeRuler(self):
@@ -269,49 +275,14 @@ class customRuler(wx.Panel):
         dc.SetTextForeground('#000000')
         dc.SetFont(self.font)
         if self.opc == 1:
-            dc.DrawRectangle(0, 0, self.Size[0] - 4, 30)
-            dc = wx.PaintDC(self)
-
-            msS = self.graph.strMs
-            msE = msS + self.graph.msShowing
-            part = self.graph.msShowing / 100
-            i = 0
-            RM = 0
-            while i < 101:
-                f = self.msToPixel((part * i) + msS, msE)
-                if (i % 10) == 0:
-                    y = int(part * i + msS)
-                    w, h = dc.GetTextExtent(str(y))
-                    if i == 0:
-                        RM = w / 2
-                        f = f + 1
-                    st = "ms"
-                    if i == 100:
-                        y = int(y / 1000)
-                        w, h = dc.GetTextExtent(str(y))
-                        RM = w * -1
-                        f = f - 6
-                        st = "s"
-
-                    dc.DrawLine(f, 0, f, 10)
-
-                    dc.DrawText(str(y), f + RM - w / 2, 11)
-                    dc.DrawText(st, f + RM + w / 2, 11)
-                    RM = 0
-
-                elif (i % 5) == 0:
-                    dc.DrawLine(f, 0, f, 8)
-
-                elif not (i % 1):
-                    dc.DrawLine(f, 0, f, 4)
-                i += 1
+            pass
         else:
             channel = self.getChecked()
             self.nCh = len(channel)
             if self.nCh > 0:
-                h = self.height / self.nCh
+                h = 600 / self.nCh
                 if self.zoom:
-                    h = self.height / self.num
+                    h = 600 / self.num
                 i = 0
                 posy = 0
                 while i < self.nCh:

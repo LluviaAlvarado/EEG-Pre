@@ -118,10 +118,10 @@ class CgraphPanel(wx.Panel):
             self.paint = True
             self.GetParent().Refresh()
             # changing channel labels
-            ch = self.getViewChannels()
+            ch, read = self.getViewChannels()
             self.GetParent().timeRuler.update()
             self.GetParent().ampRuler.zoomManager(len(ch))
-            self.GetParent().channelList.adjustment(ch)
+            self.GetParent().componentList.adjustment(read)
             self.strMove = self.endMove
 
     def setSamplingRate(self):
@@ -178,12 +178,12 @@ class CgraphPanel(wx.Panel):
             self.paint = True
             self.GetParent().Refresh()
             # changing channel labels
-            ch = self.getViewChannels()
+            ch, read = self.getViewChannels()
             self.GetParent().timeRuler.update()
             self.GetParent().ampRuler.zoomManager(len(ch))
-            self.GetParent().componentList.adjustment(ch)
+            self.GetParent().componentList.adjustment(read)
         else:
-            ch = self.getViewChannels()
+            ch, read = self.getViewChannels()
             self.GetParent().timeRuler.update()
             self.GetParent().ampRuler.zoomManager(len(ch))
             self.GetParent().componentList.adjustment()
@@ -224,20 +224,23 @@ class CgraphPanel(wx.Panel):
         self.clShowing = endMs - self.strMs
         if self.clShowing < 10:
             self.clShowing = 10
-        if self.strMs + self.clShowing > self.ica.duration * 1000:
+        if self.strMs + self.clShowing > 1 * 1000:
             self.strMs = len(self.ica.components) - self.clShowing
         self.setSamplingRate()
         # repainting
         self.paint = True
         self.GetParent().Refresh()
         # changing channel labels
-        ch = self.getViewChannels()
+        ch, read = self.getViewChannels()
         self.GetParent().ampRuler.zoomManager(len(ch))
-        self.GetParent().channelList.adjustment(ch)
+        self.GetParent().componentList.adjustment(read)
+        # self.GetParent().componentList.adjustment(ch)
 
     def getViewChannels(self):
         checked = self.getChecked()
+        dchecked = self.GetParent().selected.GetCheckedItems()
         channels = []
+        read = []
         # if there is zoom
         if self.zoom:
             i = self.strComp
@@ -252,10 +255,11 @@ class CgraphPanel(wx.Panel):
             self.strComp = i
             while i < self.endComp:
                 channels.append(checked[i])
+                read.append(dchecked[i])
                 i += 1
         else:
             channels = checked
-        return channels
+        return channels, read
 
     def msToReading(self, ms):
         return int((ms * self.nSamp) / len(self.ica.components))
@@ -267,13 +271,12 @@ class CgraphPanel(wx.Panel):
             dc.Clear()
             dc.SetPen(wx.Pen(wx.BLACK, 4))
             y = 0
-
             amUnits = self.ica.amUnits
             timeLapse = self.timeLapse
             incx = self.incx
             self.comPosition = []
             # defining channels to plot
-            channels = self.getViewChannels()
+            channels, read = self.getViewChannels()
             if len(channels) > 0:
                 hSpace = (self.Size[1] - 5) / len(channels)
                 w = self.w
@@ -291,7 +294,7 @@ class CgraphPanel(wx.Panel):
                             ny2 = ny
                         else:
                             ny2 = (((channel[inci] - amUnits[1]) * ((y + hSpace) - y)) / (
-                                        amUnits[0] - amUnits[1])) + y
+                                    amUnits[0] - amUnits[1])) + y
                         if abs(ny - ny2) > 3 or (x + incx) > 3:
                             dc.DrawLine(x, ny, x + incx, ny2)
                         else:

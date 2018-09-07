@@ -306,16 +306,23 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.AddButton(self.btnView)
         self.buttons.append(self.btnView)
         self.Bind(wx.EVT_BUTTON, self.changeview, self.btnView)
+        ica = 0
+        if self.graph.ica == None:
+            max = self.graph.eeg.amUnits[0]
+            min = self.graph.eeg.amUnits[1]
+        else:
+            ica = 43
+            max = self.graph.ica.amUnits[0]
+            min = self.graph.ica.amUnits[1]
 
-        b1 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(96, 46))
+        b1 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(2, 2), size=(96 + ica, 46))
         b1.SetBackgroundColour((0, 0, 0))
-        b2 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(3, 3), size=(94, 44))
-
+        b2 = wx.StaticText(self, 0, " ", style=wx.ALIGN_CENTER, pos=(3, 3), size=(94 + ica, 44))
         r1 = wx.StaticText(self, -1, "Amplitud Promedio ", style=wx.ALIGN_CENTER, pos=(5, 4), size=(-1, -1))
-        r2 = wx.StaticText(self, -1, "Máxima:  " + str(round(self.graph.eeg.amUnits[0], 3)), style=wx.ALIGN_CENTER,
+        r2 = wx.StaticText(self, -1, "Máxima:  " + str(round(max, 3)), style=wx.ALIGN_CENTER,
                            pos=(5, 18),
                            size=(-1, -1))
-        r3 = wx.StaticText(self, -1, "Mínima:  " + str(round(self.graph.eeg.amUnits[1], 3)), style=wx.ALIGN_CENTER,
+        r3 = wx.StaticText(self, -1, "Mínima:  " + str(round(min, 3)), style=wx.ALIGN_CENTER,
                            pos=(5, 32),
                            size=(-1, -1))
         r1.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.NORMAL))

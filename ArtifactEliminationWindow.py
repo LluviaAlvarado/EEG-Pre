@@ -1,5 +1,7 @@
 # local imports
 from FilesWindow import *
+from BPFWindow import *
+from WindowDialog import *
 from ComponentViewer import *
 from FastICA import *
 
@@ -9,48 +11,35 @@ class ArtifactEliminationWindow(wx.Frame):
         window that contains the artifact elimination configuration and
         opens a visualisation window
         """
+
     def __init__(self, parent):
 
         wx.Frame.__init__(self, parent, -1, "Eliminación de Artefactos", )
-        self.SetSize(500, 500)
+        self.SetSize(250, 250)
         self.Centre()
         self.viewer = None
         self.icas = []
+        self.BPFwindow = None
         # create base panel in the frame
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         # base vbox
-        self.baseSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.leftSizer = wx.BoxSizer(wx.VERTICAL)
-        infoLabel = wx.StaticText(self.pnl, label="Listado de Bandas:")
-        extraCannels = wx.StaticText(self.pnl, label="Bandas personalizadas:")
-        info = wx.StaticText(self.pnl, label="De doble clic sobre una Banda\npara editar las Frecuencias")
-
-        self.leftSizer.Add(infoLabel, 0, wx.CENTER, 5)
-
-        self.leftSizer.Add(extraCannels, 0, wx.CENTER, 5)
-
-        self.baseSizer.Add(self.leftSizer, -1, wx.EXPAND | wx.ALL, 5)
+        self.baseSizer = wx.BoxSizer(wx.VERTICAL)
+        infoLabel = wx.StaticText(self.pnl, label="Opciónes:")
+        self.baseSizer.Add(infoLabel, -1, wx.EXPAND | wx.ALL, 5)
         # vbox for buttons
-        self.buttonSizer = wx.BoxSizer(wx.VERTICAL)
-        self.buttonSizer.AddSpacer(15)
-        self.buttonSizer.Add(info, -1, wx.EXPAND | wx.ALL, 5)
-
-        self.buttonSizer.AddSpacer(180)
-
-        self.buttonSizer.AddSpacer(30)
-        applyButton = wx.Button(self.pnl, label="Aplicar Filtrado")
-        applyButton.Bind(wx.EVT_BUTTON, self.applyFastICA)
+        manualButton = wx.Button(self.pnl, label="Manualmente")
+        autoButton = wx.Button(self.pnl, label="Automáticamente")
+        manualButton.Bind(wx.EVT_BUTTON, self.applyFastICA)
+        autoButton.Bind(wx.EVT_BUTTON, self.applyAutomatically)
         self.viewButton = wx.Button(self.pnl, label="Visualizar")
         self.viewButton.Bind(wx.EVT_BUTTON, self.openView)
-        self.viewButton.Disable()
         self.exportButton = wx.Button(self.pnl, label="Exportar")
         self.exportButton.Bind(wx.EVT_BUTTON, self.exportar)
         self.exportButton.Disable()
-        self.buttonSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
-        self.buttonSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
-        self.buttonSizer.Add(self.exportButton, -1, wx.EXPAND | wx.ALL, 5)
-
-        self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
+        self.baseSizer.Add(manualButton, -1, wx.EXPAND | wx.ALL, 5)
+        self.baseSizer.Add(autoButton, -1, wx.EXPAND | wx.ALL, 5)
+        self.baseSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
+        self.baseSizer.Add(self.exportButton, -1, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -110,7 +99,6 @@ class ArtifactEliminationWindow(wx.Frame):
     def applyFastICA(self, event):
         self.GetParent().setStatus("Eliminando Artefactos...", 1)
         eegs = self.GetParent().project.EEGS
-        flag = True
         matrix = []
         self.icas = []
         for eeg in eegs:
@@ -126,8 +114,30 @@ class ArtifactEliminationWindow(wx.Frame):
             self.GetParent().filesWindow.Destroy()
             self.GetParent().filesWindow = FilesWindow(self.GetParent())
             self.GetParent().filesWindow.Show()
+        self.openCompView(event)
+        self.GetParent().setStatus("", 0)
 
-    def openView(self, event):
+    def applyAutomatically(self, event):
+        artifactSelected, apply = self.getSelectedA()
+        # 0 - Eye movement, 1 - blink, 2 - muscular, 3- cardiac
+        if apply:
+            # TODO aqui el metodo automático, artifactSelected = (0,1,2) tiene el listado de los artefactos
+            pass
+
+    def getSelectedA(self):
+        artifactSelected = []
+        with WindowAutoAE(self, artifactSelected) as dlg:
+            dlg.ShowModal()
+            artifactSelected = dlg.artifactList.GetCheckedItems()
+            use = dlg.applied
+        return artifactSelected, use
+
+    def openCompView(self, event):
         if self.viewer is not None:
             self.viewer.Hide()
         self.viewer = ComponentViewer(self, self.icas)
+
+    def openView(self, event):
+        if self.BPFwindow is not None:
+            self.BPFwindow.Hide()
+        self.BPFwindow = BFPWindow(self)

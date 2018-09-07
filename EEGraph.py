@@ -18,6 +18,7 @@ class EEGraph(wx.Panel):
         h = h - 187
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.eeg = eeg
+        self.ica = None
         self.selected = selected
         self.toolbar = None
         # baseSizer
@@ -137,7 +138,6 @@ class customRuler(wx.Panel):
             self.opc = 2
             wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
             self.makeAmpRuler()
-
         self.SetSizer(baseSizer)
 
     def msToPixel(self, ms, msE):

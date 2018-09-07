@@ -6,7 +6,7 @@ class WindowDialog(wx.Dialog):
 
     def __init__(self, parent, l, tbe):
         wx.Dialog.__init__(self, parent, title="Parametros para Ventaneo:",
-                  size=(400, 120))
+                           size=(400, 120))
         baseSizer = wx.BoxSizer(wx.VERTICAL)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         lenLabel = wx.StaticText(self, label="Longitud (ms):")
@@ -20,7 +20,7 @@ class WindowDialog(wx.Dialog):
         sizer.Add(tbeLabel, 0, wx.CENTER | wx.ALL, 5)
         sizer.Add(self.tbe, 0, wx.CENTER | wx.ALL, 5)
         btnSizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnSizer.AddSpacer(self.Size[0]/1.5)
+        btnSizer.AddSpacer(self.Size[0] / 1.5)
         btnSizer.Add(close, 1, wx.RIGHT, 5)
         baseSizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 2)
         baseSizer.Add(btnSizer, 1, wx.EXPAND | wx.ALL, 2)
@@ -29,6 +29,7 @@ class WindowDialog(wx.Dialog):
 
     def close(self, event):
         self.Close(True)
+
 
 class WindowSaveOnExit(wx.Dialog):
     def __init__(self, parent, opc):
@@ -53,7 +54,6 @@ class WindowSaveOnExit(wx.Dialog):
         btnSizer.Add(can, 0, wx.CENTER | wx.ALL, 5)
         baseSizer.Add(sizer, 1, wx.EXPAND | wx.ALL, 2)
         baseSizer.Add(btnSizer, 1, wx.EXPAND | wx.ALL, 2)
-
         self.SetSizer(baseSizer)
         self.Center()
 
@@ -66,18 +66,19 @@ class WindowSaveOnExit(wx.Dialog):
         self.Close(True)
 
     def save(self, event):
-        self.opc =1
+        self.opc = 1
         self.Close(True)
+
 
 class WindowCustomWave(wx.Dialog):
     def __init__(self, parent, name, lowF, higF):
         wx.Dialog.__init__(self, parent, title="Parametros del canal:",
-                  size=(270, 190))
+                           size=(270, 190))
         baseSizer = wx.BoxSizer(wx.VERTICAL)
         nameSizer = wx.BoxSizer(wx.HORIZONTAL)
         lowSizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        nameLabel =wx.StaticText(self, label="Nombre de la banda:")
+        nameLabel = wx.StaticText(self, label="Nombre de la banda:")
         lowLabel = wx.StaticText(self, label="Frecuencia baja (Hz):")
         higLabel = wx.StaticText(self, label="Frecuencia alta (Hz): ")
         self.name = wx.TextCtrl(self, value=str(name))
@@ -93,7 +94,7 @@ class WindowCustomWave(wx.Dialog):
         sizer.Add(higLabel, 0, wx.CENTER | wx.ALL, 5)
         sizer.Add(self.higF, 0, wx.CENTER | wx.ALL, 5)
         btnSizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnSizer.AddSpacer(self.Size[0]/2.2)
+        btnSizer.AddSpacer(self.Size[0] / 2.2)
         btnSizer.Add(close, 1, wx.RIGHT, 15)
         baseSizer.Add(nameSizer, 0, wx.EXPAND | wx.ALL, 2)
         baseSizer.Add(lowSizer, 0, wx.EXPAND | wx.ALL, 2)
@@ -110,4 +111,27 @@ class WindowCustomWave(wx.Dialog):
 
     def apply(self, event):
         self.flag = True
+        self.Close(True)
+
+
+class WindowAutoAE(wx.Dialog):
+    def __init__(self, parent, list):
+        wx.Dialog.__init__(self, parent, title="e.e",
+                           size=(200, 170))
+        type = "Movimiento Ocular", "Parpadeo", "Muscular", "Cardíaco"
+        self.applied = False
+        baseSizer = wx.BoxSizer(wx.VERTICAL)
+        self.artifactList = wx.CheckListBox(self, choices=type)
+        apply = wx.Button(self, label="Aplicar")
+        apply.Bind(wx.EVT_BUTTON, self.apply)
+        baseSizer.Add(self.artifactList, 0, wx.EXPAND | wx.ALL, 5)
+        baseSizer.Add(apply, 0, wx.EXPAND | wx.ALL, 5)
+        self.SetSizer(baseSizer)
+        self.Center()
+
+    def close(self, event):
+        self.Close(True)
+
+    def apply(self, event):
+        self.applied = True
         self.Close(True)
