@@ -249,7 +249,7 @@ class customRuler(wx.Panel):
         self.nCh = nCh
         self.increment = 0
         self.minTime = 0
-        self.maxTime = self.graph.clShowing + self.minTime
+        self.maxTime = self.graph.msShowing + self.minTime
         self.opc = 0
         self.zoom = False
         self.num = 0

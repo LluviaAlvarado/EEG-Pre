@@ -28,8 +28,8 @@ class CgraphPanel(wx.Panel):
         self.move = False
         self.strMove = None
         self.endMove = None
-        self.nSamp = len(ica.components)
-        self.clShowing = len(ica.components)
+        self.nSamp = len(ica.components[0])
+        self.msShowing = ica.duration * 1000
         self.setSamplingRate()
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
@@ -102,12 +102,12 @@ class CgraphPanel(wx.Panel):
             length = abs(end[0] - start[0])
 
             # getting the readings to show
-            endMs = self.strMs + self.clShowing
+            endMs = self.strMs + self.msShowing
             if end[0] < start[0]:
                 self.strMs += (length * self.timeLapse) / self.incx
                 # make sure it is not longer than the actual readings
                 if (self.strMs + endMs) > self.ica.duration * 1000:
-                    self.strMs = len(self.ica.components) - self.clShowing
+                    self.strMs = len(self.ica.components) - self.msShowing
             else:
                 self.strMs -= (length * self.timeLapse) / self.incx
                 # make sure it does not go to negative index
@@ -125,12 +125,12 @@ class CgraphPanel(wx.Panel):
             self.strMove = self.endMove
 
     def setSamplingRate(self):
-        if self.clShowing < self.w:
-            self.incx = self.w / self.clShowing
+        if self.msShowing < self.w:
+            self.incx = self.w / self.msShowing
             self.timeLapse = 1
         else:
             self.incx = 1
-            self.timeLapse = self.clShowing / self.w
+            self.timeLapse = self.msShowing / self.w
 
     # gets the selected electrodes to graph
     def getChecked(self):
@@ -153,7 +153,7 @@ class CgraphPanel(wx.Panel):
         self.strMs = 0
         self.strComp = 0
         self.endComp = len(self.getChecked())
-        self.clShowing = len(self.ica.components)
+        self.msShowing = self.ica.duration * 1000
         self.setSamplingRate()
         self.zoomPile = []
         # repainting
@@ -173,7 +173,7 @@ class CgraphPanel(wx.Panel):
             self.incx = zoom[2]
             self.strComp = zoom[3]
             self.endComp = zoom[4]
-            self.clShowing = zoom[5]
+            self.msShowing = zoom[5]
             # repainting
             self.paint = True
             self.GetParent().Refresh()
@@ -191,7 +191,7 @@ class CgraphPanel(wx.Panel):
 
     def setZoom(self, start, end):
         # adding this zoom to the pile
-        self.zoomPile.append([self.strMs, self.timeLapse, self.incx, self.strComp, self.endComp, self.clShowing])
+        self.zoomPile.append([self.strMs, self.timeLapse, self.incx, self.strComp, self.endComp, self.msShowing])
         self.zoom = True
         tmpS = self.strComp
 
@@ -221,11 +221,11 @@ class CgraphPanel(wx.Panel):
         startr = self.strMs
         self.strMs += (start[0] * self.timeLapse) / self.incx
         endMs = startr + (end[0] * self.timeLapse) / self.incx
-        self.clShowing = endMs - self.strMs
-        if self.clShowing < 10:
-            self.clShowing = 10
-        if self.strMs + self.clShowing > 1 * 1000:
-            self.strMs = len(self.ica.components) - self.clShowing
+        self.msShowing = endMs - self.strMs
+        if self.msShowing < 10:
+            self.msShowing = 10
+        if self.strMs + self.msShowing > 1 * 1000:
+            self.strMs = len(self.ica.components) - self.msShowing
         self.setSamplingRate()
         # repainting
         self.paint = True
@@ -262,7 +262,7 @@ class CgraphPanel(wx.Panel):
         return channels, read
 
     def msToReading(self, ms):
-        return int((ms * self.nSamp) / len(self.ica.components))
+        return int((ms * self.nSamp) / (self.ica.duration * 1000))
 
     def OnPaint(self, event=None):
         # buffered so it doesn't paint channel per channel

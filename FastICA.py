@@ -8,10 +8,11 @@ class FastICA():
        it may do this automatically or the user can select the components
        to remove'''
 
-    def __init__(self, signals, auto):
+    def __init__(self, signals, t, auto):
         self.signals = signals
         self.components = []
         self.amUnits = []
+        self.duration = t
         self.selectedComponents = []
         self.icaParameters = []
         self.separateComponents()
@@ -22,9 +23,9 @@ class FastICA():
 
     # actual FastICA algorithm part 1: just creating matrix of independent components
     def separateComponents(self):
-        self.ica = ICA(n_components=len(self.signals))
-        self.components = self.ica.fit_transform(self.signals)
-        self.components = self.ica.components_  # Reconstruct signals
+        self.ica = ICA(n_components=len(self.signals[0]))
+        self.components = np.matrix.transpose(self.ica.fit_transform(self.signals))
+        #self.components = self.ica.components_  # Reconstruct signals
         self.amUnits = [np.amax(self.components), np.amin(self.components)]
 
     def autoSelectComponents(self):

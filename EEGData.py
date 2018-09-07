@@ -22,8 +22,8 @@ class EEGData:
         self.amUnits = [np.amax(chM), np.amin(chM)]
         self.additionalData = []
         self.channels = []
-        self.selectedCh = []
         self.fillChannels(labels, chM)
+        self.selectedCh = list(range(0, len(self.channels) + len(self.additionalData)))
         self. windows = []
 
     def setSelected(self, sel):
@@ -73,7 +73,7 @@ class EEGData:
         return new
 
     def copyChannel(self, ch, labels):
-        # making all labels 10/10 or 10/20 system
+        # making all labels 10/1 or 10/20 system
         label = self.system10_20.testLabel(labels[self.i])
         if label is None:
             '''This a label not in the system so we add

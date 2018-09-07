@@ -4,7 +4,8 @@ from BPFWindow import *
 from WindowDialog import *
 from ComponentViewer import *
 from FastICA import *
-
+import numpy as np
+from scipy import signal
 
 class ArtifactEliminationWindow(wx.Frame):
     """
@@ -104,7 +105,10 @@ class ArtifactEliminationWindow(wx.Frame):
         for eeg in eegs:
             for channel in eeg.channels:
                 matrix.append(channel.readings)
-            fastICA = FastICA(matrix, False)
+            for extra in eeg.additionalData:
+                matrix.append(extra.readings)
+            # fast ICA uses transposed matrix
+            fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration, False)
             self.icas.append(fastICA)
 
         self.viewButton.Enable()
