@@ -16,21 +16,13 @@ class FastICA():
         self.selectedComponents = []
         self.icaParameters = []
         self.separateComponents()
-        # this removes the components that are artifactual
-        if auto:
-            self.autoSelectComponents()
-            self.recreateSignals()
 
     # actual FastICA algorithm part 1: just creating matrix of independent components
     def separateComponents(self):
         self.ica = ICA(n_components=len(self.signals[0]))
         self.components = np.matrix.transpose(self.ica.fit_transform(self.signals))
-        #self.components = self.ica.components_  # Reconstruct signals
         self.amUnits = [np.amax(self.components), np.amin(self.components)]
-
-    def autoSelectComponents(self):
-        # TODO como identificarlos :'v?
-        return
+        self.selectedComponents = list(range(len(self.components)))
 
     # recreates signals with the independent components selected
     def recreateSignals(self):

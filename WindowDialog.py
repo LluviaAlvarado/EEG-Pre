@@ -116,7 +116,7 @@ class WindowCustomWave(wx.Dialog):
 
 class WindowAutoAE(wx.Dialog):
     def __init__(self, parent, list):
-        wx.Dialog.__init__(self, parent, title="e.e",
+        wx.Dialog.__init__(self, parent, title="Seleccione los artefactos a eliminar:",
                            size=(200, 170))
         type = "Movimiento Ocular", "Parpadeo", "Muscular", "Cardíaco"
         self.applied = False

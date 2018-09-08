@@ -6,6 +6,8 @@ from ComponentViewer import *
 from FastICA import *
 import numpy as np
 from wx.adv import NotificationMessage
+import pywt
+
 
 class ArtifactEliminationWindow(wx.Frame):
     """
@@ -36,7 +38,6 @@ class ArtifactEliminationWindow(wx.Frame):
         self.viewButton.Bind(wx.EVT_BUTTON, self.openView)
         self.exportButton = wx.Button(self.pnl, label="Exportar")
         self.exportButton.Bind(wx.EVT_BUTTON, self.exportar)
-        self.exportButton.Disable()
         self.baseSizer.Add(manualButton, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(autoButton, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
@@ -122,11 +123,163 @@ class ArtifactEliminationWindow(wx.Frame):
         self.GetParent().setStatus("", 0)
 
     def applyAutomatically(self, event):
+        self.icas = []
         artifactSelected, apply = self.getSelectedA()
         # 0 - Eye movement, 1 - blink, 2 - muscular, 3- cardiac
         if apply:
-            # TODO aqui el metodo automático, artifactSelected = (0,1,2) tiene el listado de los artefactos
-            pass
+            if 0 in artifactSelected:
+                # to remove eye movement we...
+                pass
+            if 1 in artifactSelected:
+                if len(self.icas) == 0:
+                    self.FastICA()
+                self.removeBlink()
+            if 2 in artifactSelected:
+                if len(self.icas) == 0:
+                    self.FastICA()
+                self.removeMuscular()
+            if 3 in artifactSelected:
+                # to remove cardiac artifacts we...
+                pass
+            self.EliminateComponents()
+
+    def FastICA(self):
+        # to remove eye blink and muscular artifacts we
+        # will use fastICA then wavelets
+        eegs = self.GetParent().project.EEGS
+        self.icas = []
+        for eeg in eegs:
+            matrix = []
+            for channel in eeg.channels:
+                matrix.append(channel.readings)
+            for extra in eeg.additionalData:
+                matrix.append(extra.readings)
+            # fast ICA uses transposed matrix
+            fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration, False)
+            self.icas.append(fastICA)
+
+    def removeBlink(self):
+        # setting cursor to wait to inform user
+        self.GetParent().setStatus("Buscando Artefactos...", 1)
+        for ica in self.icas:
+            newC = []
+            for c in ica.components:
+                # we need to get up to Ca4 to get to theta band
+                Ca4 = pywt.downcoef('a', c, 'Haar', mode='symmetric', level=4)
+                # padding to make map to time domain
+                new = []
+                for i in range(len(Ca4)):
+                    new.append(Ca4[i])
+                    for j in range(15):
+                        new.append(0.0)
+                Ca4 = np.array(new)
+                # getting all negative peaks index in Ca4
+                negative = []
+                for i in range(len(Ca4)):
+                    if Ca4[i] < 0:
+                        negative.append(i)
+                neg = Ca4[Ca4 >= 0]
+                # computing the mean of the negative peaks
+                mean = np.sum(neg) / len(neg)
+                # deciding if we remove
+                for n in negative:
+                    if Ca4[n] < mean:
+                        # remove window of 400ms with eye blink
+                        centerMs = self.sampleToMS(n)
+                        s = self.msToReading(centerMs - 200)
+                        e = self.msToReading(centerMs + 200)
+                        nSamp = self.GetParent().project.frequency * self.GetParent().project.duration
+                        if e >= nSamp:
+                            e = nSamp - 1
+                        maxN = 0
+                        maxI = s
+                        while s <= e:
+                            if Ca4[s] < maxN:
+                                maxN = Ca4[s]
+                                maxI = s
+                            s += 1
+                        # the maximum negative peak is turned to 0
+                        Ca4[maxI] = 0.0
+                # returning Ca4 to original shape
+                ca = []
+                for i in range(len(Ca4)):
+                    if i % 16 == 0:
+                        ca.append(Ca4[i])
+                # applying reverse wavelet
+                component = pywt.upcoef('a', ca, 'Haar', level=4)
+                newC.append(component)
+            ica.components = newC
+
+    def sampleToMS(self, s):
+        nSamp = self.GetParent().project.frequency * self.GetParent().project.duration
+        return int(((self.GetParent().project.duration * 1000)* s) / nSamp)
+
+    def msToReading(self, ms):
+        nSamp = self.GetParent().project.frequency * self.GetParent().project.duration
+        return int((ms * nSamp) / (self.GetParent().project.duration * 1000))
+
+
+    def removeMuscular(self):
+        # setting cursor to wait to inform user
+        self.GetParent().setStatus("Buscando Artefactos...", 1)
+        for ica in self.icas:
+            newC = []
+            for c in ica.components:
+                # applying soft thresholding to denoise, removing everythin above 50Hz
+                c = pywt.threshold(c, 50, 'less')
+                waveletC = pywt.wavedec(c, 'Haar', level=2)
+                # wavelet[0] = Ca2 wavelet[1] = Cd2 wavelet[2] = Cd1
+                # padding Cd2 to make it same length of Cd1
+                new = []
+                cd2 = waveletC[1]
+                for i in range(len(waveletC[1])):
+                    new.append(cd2[i])
+                    new.append(0.0)
+                waveletC[1] = np.array(new)
+                # getting the wavelet power spectral density
+                # dividing the component into 10 frames of equal lenght
+                x = 10
+                frameL = int(len(new) / x)
+                S1 = []
+                S2 = []
+                maximums = []
+                i = 0
+                # elevating to power 2 the elements of Cd1
+                cd1 = np.power(waveletC[2], 2)
+                # elevating to power 2 the elements of Cd2
+                cd2 = np.power(waveletC[1], 2)
+                for j in range(x):
+                    s1 = np.sum(cd1[i:i+frameL])
+                    S1.append(s1)
+                    s2 = np.sum(cd2[i:i+frameL])
+                    S2.append(s2)
+                    if s1 > s2:
+                        maximums.append(s1)
+                    else:
+                        maximums.append(s2)
+                    i += frameL
+                # calculating the mean
+                pk = np.sum(maximums) / x
+                # comparing mean to WPS
+                for i in range(x):
+                    if S1[i] > pk:
+                        # make all samples in this frame 0
+                        for j in range(frameL):
+                            waveletC[2][j+(i*frameL)] = 0.0
+                    if S2[i] > pk:
+                        # make all samples in this frame 0
+                        for j in range(frameL):
+                            waveletC[1][j + (i * frameL)] = 0.0
+                # returning cd2 to original shape
+                cd2 = []
+                for i in range(len(waveletC[1])):
+                    if i % 2 == 0:
+                        cd2.append(waveletC[1][i])
+                waveletC[1] = np.array(cd2)
+                # applying reverse wavelet transform to get resulting component
+                component = pywt.waverec(waveletC, 'Haar')
+                newC.append(component)
+            ica.components = newC
 
     def EliminateComponents(self):
         self.GetParent().setStatus("Eliminando Artefactos...", 1)
@@ -136,9 +289,8 @@ class ArtifactEliminationWindow(wx.Frame):
             ica.recreateSignals()
             eegs[i].SetChannels(ica.getSignals())
             i += 1
-
         self.GetParent().setStatus("", 0)
-        NotificationMessage(title="¡Exito!", message="Se han eliminado los componentes\ncon artefactos.").Show()
+        NotificationMessage(title="¡Exito!", message="Se han eliminado los artefactos.").Show()
 
     def getSelectedA(self):
         artifactSelected = []
