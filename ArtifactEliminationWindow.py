@@ -7,6 +7,9 @@ from FastICA import *
 import numpy as np
 from wx.adv import NotificationMessage
 import pywt
+import scipy.signal as signal
+import mne
+from mne import create_info, EpochsArray
 
 
 class ArtifactEliminationWindow(wx.Frame):
@@ -44,6 +47,14 @@ class ArtifactEliminationWindow(wx.Frame):
         self.baseSizer.Add(self.exportButton, -1, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
         self.Bind(wx.EVT_CLOSE, self.onClose)
+        # making ECG template
+        # The "Daubechies" wavelet is a rough approximation to a real,
+        # single, heart beat ("pqrst") signal
+        pqrst = signal.wavelets.daub(10)
+        # Add the gap after the pqrst when the heart is resting.
+        samples_rest = 10
+        zero_array = np.zeros(samples_rest, dtype=float)
+        self.pqrst_full = np.concatenate([pqrst, zero_array])
 
     def onClose(self, event):
         self.GetParent().onARClose()
@@ -100,18 +111,7 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def applyFastICA(self, event):
         self.GetParent().setStatus("Buscando Componentes...", 1)
-        eegs = self.GetParent().project.EEGS
-        self.icas = []
-        for eeg in eegs:
-            matrix = []
-            for channel in eeg.channels:
-                matrix.append(channel.readings)
-            for extra in eeg.additionalData:
-                matrix.append(extra.readings)
-            # fast ICA uses transposed matrix
-            fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration, False)
-            self.icas.append(fastICA)
-
+        self.FastICA()
         self.viewButton.Enable()
         self.exportButton.Enable()
         # refresh file window if it is opened
@@ -139,9 +139,64 @@ class ArtifactEliminationWindow(wx.Frame):
                     self.FastICA()
                 self.removeMuscular()
             if 3 in artifactSelected:
-                # to remove cardiac artifacts we...
-                pass
+                self.removeECG()
             self.EliminateComponents()
+
+    def removeECG(self):
+        # first we apply FastICA to get IC
+        if len(self.icas) == 0:
+            self.FastICA()
+        for ica in self.icas:
+            # next we compare with ECG pattern, the ones with
+            # high correlation will be analyzed
+            # Simulated Beats per minute rate
+            # For a health, athletic, person, 60 is resting, 180 is intensive exercising
+            bpm = 60
+            bps = bpm / 60
+            # Simumated period of time in seconds that the ecg is captured in
+            capture_length = ica.duration
+            # Caculate the number of beats in capture time period
+            # Round the number to simplify things
+            num_heart_beats = int(capture_length * bps)
+            # Concatonate together the number of heart beats needed
+            ecg_template = np.tile(self.pqrst_full, num_heart_beats)
+            diff = int(len(ica.components[0]) - len(ecg_template))
+            if diff != 0:
+                new = []
+                if diff < 0:
+                    for i in range(len(ecg_template)):
+                        new.append(ecg_template[i])
+                        i += int(abs(diff) / len(ecg_template))
+                else:
+                    for i in range(len(ecg_template)):
+                        new.append(ecg_template[i])
+                        pad = [0] * int(diff / len(ecg_template))
+                        new.extend(pad)
+                ecg_template = new
+                diff = int(len(ica.components[0]) - len(ecg_template))
+                if diff != 0:
+                    if diff < 0:
+                        ecg_template = ecg_template[0:(len(ecg_template)-diff)]
+                    else:
+                        ecg_template.extend([0]*diff)
+
+            # checking correlation
+            analyze = []
+            for c in ica.components:
+                correlation = np.corrcoef(c, ecg_template, rowvar=True)
+                if abs(correlation[0][0]) > 0.6:
+                    analyze.append(c)
+            # applying S-Transform to selected components
+            i = 0
+            for c in analyze:
+                # making epochs array for the S-transform
+                sFreq = len(c) / ica.duration
+                info = create_info(ch_names=[str(i)], sfreq=sFreq, ch_types='eeg')
+                epoch = EpochsArray(np.array(c), info)
+                ST = mne.time_frequency.tfr_stockwell(epoch)
+                # Periodicity test, if they're periodical remove
+
+                i += 1
 
     def FastICA(self):
         # to remove eye blink and muscular artifacts we
