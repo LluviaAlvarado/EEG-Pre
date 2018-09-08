@@ -156,7 +156,6 @@ class customRuler(wx.Panel):
         if self.opc == 1:
             dc.DrawRectangle(0, 0, self.Size[0] - 4, 30)
             dc = wx.PaintDC(self)
-
             msS = self.graph.strMs
             msE = msS + self.graph.msShowing
             part = self.graph.msShowing / 100

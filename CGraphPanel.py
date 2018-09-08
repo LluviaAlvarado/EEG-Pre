@@ -12,7 +12,7 @@ class CgraphPanel(wx.Panel):
         self.ica = ica
         self.timeLapse = 0
         self.incx = 1
-        self.w = self.Size[0]
+        self.w = w
         # list of components in screen and start position
         self.comPosition = []
         # vars for create a window

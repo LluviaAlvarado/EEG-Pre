@@ -13,6 +13,7 @@ class ComponentViewer(wx.Frame):
         wx.Frame.__init__(self, parent, -1, "Visor de Componentes Independientes",
                           style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Maximize(True)
+        self.SetBackgroundColour('light grey')
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
         self.icas = icas
@@ -21,12 +22,11 @@ class ComponentViewer(wx.Frame):
         topSizer = wx.BoxSizer(wx.HORIZONTAL)
         # button to eliminate artifacts
         eliminate = wx.Button(self, label="Eliminar Artefactos")
-        topSizer.AddSpacer(self.Size[1] )
-        topSizer.Add(eliminate, 0, wx.EXPAND | wx.ALL, 1)
         eliminate.Bind(wx.EVT_BUTTON, self.Eliminate)
+        frameSizer.Add(eliminate, 0,  wx.ALIGN_RIGHT, 1)
         frameSizer.Add(topSizer, 0, wx.EXPAND | wx.ALL, 1)
         # EEG tabs
-        self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
+        self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]-15),
                                               style=aui.AUI_NB_DEFAULT_STYLE ^ (
                                                       aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                                     | aui.AUI_NB_WINDOWLIST_BUTTON)
@@ -36,6 +36,7 @@ class ComponentViewer(wx.Frame):
         frameSizer.Add(self.navigationTabs, 0, wx.EXPAND | wx.ALL, 3)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.SetSizer(frameSizer)
+
         # creating a status bar to inform user of process
         self.CreateStatusBar()
         # setting the cursor to loading
@@ -94,7 +95,7 @@ class ComponentTab(wx.Panel):
         leftPnl = wx.Panel(self)
         labels = []
         for i in range(len(self.ica.components)):
-            labels.append("C" + str(i))
+            labels.append("S" + str(i))
         self.componentList = wx.CheckListBox(leftPnl, choices=labels)
         project = self.GetParent().GetParent().project
         self.tabManager = TabManager(leftPnl, self, project.windowLength)
@@ -122,7 +123,6 @@ class ComponentTab(wx.Panel):
         componentContainer.AddSpacer(4)
         componentContainer.Add(applyChanges, 0, wx.EXPAND | wx.ALL, 0)
         leftPnl.SetSizer(componentContainer)
-
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
         # component graphic information right side
         rightPnl = wx.Panel(self, size=self.Size)
@@ -167,15 +167,14 @@ class CGraph(wx.Panel):
         self.selected = selected
         self.toolbar = None
         # baseSizer
-        # baseSizer = wx.FlexGridSizer(1, 3, gap=(0, 0))
-        baseSizer = wx.BoxSizer(wx.HORIZONTAL)
+        baseSizer = wx.FlexGridSizer(2, 3, gap=(0, 0))
         # and to the right the eeg graph
-        w = self.Size[0] - 65
+        w = self.Size[0] - 234
         h = self.Size[1]
         self.graph = CgraphPanel(self, ica, w, h)
         self.zoomP = zoomPanel(self, self.graph)
         # bottom is reserved just for the time ruler
-        values = [0, len(self.ica.components)]
+        values = [0, self.ica.duration]
         self.timeRuler = customRuler(self, wx.HORIZONTAL, wx.SUNKEN_BORDER, values, len(self.ica.components))
 
         # left amplitud ruler side
@@ -189,6 +188,9 @@ class CGraph(wx.Panel):
         baseSizer.Add(self.componentList, 0, wx.EXPAND, 0)
         baseSizer.Add(self.ampRuler, 0, wx.EXPAND, 0)
         baseSizer.Add(self.graph, 0, wx.EXPAND, 0)
+        baseSizer.AddSpacer(30)
+        baseSizer.AddSpacer(30)
+        baseSizer.Add(self.timeRuler, 0, wx.EXPAND, 0)
         self.SetSizer(baseSizer)
 
     def setToolbar(self, toolbar):
@@ -216,7 +218,7 @@ class customList(wx.Panel):
             components = self.getChecked()
         self.DestroyChildren()
         if len(components) > 0:
-            h = (590) / len(components)
+            h = (self.Size[1] - 5) / len(components)
             fontSize = int(h) - 3
             if h > 15:
                 fontSize = 10
@@ -224,7 +226,8 @@ class customList(wx.Panel):
             posy = 0
             while i < len(components):
                 center = posy + (h / 2) - (fontSize / 2)
-                rule = wx.StaticText(self, i, "C" + str(components[i]), style=wx.ALIGN_CENTER,
+                rule = wx.StaticText(self, i, ""
+                                              "S" + str(components[i]), style=wx.ALIGN_CENTER,
                                      pos=(0, center),
                                      size=(30, h))
                 rule.SetFont(wx.Font(fontSize, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
@@ -250,7 +253,7 @@ class customRuler(wx.Panel):
         self.lapse = values
         self.font = wx.Font(5, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
                             wx.FONTWEIGHT_BOLD, False, 'Courier 10 Pitch')
-        self.height = parent.graph.Size[1] - 3
+        self.height = parent.graph.Size[1] - 30
         self.width = parent.graph.Size[0]
         self.place = (self.width / 10)
         # Amplitude range
@@ -267,14 +270,19 @@ class customRuler(wx.Panel):
         self.num = 0
 
         baseSizer = wx.BoxSizer(orientation)
-        self.opc = 2
-        wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
-        self.makeAmpRuler()
-
+        if orientation == wx.HORIZONTAL:
+            self.opc = 1
+            wx.Panel.__init__(self, parent, size=(self.width, 35),
+                              style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+            self.makeTimeRuler()
+        else:
+            self.opc = 2
+            wx.Panel.__init__(self, parent, style=style, size=(30, self.height))
+            self.makeAmpRuler()
         self.SetSizer(baseSizer)
 
     def msToPixel(self, ms, msE):
-        length = self.graph.clShowing
+        length = self.graph.msShowing
         return ((length - (msE - ms)) * self.graph.incx) / self.graph.timeLapse
 
     def makeTimeRuler(self):
@@ -287,7 +295,41 @@ class customRuler(wx.Panel):
         dc.SetTextForeground('#000000')
         dc.SetFont(self.font)
         if self.opc == 1:
-            pass
+            dc.DrawRectangle(0, 0, self.Size[0] - 4, 30)
+            dc = wx.PaintDC(self)
+            msS = self.graph.strMs
+            msE = msS + self.graph.msShowing
+            part = self.graph.msShowing / 100
+            i = 0
+            RM = 0
+            while i < 101:
+                f = self.msToPixel((part * i) + msS, msE)
+                if (i % 10) == 0:
+                    y = int(part * i + msS)
+                    w, h = dc.GetTextExtent(str(y))
+                    if i == 0:
+                        RM = w / 2
+                        f = f + 1
+                    st = "ms"
+                    if i == 100:
+                        y = int(y / 1000)
+                        w, h = dc.GetTextExtent(str(y))
+                        RM = w * -1
+                        f = f - 6
+                        st = "s"
+
+                    dc.DrawLine(f, 0, f, 10)
+
+                    dc.DrawText(str(y), f + RM - w / 2, 11)
+                    dc.DrawText(st, f + RM + w / 2, 11)
+                    RM = 0
+
+                elif (i % 5) == 0:
+                    dc.DrawLine(f, 0, f, 8)
+
+                elif not (i % 1):
+                    dc.DrawLine(f, 0, f, 4)
+                i += 1
         else:
             channel = self.getChecked()
             self.nCh = len(channel)

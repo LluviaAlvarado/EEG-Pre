@@ -29,7 +29,6 @@ class zoomPanel(wx.Panel):
             self.GetParent().graph.setZoom(self.zStart, self.zEnd)
             self.OnPaint()
             # refresh the windows
-            self.GetParent().windowP.Refresh()
             self.zStart = None
             self.zEnd = None
 

@@ -347,13 +347,14 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.unToggleOthers(self.ID_FIT)
             self.graph.graph.move = False
             self.graph.zoomP.zoom = False
-            self.graph.windowP.fill = False
             self.graph.graph.newWin = False
-
             self.graph.graph.resetZoom()
             self.graph.ampRuler.update()
             self.graph.timeRuler.update()
-            self.graph.channelList.adjustment()
+            if self.graph.ica == None:
+                self.graph.channelList.adjustment()
+            else:
+                self.graph.componentList.adjustment()
         event.Skip()
 
     def ZoomO(self, event):
@@ -361,7 +362,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.graph.SetCursor(myCursor)
         self.graph.graph.move = False
-        self.graph.windowP.fill = False
         self.graph.zoomP.zoom = False
         self.graph.graph.newWin = False
         self.graph.graph.returnZoom()
@@ -376,7 +376,6 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = False
             self.graph.graph.newWin = False
-            self.graph.windowP.fill = False
             self.graph.zoomP.zoom = True
             # untoggling others
             self.unToggleOthers(self.ID_ZOOM)
@@ -394,7 +393,7 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.graph.SetCursor(myCursor)
             self.graph.graph.move = True
             self.graph.graph.newWin = False
-            self.graph.windowP.fill = False
+
             # untoggling others
             self.unToggleOthers(self.ID_MOVE)
         else:
@@ -410,17 +409,15 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.window_s = 0
         if self.window_s == 0:
             self.btnView.SetBitmap(self.all_w)
-            self.graph.windowP.setWindowState(2)
+
             self.btnView.SetShortHelp("Todas las ventanas")
         if not self.edit and self.window_s == 1:
             self.window_s += 1
         if self.window_s == 1:
             self.btnView.SetBitmap(self.sel_w)
-            self.graph.windowP.setWindowState(1)
             self.btnView.SetShortHelp("Solo la ventana seleccionada")
         if self.window_s == 2:
             self.btnView.SetBitmap(self.no_w)
-            self.graph.windowP.setWindowState(0)
             self.btnView.SetShortHelp("Ninguna ventana")
 
     def newWindow(self, event):
