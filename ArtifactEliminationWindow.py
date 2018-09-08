@@ -8,8 +8,7 @@ import numpy as np
 from wx.adv import NotificationMessage
 import pywt
 import scipy.signal as signal
-import mne
-from mne import create_info, EpochsArray
+import peakutils
 
 
 class ArtifactEliminationWindow(wx.Frame):
@@ -186,17 +185,25 @@ class ArtifactEliminationWindow(wx.Frame):
                 correlation = np.corrcoef(c, ecg_template, rowvar=True)
                 if abs(correlation[0][0]) > 0.6:
                     analyze.append(c)
-            # applying S-Transform to selected components
-            i = 0
+            # checking peaks
+            newC = []
             for c in analyze:
-                # making epochs array for the S-transform
-                sFreq = len(c) / ica.duration
-                info = create_info(ch_names=[str(i)], sfreq=sFreq, ch_types='eeg')
-                epoch = EpochsArray(np.array(c), info)
-                ST = mne.time_frequency.tfr_stockwell(epoch)
-                # Periodicity test, if they're periodical remove
-
-                i += 1
+                peaks = peakutils.indexes(c, thres=0.6, min_dist=1)
+                # testing periodicity}
+                F = 0.0
+                for i in range(len(peaks) - 1):
+                    t = float(self.sampleToMS(peaks[i+1]) - self.sampleToMS(peaks[i]))
+                    F += 1 / t
+                # median frequency of peaks
+                F = F / len(peaks)
+                # if it is between min and max of heart rate
+                N = F*(1+0.25) - F*(1-0.25)
+                if (2/3) <= F <= 3:
+                    if N >= int(0.8*F*ica.duration):
+                        # this is an ECG component
+                        c = np.array([0.0] * len(c))
+                newC.append(c)
+            ica.components = newC
 
     def FastICA(self):
         # to remove eye blink and muscular artifacts we
@@ -267,7 +274,7 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def sampleToMS(self, s):
         nSamp = self.GetParent().project.frequency * self.GetParent().project.duration
-        return int(((self.GetParent().project.duration * 1000)* s) / nSamp)
+        return ((self.GetParent().project.duration * 1000)* s) / nSamp
 
     def msToReading(self, ms):
         nSamp = self.GetParent().project.frequency * self.GetParent().project.duration
