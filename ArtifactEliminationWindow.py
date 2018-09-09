@@ -242,7 +242,6 @@ class ArtifactEliminationWindow(wx.Frame):
                 newC.append(c)
             ica.components = newC
 
-
     def removeECG(self):
         # first we apply FastICA to get IC
         if len(self.icas) == 0:
@@ -281,33 +280,27 @@ class ArtifactEliminationWindow(wx.Frame):
                     else:
                         ecg_template.extend([0]*diff)
             # checking correlation
-            analyze = []
+            newC = []
             for c in ica.components:
                 correlation = pearsonr(c, ecg_template)
                 if abs(correlation[0]) > 0.6 or abs(correlation[1]) > 0.6:
-                    analyze.append(c)
-            # checking peaks
-            newC = []
-            for c in analyze:
-                peaks = peakutils.indexes(c, thres=0.6, min_dist=1)
-                if len(peaks) != 0:
-                    # testing periodicity}
-                    F = 0.0
-                    for i in range(len(peaks) - 1):
-                        t = float(self.sampleToMS(peaks[i+1]) - self.sampleToMS(peaks[i]))
-                        F += 1 / t
-                    # median frequency of peaks
-                    F = F / len(peaks)
-                    # if it is between min and max of heart rate
-                    N = F*(1+0.25) - F*(1-0.25)
-                    if (2/3) <= F <= 3:
-                        if N >= int(0.8*F*ica.duration):
-                            # this is an ECG component
-                            c = np.array([0.0] * len(c))
-                    newC.append(c)
-                else:
-                    # ECG was removed by previous method
-                    newC = ica.components
+                    # checking peaks
+                    peaks = peakutils.indexes(c, thres=0.6, min_dist=1)
+                    if len(peaks) != 0:
+                        # testing periodicity}
+                        F = 0.0
+                        for i in range(len(peaks) - 1):
+                            t = float(self.sampleToMS(peaks[i+1]) - self.sampleToMS(peaks[i]))
+                            F += 1 / t
+                        # median frequency of peaks
+                        F = F / len(peaks)
+                        # if it is between min and max of heart rate
+                        N = F*(1+0.25) - F*(1-0.25)
+                        if (2/3) <= F <= 3:
+                            if N >= int(0.8*F*ica.duration):
+                                # this is an ECG component
+                                c = np.array([0.0] * len(c))
+                newC.append(c)
             ica.components = newC
 
     def FastICA(self):
