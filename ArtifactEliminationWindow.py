@@ -9,6 +9,9 @@ from wx.adv import NotificationMessage
 import pywt
 import scipy.signal as signal
 import peakutils
+from os import listdir
+from os.path import isfile, join
+from scipy.stats.stats import pearsonr
 
 
 class ArtifactEliminationWindow(wx.Frame):
@@ -126,9 +129,10 @@ class ArtifactEliminationWindow(wx.Frame):
         artifactSelected, apply = self.getSelectedA()
         # 0 - Eye movement, 1 - blink, 2 - muscular, 3- cardiac
         if apply:
+            # setting cursor to wait to inform user
+            self.GetParent().setStatus("Buscando Artefactos...", 1)
             if 0 in artifactSelected:
-                # to remove eye movement we...
-                pass
+                self.removeEOG()
             if 1 in artifactSelected:
                 if len(self.icas) == 0:
                     self.FastICA()
@@ -140,6 +144,104 @@ class ArtifactEliminationWindow(wx.Frame):
             if 3 in artifactSelected:
                 self.removeECG()
             self.EliminateComponents()
+
+    def ReadEOGS(self):
+        # let's read the EOGS saved in .csv
+        p = "D:\Documentos\Computacion\EEG\EEG-Pre\src\EOG"
+        paths = [f for f in listdir(p) if isfile(join(p, f))]
+        csv = []
+        for path in paths:
+            if ".csv" in path:
+                csv.append(self.readCSV(p+"\\"+path))
+        return csv
+
+    def readCSV(self, path):
+        r = []
+        with open(path, newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for row in reader:
+                r = row[0:int(len(row)-1)]
+        return r
+
+    def removeEOG(self):
+        # first we apply FastICA to get IC
+        if len(self.icas) == 0:
+            self.FastICA()
+        for ica in self.icas:
+            # reading EOG patterns
+            EOGS = self.ReadEOGS()
+            # make EOGS same length of components, the patterns are 30s long
+            if ica.duration != 30:
+                diff = ica.duration - 30
+                if diff < 0:
+                    # getting just the amount of time
+                    newE = []
+                    for e in EOGS:
+                        # the patterns have a sample rate of 200Hz
+                        e = e[0:int(200*ica.duration)]
+                        newE.append(e)
+                    EOGS = newE
+                else:
+                    # getting just the amount of time and padding samples
+                    newE = []
+                    # the patterns have a sample rate of 200Hz
+                    sampAdd = diff * 200
+                    timesEOG = sampAdd / len(EOGS[0])
+                    for e in EOGS:
+                        extension = e * timesEOG
+                        e.extend(extension)
+                        newE.append(e)
+                    EOGS = newE
+                sDiff = len(EOGS[0]) - len(ica.components[0])
+                if sDiff < 0:
+                    newE = []
+                    for e in EOGS:
+                        new = []
+                        for i in range(len(e)):
+                            new.append(e[i])
+                            pad = [0] * int(abs(sDiff) / len(e))
+                            new.extend(pad)
+                        newE.append(new)
+                    EOGS = newE
+                elif sDiff > 0:
+                    newE = []
+                    for e in EOGS:
+                        new = []
+                        for i in range(len(e)):
+                            new.append(e[i])
+                            i += int(abs(sDiff) / len(e))
+                        newE.append(new)
+                    EOGS = newE
+            sDiff = len(EOGS[0]) - len(ica.components[0])
+            if sDiff < 0:
+                for e in EOGS:
+                    pad = [0] * abs(sDiff)
+                    e.extend(pad)
+            elif sDiff > 0:
+                newE = []
+                for e in EOGS:
+                    new = e[0:int(len(e)-sDiff)]
+                    newE.append(new)
+                EOGS = newE
+            # next we compare with EOG patterns, the ones with
+            # high correlation will be analyzed
+            newC = []
+            for c in ica.components:
+                mean = 0
+                mean2 = 0
+                for eog in EOGS:
+                    e = np.array(eog).astype('float64')
+                    correlation = pearsonr(c, e)
+                    mean += correlation[0]
+                    mean2 += correlation[1]
+                mean = mean / len(EOGS)
+                mean2 = mean2 / len(EOGS)
+                if abs(mean) > 0.6 or abs(mean2) > 0.6:
+                    # this is an EOG component
+                    c = np.array([0.0] * len(c))
+                newC.append(c)
+            ica.components = newC
+
 
     def removeECG(self):
         # first we apply FastICA to get IC
@@ -178,31 +280,34 @@ class ArtifactEliminationWindow(wx.Frame):
                         ecg_template = ecg_template[0:(len(ecg_template)-diff)]
                     else:
                         ecg_template.extend([0]*diff)
-
             # checking correlation
             analyze = []
             for c in ica.components:
-                correlation = np.corrcoef(c, ecg_template, rowvar=True)
-                if abs(correlation[0][0]) > 0.6:
+                correlation = pearsonr(c, ecg_template)
+                if abs(correlation[0]) > 0.6 or abs(correlation[1]) > 0.6:
                     analyze.append(c)
             # checking peaks
             newC = []
             for c in analyze:
                 peaks = peakutils.indexes(c, thres=0.6, min_dist=1)
-                # testing periodicity}
-                F = 0.0
-                for i in range(len(peaks) - 1):
-                    t = float(self.sampleToMS(peaks[i+1]) - self.sampleToMS(peaks[i]))
-                    F += 1 / t
-                # median frequency of peaks
-                F = F / len(peaks)
-                # if it is between min and max of heart rate
-                N = F*(1+0.25) - F*(1-0.25)
-                if (2/3) <= F <= 3:
-                    if N >= int(0.8*F*ica.duration):
-                        # this is an ECG component
-                        c = np.array([0.0] * len(c))
-                newC.append(c)
+                if len(peaks) != 0:
+                    # testing periodicity}
+                    F = 0.0
+                    for i in range(len(peaks) - 1):
+                        t = float(self.sampleToMS(peaks[i+1]) - self.sampleToMS(peaks[i]))
+                        F += 1 / t
+                    # median frequency of peaks
+                    F = F / len(peaks)
+                    # if it is between min and max of heart rate
+                    N = F*(1+0.25) - F*(1-0.25)
+                    if (2/3) <= F <= 3:
+                        if N >= int(0.8*F*ica.duration):
+                            # this is an ECG component
+                            c = np.array([0.0] * len(c))
+                    newC.append(c)
+                else:
+                    # ECG was removed by previous method
+                    newC = ica.components
             ica.components = newC
 
     def FastICA(self):
@@ -221,8 +326,6 @@ class ArtifactEliminationWindow(wx.Frame):
             self.icas.append(fastICA)
 
     def removeBlink(self):
-        # setting cursor to wait to inform user
-        self.GetParent().setStatus("Buscando Artefactos...", 1)
         for ica in self.icas:
             newC = []
             for c in ica.components:
@@ -282,8 +385,6 @@ class ArtifactEliminationWindow(wx.Frame):
 
 
     def removeMuscular(self):
-        # setting cursor to wait to inform user
-        self.GetParent().setStatus("Buscando Artefactos...", 1)
         for ica in self.icas:
             newC = []
             for c in ica.components:
