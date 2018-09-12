@@ -5,6 +5,7 @@ from WindowDialog import *
 from ComponentViewer import *
 from FastICA import *
 import numpy as np
+import threading
 from wx.adv import NotificationMessage
 import pywt
 import scipy.signal as signal
@@ -147,12 +148,12 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def ReadEOGS(self):
         # let's read the EOGS saved in .csv
-        p = "D:\Documentos\Computacion\EEG\EEG-Pre\src\EOG"
+        p = "src/EOG"
         paths = [f for f in listdir(p) if isfile(join(p, f))]
         csv = []
         for path in paths:
             if ".csv" in path:
-                csv.append(self.readCSV(p+"\\"+path))
+                csv.append(self.readCSV(p + "\\" + path))
         return csv
 
     def readCSV(self, path):
@@ -160,7 +161,7 @@ class ArtifactEliminationWindow(wx.Frame):
         with open(path, newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quotechar='"')
             for row in reader:
-                r = row[0:int(len(row)-1)]
+                r = row[0:int(len(row) - 1)]
         return r
 
     def removeEOG(self):
@@ -178,7 +179,7 @@ class ArtifactEliminationWindow(wx.Frame):
                     newE = []
                     for e in EOGS:
                         # the patterns have a sample rate of 200Hz
-                        e = e[0:int(200*ica.duration)]
+                        e = e[0:int(200 * ica.duration)]
                         newE.append(e)
                     EOGS = newE
                 else:
@@ -220,7 +221,7 @@ class ArtifactEliminationWindow(wx.Frame):
             elif sDiff > 0:
                 newE = []
                 for e in EOGS:
-                    new = e[0:int(len(e)-sDiff)]
+                    new = e[0:int(len(e) - sDiff)]
                     newE.append(new)
                 EOGS = newE
             # next we compare with EOG patterns, the ones with
@@ -276,9 +277,9 @@ class ArtifactEliminationWindow(wx.Frame):
                 diff = int(len(ica.components[0]) - len(ecg_template))
                 if diff != 0:
                     if diff < 0:
-                        ecg_template = ecg_template[0:(len(ecg_template)-diff)]
+                        ecg_template = ecg_template[0:(len(ecg_template) - diff)]
                     else:
-                        ecg_template.extend([0]*diff)
+                        ecg_template.extend([0] * diff)
             # checking correlation
             newC = []
             for c in ica.components:
@@ -290,14 +291,14 @@ class ArtifactEliminationWindow(wx.Frame):
                         # testing periodicity}
                         F = 0.0
                         for i in range(len(peaks) - 1):
-                            t = float(self.sampleToMS(peaks[i+1]) - self.sampleToMS(peaks[i]))
+                            t = float(self.sampleToMS(peaks[i + 1]) - self.sampleToMS(peaks[i]))
                             F += 1 / t
                         # median frequency of peaks
                         F = F / len(peaks)
                         # if it is between min and max of heart rate
-                        N = F*(1+0.25) - F*(1-0.25)
-                        if (2/3) <= F <= 3:
-                            if N >= int(0.8*F*ica.duration):
+                        N = F * (1 + 0.25) - F * (1 - 0.25)
+                        if (2 / 3) <= F <= 3:
+                            if N >= int(0.8 * F * ica.duration):
                                 # this is an ECG component
                                 c = np.array([0.0] * len(c))
                 newC.append(c)
@@ -317,6 +318,11 @@ class ArtifactEliminationWindow(wx.Frame):
             # fast ICA uses transposed matrix
             fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration, False)
             self.icas.append(fastICA)
+        processes = [threading.Thread(target=ica.separateComponents) for ica in self.icas]
+        for p in processes:
+            p.start()
+        for p in processes:
+            p.join()
 
     def removeBlink(self):
         for ica in self.icas:
@@ -370,12 +376,11 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def sampleToMS(self, s):
         nSamp = self.GetParent().project.frequency * self.GetParent().project.duration
-        return ((self.GetParent().project.duration * 1000)* s) / nSamp
+        return ((self.GetParent().project.duration * 1000) * s) / nSamp
 
     def msToReading(self, ms):
         nSamp = self.GetParent().project.frequency * self.GetParent().project.duration
         return int((ms * nSamp) / (self.GetParent().project.duration * 1000))
-
 
     def removeMuscular(self):
         for ica in self.icas:
@@ -405,9 +410,9 @@ class ArtifactEliminationWindow(wx.Frame):
                 # elevating to power 2 the elements of Cd2
                 cd2 = np.power(waveletC[1], 2)
                 for j in range(x):
-                    s1 = np.sum(cd1[i:i+frameL])
+                    s1 = np.sum(cd1[i:i + frameL])
                     S1.append(s1)
-                    s2 = np.sum(cd2[i:i+frameL])
+                    s2 = np.sum(cd2[i:i + frameL])
                     S2.append(s2)
                     if s1 > s2:
                         maximums.append(s1)
@@ -421,7 +426,7 @@ class ArtifactEliminationWindow(wx.Frame):
                     if S1[i] > pk:
                         # make all samples in this frame 0
                         for j in range(frameL):
-                            waveletC[2][j+(i*frameL)] = 0.0
+                            waveletC[2][j + (i * frameL)] = 0.0
                     if S2[i] > pk:
                         # make all samples in this frame 0
                         for j in range(frameL):

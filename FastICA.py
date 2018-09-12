@@ -15,7 +15,7 @@ class FastICA():
         self.duration = t
         self.selectedComponents = []
         self.icaParameters = []
-        self.separateComponents()
+        # self.separateComponents()
 
     # actual FastICA algorithm part 1: just creating matrix of independent components
     def separateComponents(self):
@@ -27,11 +27,10 @@ class FastICA():
     # recreates signals with the independent components selected
     def recreateSignals(self):
         # modify the mixing matrix so it only adds the selected components
-        for i in range(len(self.ica.mixing_)):
+        for i in range(len(self.components)):
             if not self.isSelected(i):
-                # turn to 0 all this row
-                for j in range(len(self.ica.mixing_[i])):
-                    self.ica.mixing_[j][i] = 0
+                # turn to 0 all this component
+                self.components[i] = [0.0] * len(self.components[i])
         self.signals = self.ica.inverse_transform(np.matrix.transpose(np.array(self.components)))
         # transposing
         self.signals = np.matrix.transpose(self.signals)

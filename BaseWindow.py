@@ -18,7 +18,6 @@ class BaseWindow(wx.Frame):
         self.circleMngr = CircleManager(self.workArea, width, height, self)
         self.project = Project()
         self.aux = Project()
-
         # to just open 1 files window
         self.filesWindow = None
         self.preBPFW = None
