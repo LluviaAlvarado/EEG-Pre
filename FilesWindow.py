@@ -1,8 +1,7 @@
 # Imports
-import csv
 
 # local imports
-from FileReader import *
+from FileReaderWriter import *
 from WindowDialog import *
 from WindowEditor import *
 
@@ -80,7 +79,7 @@ class FilesWindow(wx.Frame):
         pathPicker = wx.DirDialog(None, "Exportar en:", "D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
                                   wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if pathPicker.ShowModal() != wx.ID_CANCEL:
-            writer = FileReader()
+            writer = FileReaderWriter()
             windows = []
             windowsExist = False
             for eeg in self.GetParent().project.EEGS:
@@ -109,20 +108,8 @@ class FilesWindow(wx.Frame):
                 # deleting the prev file and txt
                 os.remove(file)
                 os.remove(txt)
-        with open(file, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=',', quotechar='"',
-                                quoting=csv.QUOTE_MINIMAL)
-            matrix = []
-            for row in windows:
-                s = [row[0]]
-                for w in row[1]:
-                    s.append(w.stimulus)
-                matrix.append(s)
-            writer.writerows(matrix)
-        # writing the txt
-        with open(txt, 'w', newline='') as txtfile:
-            txtfile.write("Longitud: " + str(self.GetParent().project.windowLength) +
-                          " TAE: " + str(self.GetParent().project.windowTBE))
+            #writing windowFiles
+            FileReaderWriter().writeWindowFiles(windows, file, txt, self.GetParent().project.windowLength, self.GetParent().project.windowTBE)
         self.GetParent().setStatus("", 0)
 
     def onClose(self, event):
@@ -169,17 +156,6 @@ class FilesWindow(wx.Frame):
         # fill the windows with the file
         self.loadWindows(picker.Path)
 
-    def readCSV(self, path):
-        matrix = []
-        with open(path, newline='') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            for row in reader:
-                matrix.append(row)
-            if (len(matrix) != len(self.GetParent().project.EEGS)):
-                # this csv does not match with the loaded files
-                return []
-        return matrix
-
     def getCorrectWindowInfo(self, name, csv):
         for row in csv:
             if row[0] == name:
@@ -195,7 +171,10 @@ class FilesWindow(wx.Frame):
         # let's read and verify the csv
         name = str(path).split("\\")
         name = name[len(name) - 1].split(".")[0]
-        csv = self.readCSV(path)
+        csv = FileReaderWriter().readCSV(path)
+        if (len(csv) != len(self.GetParent().project.EEGS)):
+            # this csv does not match with the loaded files
+            csv = []
         if len(csv) != 0:
             # let's ask for the length and tbe of the windows
             l, tbe = self.getWindowData()
@@ -243,7 +222,7 @@ class FilesWindow(wx.Frame):
         myCursor = wx.Cursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
         self.GetParent().SetStatusText("Cargando Archivos...")
-        reader = FileReader()
+        reader = FileReaderWriter()
         errorFiles = []
         currentAmount = len(self.GetParent().project.EEGS)
         for path in filePaths:

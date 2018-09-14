@@ -15,7 +15,7 @@ class FastICA():
         self.duration = t
         self.selectedComponents = []
         self.icaParameters = []
-        # self.separateComponents()
+
 
     # actual FastICA algorithm part 1: just creating matrix of independent components
     def separateComponents(self):

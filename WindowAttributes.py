@@ -4,6 +4,7 @@ import wx.grid
 
 from WindowEditor import *
 from WindowDialog import *
+from WindowCharacterization import *
 
 
 # Esta clase tiene cosas que debo arreglar ya porque esta feo lo que hice
@@ -65,31 +66,9 @@ class WindowAttributes(wx.Frame):
         self.Destroy()
 
     def applyFFT(self):
-        MagFase = []
         eegs = self.GetParent().project.EEGS
-        for eeg in eegs:
-            for w in eeg.windows:
-                ffts = []
-                for ch in w.readings:
-                    fourier = np.fft.rfft(ch, len(ch))
-                    index = int((len(ch) / 2) - self.amountHF)
-                    group = []
-                    for i in range(index, int(len(ch) / 2)):
-                        group.append(fourier[i])
-                    ffts.append(group)
-                # getting the average frequency for the selected group per window
-                MF = []
-                for i in range(self.amountHF):
-                    aux = []
-                    for fft in ffts:
-                        aux.append(fft[i])
-                    fft = np.average(aux)
-                    # getting the magnitude and fase for each value of fft
-                    magnitude = np.sqrt(np.exp2(fft.real) + np.exp2(fft.imag))
-                    fase = np.arctan((np.exp2(fft.imag) / np.exp2(fft.real)))
-                    MagFase.append([magnitude, fase])
         # setting MV to the project
-        self.GetParent().project.windowMagFase = MagFase
+        self.GetParent().project.windowMagFase = WindowCharacterization().getMagFase(eegs)
 
     def confFFT(self, event, opc):
         if opc == 1 or opc == 0:
@@ -104,48 +83,19 @@ class WindowAttributes(wx.Frame):
                 pass
 
     def applyAUC(self):
-        AUC = []
         eegs = self.GetParent().project.EEGS
-        for eeg in eegs:
-            for w in eeg.windows:
-                areas = []
-                for ch in w.readings:
-                    dx = 1
-                    area = np.trapz(ch, dx=dx)
-                    areas.append(area)
-                # getting the average area per window
-                area = np.average(areas)
-                AUC.append(area)
         # setting AUC to the project
-        self.GetParent().project.windowAUC = AUC
+        self.GetParent().project.windowAUC = WindowCharacterization().getAUC(eegs)
 
     def applyMV(self):
-        MV = []
         eegs = self.GetParent().project.EEGS
-        for eeg in eegs:
-            for w in eeg.windows:
-                maxs = []
-                mins = []
-                for ch in w.readings:
-                    max = np.amax(ch)
-                    min = np.amin(ch)
-                    maxs.append(max)
-                    mins.append(min)
-                # getting the average max voltage per window
-                max = np.average(maxs)
-                min = np.average(mins)
-                MV.append([min, max])
-        # setting MV to the project
-        self.GetParent().project.windowMinMaxVolt = MV
+        self.GetParent().project.windowMinMaxVolt = WindowCharacterization().getMV(eegs)
 
     def apply(self, event):
         selected = self.optionsList.GetCheckedItems()
         for opc in selected:
-            if opc == 0:
-                # Transformada rápida de Fourier(Magnitud)
-                self.applyFFT()
-            elif opc == 1:
-                # Transformada rápida de Fourier(Fase)
+            if opc == 0 or opc == 1:
+                # Transformada rápida de Fourier(Magnitud y Fase)
                 self.applyFFT()
             elif opc == 2:
                 # Area bajo la curva

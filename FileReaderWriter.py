@@ -13,12 +13,13 @@ import h5py
 import mne.io as mne
 import pyedflib
 import scipy.io as sio
+import csv
 
 # local imports
 from EEGData import *
 
 
-class FileReader:
+class FileReaderWriter:
     __error = False
 
     def hasError(self):
@@ -34,6 +35,29 @@ class FileReader:
         else:
             print("An Unknown error has occurred")
         self.__error = True
+
+    def readCSV(self, path):
+        matrix = []
+        with open(path, newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for row in reader:
+                matrix.append(row)
+        return matrix
+
+    def writeWindowFiles(self, windows, file, txt, l, tbe):
+        with open(file, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='"',
+                                quoting=csv.QUOTE_MINIMAL)
+            matrix = []
+            for row in windows:
+                s = [row[0]]
+                for w in row[1]:
+                    s.append(w.stimulus)
+                matrix.append(s)
+            writer.writerows(matrix)
+        # writing the txt
+        with open(txt, 'w', newline='') as txtfile:
+            txtfile.write("Longitud: " + str(l) + " TAE: " + str(tbe))
 
     def writeFile(self, eeg, project, path):
         try:
