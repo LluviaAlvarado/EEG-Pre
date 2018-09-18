@@ -2,6 +2,7 @@ from FilesWindow import *
 from BandpassFilter import *
 from WindowAttributes import *
 from ArtifactEliminationWindow import *
+from CorrelationWindow import *
 
 
 class AddCircle:
@@ -58,9 +59,12 @@ class AddCircle:
             new = characterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
                                   self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
+        elif res == 'Correlación':
+            new = CorrelationCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
+                                  self.parent.mainW)
+            new.addImg(self.parent.imgCtrl.GetParent())
         if new is not None:
             self.parent.hijos.append(new)
-        # print(res)
 
 
 class Circle:
@@ -75,8 +79,7 @@ class Circle:
 
     # Todo: Convertir esto en un diccionario
     menu_options = [
-        # [wx.NewId(),'Coherencia'],
-        # [wx.NewId(),'PDC/DTF'],
+        [wx.NewId(),'Correlación'],
         [wx.NewId(), 'Filtrado'],
         [wx.NewId(), 'Artefactos'],
         [wx.NewId(), 'Caracterizar']
@@ -145,21 +148,17 @@ class characterCircle(Circle):
         self.mainW.characterWindow.Show()
 
 
-class CoherenceCircle(Circle):
-
-    def __init__(self, pos, diameter):
-        super().__init__(pos, diameter)
-        self.img = wx.Image('./Images/CohIMG.png', wx.BITMAP_TYPE_ANY)
+class CorrelationCircle(Circle):
+    def __init__(self, pos, diameter, mainW):
+        super().__init__(pos, diameter, mainW)
+        self.img = wx.Image('./Images/Grafica.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
 
-
-class PDC_DTFCircle(Circle):
-
-    def __init__(self, pos, diameter):
-        super().__init__(pos, diameter)
-        self.img = wx.Image('./Images/PDCDTF.png', wx.BITMAP_TYPE_ANY)
-        self.img = self.img.Scale(diameter, diameter)
-
+    def onDoubleClick(self, event):
+        Circle.plus.removeImg()
+        if self.mainW.corrW is None:
+            self.mainW.corrW = CorrelationWindow(self.mainW)
+        self.mainW.corrW.Show()
 
 class ArtifactCircle(Circle):
 

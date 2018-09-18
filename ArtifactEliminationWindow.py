@@ -23,7 +23,7 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def __init__(self, parent):
 
-        wx.Frame.__init__(self, parent, -1, "Eliminación de Artefactos con FastICA", )
+        wx.Frame.__init__(self, parent, -1, "Eliminación de Artefactos con FastICA")
         self.SetSize(250, 250)
         self.Centre()
         self.viewer = None
