@@ -13,6 +13,7 @@ import peakutils
 from os import listdir
 from os.path import isfile, join
 from scipy.stats.stats import pearsonr
+from wx.adv import AnimationCtrl, Animation
 
 
 class ArtifactEliminationWindow(wx.Frame):
@@ -29,6 +30,7 @@ class ArtifactEliminationWindow(wx.Frame):
         self.viewer = None
         self.icas = []
         self.BPFwindow = None
+        self.loading = None
         # create base panel in the frame
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         # base vbox
@@ -114,6 +116,22 @@ class ArtifactEliminationWindow(wx.Frame):
         self.openCompView(event)
         self.GetParent().setStatus("", 0)
 
+    def apply(self, artifactSelected):
+        if 0 in artifactSelected:
+            self.removeEOG()
+        if 1 in artifactSelected:
+            if len(self.icas) == 0:
+                self.FastICA()
+            self.removeBlink()
+        if 2 in artifactSelected:
+            if len(self.icas) == 0:
+                self.FastICA()
+            self.removeMuscular()
+        if 3 in artifactSelected:
+            self.removeECG()
+        self.EliminateComponents()
+        wx.CallAfter(self.loading.Stop)
+
     def applyAutomatically(self, event):
         self.icas = []
         artifactSelected, apply = self.getSelectedA()
@@ -121,19 +139,9 @@ class ArtifactEliminationWindow(wx.Frame):
         if apply:
             # setting cursor to wait to inform user
             self.GetParent().setStatus("Buscando Artefactos...", 1)
-            if 0 in artifactSelected:
-                self.removeEOG()
-            if 1 in artifactSelected:
-                if len(self.icas) == 0:
-                    self.FastICA()
-                self.removeBlink()
-            if 2 in artifactSelected:
-                if len(self.icas) == 0:
-                    self.FastICA()
-                self.removeMuscular()
-            if 3 in artifactSelected:
-                self.removeECG()
-            self.EliminateComponents()
+            self.loading = Splash(self.GetParent())
+            self.loading.Play()
+            threading.Thread(target=self.apply, args=[artifactSelected]).start()
 
     def ReadEOGS(self):
         # let's read the EOGS saved in .csv
@@ -275,7 +283,8 @@ class ArtifactEliminationWindow(wx.Frame):
                 correlation = pearsonr(c, ecg_template)
                 if abs(correlation[0]) > 0.6 or abs(correlation[1]) > 0.6:
                     # checking peaks
-                    peaks = peakutils.indexes(c, thres=0.6, min_dist=1)
+                    dist = len(c) / ica.duration / 2
+                    peaks = peakutils.indexes(c, thres=0.6, min_dist=dist)
                     if len(peaks) != 0:
                         # testing periodicity}
                         F = 0.0
@@ -387,8 +396,8 @@ class ArtifactEliminationWindow(wx.Frame):
                     new.append(0.0)
                 waveletC[1] = np.array(new)
                 # getting the wavelet power spectral density
-                # dividing the component into 10 frames of equal lenght
-                x = 10
+                # dividing the component into x frames of a half of a second each
+                x = int(ica.duration)*2
                 frameL = int(len(new) / x)
                 S1 = []
                 S2 = []
@@ -459,3 +468,25 @@ class ArtifactEliminationWindow(wx.Frame):
         if self.BPFwindow is not None:
             self.BPFwindow.Hide()
         self.BPFwindow = BFPWindow(self)
+
+
+class Splash(wx.adv.SplashScreen):
+
+    def __init__(self, parent, id=-1):
+
+        image = os.getcwd() + "\\src\\searching.gif"
+        aBitmap = wx.Image(name =image).ConvertToBitmap()
+        splashStyle = wx.adv.SPLASH_CENTRE_ON_PARENT
+        splashDuration = 0 # milliseconds
+        wx.adv.SplashScreen.__init__(self, aBitmap, splashStyle,
+                                 splashDuration, parent)
+        gif = wx.adv.AnimationCtrl(self, id, wx.adv.Animation(image),)
+
+        self.Show()
+        self.gif = gif
+
+    def Play(self,):
+        self.gif.Play()
+
+    def Stop(self,):
+        self.gif.Stop()

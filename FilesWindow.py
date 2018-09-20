@@ -2,7 +2,6 @@
 
 # local imports
 from FileReaderWriter import *
-from WindowDialog import *
 from WindowEditor import *
 
 
