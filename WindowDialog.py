@@ -1,5 +1,8 @@
 # Imports
 import wx
+import os
+import wx.adv
+import wx.lib.throbber
 
 
 class WindowDialog(wx.Dialog):
@@ -30,6 +33,33 @@ class WindowDialog(wx.Dialog):
     def close(self, event):
         self.Close(True)
 
+class WorkingAnimation(wx.Frame):
+
+    def __init__(self, parent, type):
+        wx.Frame.__init__(self, parent, -1, "")
+        self.SetSize(200, 200)
+        self.Centre()
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        image = None
+        message = ""
+        self.SetWindowStyle(wx.STAY_ON_TOP | wx.FRAME_FLOAT_ON_PARENT)
+        if type == 'search':
+            image = os.getcwd() + "\\src\\searching.gif"
+            message = "Eliminando Artefactos..."
+        self.gif = wx.adv.AnimationCtrl(panel, anim=wx.adv.Animation(image),)
+        self.gif.SetToolTip(message)
+        self.gif.SetLabel(message)
+        sizer.Add(self.gif, 0, wx.EXPAND | wx.ALL, 2)
+        panel.SetSizer(sizer)
+
+    def Play(self,):
+        self.Show()
+        self.gif.Play()
+
+    def Stop(self,):
+        self.gif.Stop()
+        self.Hide()
 
 class WindowSaveOnExit(wx.Dialog):
     def __init__(self, parent, opc):

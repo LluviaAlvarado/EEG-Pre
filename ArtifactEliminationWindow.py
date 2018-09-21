@@ -139,7 +139,7 @@ class ArtifactEliminationWindow(wx.Frame):
         if apply:
             # setting cursor to wait to inform user
             self.GetParent().setStatus("Buscando Artefactos...", 1)
-            self.loading = Splash(self.GetParent())
+            self.loading = WorkingAnimation(self.GetParent(), 'search')
             self.loading.Play()
             threading.Thread(target=self.apply, args=[artifactSelected]).start()
 
@@ -470,23 +470,3 @@ class ArtifactEliminationWindow(wx.Frame):
         self.BPFwindow = BFPWindow(self)
 
 
-class Splash(wx.adv.SplashScreen):
-
-    def __init__(self, parent, id=-1):
-
-        image = os.getcwd() + "\\src\\searching.gif"
-        aBitmap = wx.Image(name =image).ConvertToBitmap()
-        splashStyle = wx.adv.SPLASH_CENTRE_ON_PARENT
-        splashDuration = 0 # milliseconds
-        wx.adv.SplashScreen.__init__(self, aBitmap, splashStyle,
-                                 splashDuration, parent)
-        gif = wx.adv.AnimationCtrl(self, id, wx.adv.Animation(image),)
-
-        self.Show()
-        self.gif = gif
-
-    def Play(self,):
-        self.gif.Play()
-
-    def Stop(self,):
-        self.gif.Stop()
