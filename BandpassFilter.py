@@ -1,10 +1,10 @@
 # Imports
-from copy import deepcopy
-
 # local imports
 from FilesWindow import *
 from Channel import *
 from BPFWindow import *
+from WindowDialog import WindowCustomWave
+from Utils import exportEEGS
 
 
 class frequencyBand:
@@ -76,7 +76,7 @@ class PreBPFW(wx.Frame):
         self.viewButton.Bind(wx.EVT_BUTTON, self.openView)
         self.viewButton.Disable()
         self.exportButton = wx.Button(self.pnl, label="Exportar")
-        self.exportButton.Bind(wx.EVT_BUTTON, self.exportar)
+        self.exportButton.Bind(wx.EVT_BUTTON, self.export)
         self.exportButton.Disable()
         self.buttonSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
         self.buttonSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
@@ -160,43 +160,8 @@ class PreBPFW(wx.Frame):
                 flag = False
         return name, lowF, higF, flag
 
-    def exportar(self, event):
-        pathPicker = wx.DirDialog(None, "Exportar en:", "D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
-                                  wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-        if pathPicker.ShowModal() != wx.ID_CANCEL:
-            writer = FileReaderWriter()
-            windows = []
-            windowsExist = False
-            for eeg in self.GetParent().project.EEGS:
-                writer.writeFile(eeg, self.GetParent().project.name, pathPicker.GetPath())
-                if len(eeg.windows) > 0:
-                    windowsExist = True
-                windows.append([eeg.name, eeg.windows])
-            # exporting csv with window information and a txt with the TBE and length in ms
-            if windowsExist:
-                self.writeWindowFiles(windows, pathPicker.GetPath())
-
-    def writeWindowFiles(self, windows, path):
-        # setting cursor to wait to inform user
-        self.GetParent().setStatus("Exportando...", 1)
-        file = path + "\\" + self.GetParent().project.name + "_windows.csv"
-        txt = path + "\\" + self.GetParent().project.name + "_windows.txt"
-        if os.path.isfile(file):
-            # it already exists
-            f = self.GetParent().project.name + "_windows.csv"
-            msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
-                                                              "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
-                                   style=wx.YES_NO | wx.CENTRE)
-            if msg.ShowModal() == wx.ID_NO:
-                return  # we don't to anything
-            else:
-                # deleting the prev file and txt
-                os.remove(file)
-                os.remove(txt)
-            # writing windowFiles
-            FileReaderWriter().writeWindowFiles(windows, file, txt, self.GetParent().project.windowLength,
-                    self.GetParent().project.windowTBE)
-        self.GetParent().setStatus("", 0)
+    def export(self, event):
+        exportEEGS(self.GetParent().project)
 
     def applyFilter(self, event):
         self.GetParent().setStatus("Filtrando...", 1)

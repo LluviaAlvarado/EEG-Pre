@@ -3,6 +3,7 @@
 # local imports
 from FileReaderWriter import *
 from WindowEditor import *
+from Utils import exportEEGS
 
 
 class FilesWindow(wx.Frame):
@@ -60,7 +61,7 @@ class FilesWindow(wx.Frame):
         self.buttonSizer.Add(helpLabel, 0, wx.EXPAND | wx.ALL, 5)
         # button to save modified eegs
         self.saveButton = wx.Button(self.pnl, label="Exportar")
-        self.saveButton.Bind(wx.EVT_BUTTON, self.exportar)
+        self.saveButton.Bind(wx.EVT_BUTTON, self.export)
         if len(self.GetParent().project.EEGS) == 0:
             self.saveButton.Disable()
         self.buttonSizer.AddSpacer(50)
@@ -74,42 +75,8 @@ class FilesWindow(wx.Frame):
                                         wildcard="Todos (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq",
                                         style=wx.FD_OPEN | wx.FD_MULTIPLE)
 
-    def exportar(self, event):
-        pathPicker = wx.DirDialog(None, "Exportar en:", "D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
-                                  wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-        if pathPicker.ShowModal() != wx.ID_CANCEL:
-            writer = FileReaderWriter()
-            windows = []
-            windowsExist = False
-            for eeg in self.GetParent().project.EEGS:
-                writer.writeFile(eeg, self.GetParent().project.name, pathPicker.GetPath())
-                if len(eeg.windows) > 0:
-                    windowsExist = True
-                windows.append([eeg.name, eeg.windows])
-            # exporting csv with window information and a txt with the TBE and length in ms
-            if windowsExist:
-                self.writeWindowFiles(windows, pathPicker.GetPath())
-
-    def writeWindowFiles(self, windows, path):
-        # setting cursor to wait to inform user
-        self.GetParent().setStatus("Exportando...", 1)
-        file = path + "\\" + self.GetParent().project.name + "_windows.csv"
-        txt = path + "\\" + self.GetParent().project.name + "_windows.txt"
-        if os.path.isfile(file):
-            # it already exists
-            f = self.GetParent().project.name + "_windows.csv"
-            msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
-                                                              "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
-                                   style=wx.YES_NO | wx.CENTRE)
-            if msg.ShowModal() == wx.ID_NO:
-                return  # we don't to anything
-            else:
-                # deleting the prev file and txt
-                os.remove(file)
-                os.remove(txt)
-            #writing windowFiles
-            FileReaderWriter().writeWindowFiles(windows, file, txt, self.GetParent().project.windowLength, self.GetParent().project.windowTBE)
-        self.GetParent().setStatus("", 0)
+    def export(self, event):
+        exportEEGS(self.GetParent().project)
 
     def onClose(self, event):
         self.GetParent().onFWClose()

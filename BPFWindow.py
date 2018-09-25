@@ -7,9 +7,8 @@ from WindowEditor import *
 
 
 class BFPWindow(wx.Frame):
-    title = "Visualizar"
-    def __init__(self, parent):
-        wx.Frame.__init__(self, parent, -1, "Filtrado", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
+    def __init__(self, parent, prev=False):
+        wx.Frame.__init__(self, parent, -1, "Visualizar EEGs", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Maximize(True)
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
@@ -21,7 +20,7 @@ class BFPWindow(wx.Frame):
                                                           aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                                     | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
-        self.fillnavigationTabs()
+        self.fillnavigationTabs(prev)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
         frameSizer.Add(self.navigationTabs, 0, wx.EXPAND, 3)
@@ -52,13 +51,13 @@ class BFPWindow(wx.Frame):
             myCursor = wx.Cursor(wx.CURSOR_WAIT)
             self.SetCursor(myCursor)
 
-    def fillnavigationTabs(self):
+    def fillnavigationTabs(self, prev):
         eegs = self.GetParent().GetParent().project.EEGS
         for eeg in eegs:
-            self.addNav(eeg)
+            self.addNav(eeg, prev)
 
-    def addNav(self, e):
-        page = tab(self.navigationTabs, self.project, e.name)
+    def addNav(self, e, prev):
+        page = tab(self.navigationTabs, self.project, e.name, prev)
         self.navigationTabs.AddPage(page, e.name)
 
     def onClose(self, event):
@@ -69,7 +68,7 @@ class tab(wx.Panel):
     '''Panel that contains graph of an EEG
     and window tools'''
 
-    def __init__(self, p, project, name):
+    def __init__(self, p, project, name, prev):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size[0] - 10, p.Size[1] - 10))
         self.project = project
         self.name = name
@@ -80,7 +79,7 @@ class tab(wx.Panel):
                                        style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                              | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
-        self.fillEEGTabs()
+        self.fillEEGTabs(prev)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
         frameSizer.Add(self.eegTabs, 0, wx.EXPAND, 3)
@@ -95,15 +94,15 @@ class tab(wx.Panel):
     def loadingFinished(self, event):
         wx.CallLater(0, lambda: self.GetParent().GetParent().SetStatus("", 0))
 
-    def addTab(self, e):
-        page = EEGTabV(self.eegTabs, e)
+    def addTab(self, e, prev):
+        page = EEGTabV(self.eegTabs, e, prev)
         self.eegTabs.AddPage(page, e.name)
 
-    def fillEEGTabs(self):
+    def fillEEGTabs(self, prev):
         eegs = self.GetParent().GetParent().project.EEGS
         for eeg in eegs:
             if self.name in eeg.name:
-                self.addTab(eeg)
+                self.addTab(eeg, prev)
 
     def onClose(self, event):
         self.Destroy()

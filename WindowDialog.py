@@ -52,6 +52,11 @@ class WorkingAnimation(wx.Frame):
         self.gif.SetLabel(message)
         sizer.Add(self.gif, 0, wx.EXPAND | wx.ALL, 2)
         panel.SetSizer(sizer)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
+
+    def onEraseBackground(self, event):
+        # Overridden to do nothing to prevent flicker
+        pass
 
     def Play(self,):
         self.Show()

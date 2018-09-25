@@ -7,7 +7,7 @@ class EEGraph(wx.Panel):
     """this is a panel that displays
     an EEG for visual examination"""
 
-    def __init__(self, parent, eeg, selected, v=False):
+    def __init__(self, parent, eeg, selected, v=False, prev=None, p=False):
         h = parent.GetParent().GetParent().Size[1]
         w = parent.GetParent().GetParent().Size[0]
         w = w - (w / 5)
@@ -28,6 +28,9 @@ class EEGraph(wx.Panel):
         w = self.Size[0] - 65
         h = self.Size[1]
         self.graph = graphPanel(self, eeg, w, h)
+        if p:
+            # draw a prev state of EEG signals
+            self.graph.SetPreviousState(prev)
         self.zoomP = zoomPanel(self, self.graph)
         self.windowP = windowPanel(self, self.graph)
         # bottom is reserved just for the time ruler

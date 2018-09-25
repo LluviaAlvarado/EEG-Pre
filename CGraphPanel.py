@@ -1,4 +1,5 @@
 import wx
+from Utils import msToReading
 
 
 class CgraphPanel(wx.Panel):
@@ -141,13 +142,6 @@ class CgraphPanel(wx.Panel):
                 channels.append(self.ica.components[ix])
         return channels
 
-    # changes the value for printable purposes
-    def ChangeRange(self, v, nu, nl):
-        oldRange = self.ica.amUnits[0] - self.ica.amUnits[1]
-        newRange = nu - nl
-        newV = round((((v - self.ica.amUnits[1]) * newRange) / oldRange) + nl, 2)
-        return newV
-
     def resetZoom(self):
         self.zoom = False
         self.strMs = 0
@@ -234,7 +228,6 @@ class CgraphPanel(wx.Panel):
         ch, read = self.getViewChannels()
         self.GetParent().ampRuler.zoomManager(len(ch))
         self.GetParent().componentList.adjustment(read)
-        # self.GetParent().componentList.adjustment(ch)
 
     def getViewChannels(self):
         checked = self.getChecked()
@@ -261,9 +254,6 @@ class CgraphPanel(wx.Panel):
             channels = checked
         return channels, read
 
-    def msToReading(self, ms):
-        return int((ms * self.nSamp) / (self.ica.duration * 1000))
-
     def OnPaint(self, event=None):
         # buffered so it doesn't paint channel per channel
         if self.paint:
@@ -273,6 +263,8 @@ class CgraphPanel(wx.Panel):
             y = 0
             amUnits = self.ica.amUnits
             timeLapse = self.timeLapse
+            frequency = self.ica.frequency
+            duration = self.ica.duration
             incx = self.incx
             self.comPosition = []
             # defining channels to plot
@@ -285,10 +277,10 @@ class CgraphPanel(wx.Panel):
                 for channel in channels:
                     x = 0
                     ms = self.strMs
-                    i = self.msToReading(ms)
+                    i = msToReading(ms, frequency, duration)
                     self.comPosition.append([c, y])
                     while i < self.nSamp:
-                        inci = self.msToReading(ms + timeLapse)
+                        inci = msToReading(ms + timeLapse, frequency, duration)
                         ny = (((channel[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
                         if inci > self.nSamp - 1:
                             ny2 = ny
@@ -300,7 +292,7 @@ class CgraphPanel(wx.Panel):
                         else:
                             dc.DrawPoint(x, ny)
                         ms += timeLapse
-                        i = self.msToReading(ms)
+                        i = msToReading(ms, frequency, duration)
                         x += incx
                     y += hSpace
                     c += 1

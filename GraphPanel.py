@@ -1,5 +1,5 @@
 import wx
-
+from Utils import msToReading
 
 class graphPanel(wx.Panel):
 
@@ -10,6 +10,7 @@ class graphPanel(wx.Panel):
         # var for repaint
         self.mirror = wx.EmptyBitmap
         self.eeg = eeg
+        self.prev = None
         self.timeLapse = 0
         self.incx = 1
         self.w = self.Size[0]
@@ -37,6 +38,9 @@ class graphPanel(wx.Panel):
         self.Bind(wx.EVT_LEFT_UP, self.OnClickReleased)
         self.Bind(wx.EVT_MOTION, self.MovingMouse)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+    def SetPreviousState(self, prev):
+        self.prev = prev
 
     def OnClickDown(self, event):
         if self.move:
@@ -142,13 +146,6 @@ class graphPanel(wx.Panel):
             else:
                 channels.append(self.eeg.additionalData[ix - len(self.eeg.channels)])
         return channels
-
-    # changes the value for printable purposes
-    def ChangeRange(self, v, nu, nl):
-        oldRange = self.eeg.amUnits[0] - self.eeg.amUnits[1]
-        newRange = nu - nl
-        newV = round((((v - self.eeg.amUnits[1]) * newRange) / oldRange) + nl, 2)
-        return newV
 
     def resetZoom(self):
         self.zoom = False
@@ -259,48 +256,98 @@ class graphPanel(wx.Panel):
             channels = checked
         return channels
 
-    def msToReading(self, ms):
-        return int((ms * self.nSamp) / (self.eeg.duration * 1000))
+    # gets the selected electrodes to graph
+    def getCheckedP(self):
+        checked = self.GetParent().selected.GetCheckedItems()
+        channels = []
+        for ix in checked:
+            if ix < len(self.prev.channels):
+                channels.append(self.prev.channels[ix])
+            else:
+                channels.append(self.prev.additionalData[ix - len(self.prev.channels)])
+        return channels
+
+    def getViewChannelsPrev(self):
+        checked = self.getCheckedP()
+        channels = []
+        # if there is zoom
+        if self.zoom:
+            i = self.strCh
+            r = self.endCh - i
+            if self.endCh > len(checked):
+                i -= (self.endCh - len(checked))
+                self.endCh = len(checked)
+            if r > len(checked):
+                self.endCh = len(checked)
+            if i < 0:
+                i = 0
+            self.strCh = i
+            while i < self.endCh:
+                channels.append(checked[i])
+                i += 1
+        else:
+            channels = checked
+        return channels
 
     def OnPaint(self, event=None):
         # buffered so it doesn't paint channel per channel
         if self.paint:
             dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
             dc.Clear()
-            dc.SetPen(wx.Pen(wx.BLACK, 4))
             y = 0
-
+            frequency = self.eeg.frequency
+            duration = self.eeg.duration
             amUnits = self.eeg.amUnits
             timeLapse = self.timeLapse
             incx = self.incx
             self.chanPosition = []
             # defining channels to plot
             channels = self.getViewChannels()
+            pChannels = []
+            if self.prev is not None:
+                # draw prev state of EEG
+                pChannels = self.getViewChannelsPrev()
             if len(channels) > 0:
                 hSpace = (self.Size[1] - 5) / len(channels)
-                w = self.w
-                dc.SetPen(wx.Pen(wx.BLACK, 1))
+                j = 0
                 for channel in channels:
                     x = 0
                     ms = self.strMs
-                    i = self.msToReading(ms)
+                    i = msToReading(ms, frequency, duration)
                     self.chanPosition.append([channel.label, y])
                     while i < self.nSamp:
-                        inci = self.msToReading(ms + timeLapse)
+                        inci = msToReading(ms + timeLapse, frequency, duration)
+                        # prev eeg signals
+                        if len(pChannels) != 0:
+                            ny = (((pChannels[j].readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (
+                                    amUnits[0] - amUnits[1])) + y
+                            if inci > self.nSamp - 1:
+                                ny2 = ny
+                            else:
+                                ny2 = (((pChannels[j].readings[inci] - amUnits[1]) * ((y + hSpace) - y)) / (
+                                        amUnits[0] - amUnits[1])) + y
+                            dc.SetPen(wx.GREY_PEN)
+                            if abs(ny - ny2) > 3 or (x + incx) > 3:
+                                dc.DrawLine(x, ny, x + incx, ny2)
+                            else:
+                                dc.DrawPoint(x, ny)
+                        # actual eeg signals
                         ny = (((channel.readings[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
                         if inci > self.nSamp - 1:
                             ny2 = ny
                         else:
                             ny2 = (((channel.readings[inci] - amUnits[1]) * ((y + hSpace) - y)) / (
                                         amUnits[0] - amUnits[1])) + y
+                        dc.SetPen(wx.Pen(wx.BLACK, 1))
                         if abs(ny - ny2) > 3 or (x + incx) > 3:
                             dc.DrawLine(x, ny, x + incx, ny2)
                         else:
                             dc.DrawPoint(x, ny)
                         ms += timeLapse
-                        i = self.msToReading(ms)
+                        i = msToReading(ms, frequency, duration)
                         x += incx
                     y += hSpace
+                    j += 1
             self.mirror = dc.GetAsBitmap()
             self.paint = False
         else:

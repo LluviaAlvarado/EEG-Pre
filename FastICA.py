@@ -13,6 +13,7 @@ class FastICA():
         self.components = []
         self.amUnits = []
         self.duration = t
+        self.frequency = len(signals[0]) / t
         self.selectedComponents = []
         self.icaParameters = []
 

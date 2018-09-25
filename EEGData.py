@@ -2,7 +2,7 @@
 from the EEG files'''
 # lib imports
 import numpy as np
-
+from copy import deepcopy
 # local imports
 from Channel import *
 from System10_20 import *
@@ -25,9 +25,13 @@ class EEGData:
         self.fillChannels(labels, chM)
         self.selectedCh = list(range(0, len(self.channels) + len(self.additionalData)))
         self. windows = []
+        self.prev = None
 
     def setSelected(self, sel):
         self.selectedCh = sel
+
+    def SaveState(self):
+        self.prev = deepcopy(self)
 
     def getChannel(self, i):
         if i < len(self.channels):

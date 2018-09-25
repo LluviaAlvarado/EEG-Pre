@@ -193,9 +193,9 @@ class EEGTab(wx.Panel):
 
 class EEGTabV(wx.Panel):
     '''Panel that contains graph of an EEG
-    and window tools'''
+    without window tools'''
 
-    def __init__(self, p, e):
+    def __init__(self, p, e, prev):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size))
         self.eeg = e
         self.eegGraph = None
@@ -221,7 +221,7 @@ class EEGTabV(wx.Panel):
         rightPnl = wx.Panel(self, size=self.Size)
         graphContainer = wx.BoxSizer(wx.VERTICAL)
         # panel for eeg graph
-        self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList, True)
+        self.eegGraph = EEGraph(rightPnl, self.eeg, self.electrodeList, True, self.eeg.prev, prev)
         # creation of toolbar
         self.toolbar = Toolbar(rightPnl, self.eegGraph, False)
         # sending toolbar to graph to bind
