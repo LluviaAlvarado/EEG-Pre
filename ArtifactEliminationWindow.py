@@ -109,7 +109,7 @@ class ArtifactEliminationWindow(wx.Frame):
         # first we apply FastICA to get IC
         if len(self.icas) == 0:
             self.FastICA()
-        autoRemoveECG(self.icas)
+        autoRemoveECG(self.icas, self.GetParent().project.frequency, self.GetParent().project.duration)
 
     def FastICA(self):
         # to remove eye blink and muscular artifacts we

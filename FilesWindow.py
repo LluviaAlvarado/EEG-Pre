@@ -69,9 +69,8 @@ class FilesWindow(wx.Frame):
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
         self.Bind(wx.EVT_CLOSE, self.onClose)
-        # todo cambiar la direccion default
         self.filePicker = wx.FileDialog(self.pnl, message="Elige los archivos de EEG",
-                                        defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
+                                        defaultDir=os.getcwd(),
                                         wildcard="Todos (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq",
                                         style=wx.FD_OPEN | wx.FD_MULTIPLE)
 

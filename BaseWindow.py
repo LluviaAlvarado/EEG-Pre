@@ -1,7 +1,7 @@
 import _pickle
 import gzip
 
-from CircleManager import *
+from ModuleManager import *
 from Project import *
 
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
@@ -149,11 +149,11 @@ class BaseWindow(wx.Frame):
 
         # When using a stock ID we don't need to specify the menu item's
         # label
-        exitItem = fileMenu.Append(wx.ID_EXIT)
+        exitItem = fileMenu.Append(-1, "&Salir", "Cerrar el programa.")
 
         # Now a help menu for the about item
         helpMenu = wx.Menu()
-        aboutItem = helpMenu.Append(wx.ID_ABOUT)
+        aboutItem = helpMenu.Append(-1, "&Ayuda")
         # Make the menu bar and add the two menus to it. The '&' defines
         # that the next letter is the "mnemonic" for the menu item. On the
         # platforms that support it those letters are underlined and can be
