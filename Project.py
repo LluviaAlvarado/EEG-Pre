@@ -18,6 +18,8 @@ class Project:
         self.windowAUC = None
         self.windowMagFase = None
         self.windowMinMaxVolt = None
+        self.windowDB = None
+        self.windowSelec = None
 
     def updateWindowInfo(self, l, tbe):
         self.windowLength = l

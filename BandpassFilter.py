@@ -36,6 +36,7 @@ class PreBPFW(wx.Frame):
         self.Centre()
         self.BPFwindow = None
         self.waves = self.defaultWaves()
+
         self.customWaves = []
         # create base panel in the frame
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)

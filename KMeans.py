@@ -12,10 +12,10 @@ class KMeans:
     maxE = max epochs'''
 
     def __init__(self, data, k, t, iter, maxE):
-        if t == 0:
-            t = 'k-means++'
-        else:
-            t = 'random'
+        #if t == 0:
+         #   t = 'k-means++'
+        #else:
+         #   t = 'random'
         self.kmean = KM(k, t, iter, maxE).fit(np.array(data))
         self.labels = self.kmean.labels_
         self.clusters = self.kmean.cluster_centers_

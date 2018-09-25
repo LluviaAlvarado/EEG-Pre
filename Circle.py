@@ -2,7 +2,9 @@ from FilesWindow import *
 from BandpassFilter import *
 from WindowAttributes import *
 from ArtifactEliminationWindow import *
+from KMeansWindow import *
 from CorrelationWindow import *
+from DecisionTreeWindow import *
 
 
 class AddCircle:
@@ -59,8 +61,16 @@ class AddCircle:
             new = characterCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
                                   self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
+        elif res == 'K-means':
+            new = KmeansCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
+                                  self.parent.mainW)
+            new.addImg(self.parent.imgCtrl.GetParent())
         elif res == 'Correlación':
             new = CorrelationCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
+                                  self.parent.mainW)
+            new.addImg(self.parent.imgCtrl.GetParent())
+        elif res == 'Arbol de decisión':
+            new = DtreeCircle([self.parent.x + self.separation, self.parent.y], self.parent.diameter,
                                   self.parent.mainW)
             new.addImg(self.parent.imgCtrl.GetParent())
         if new is not None:
@@ -82,7 +92,10 @@ class Circle:
         [wx.NewId(),'Correlación'],
         [wx.NewId(), 'Filtrado'],
         [wx.NewId(), 'Artefactos'],
-        [wx.NewId(), 'Caracterizar']
+        [wx.NewId(), 'Caracterizar'],
+        [wx.NewId(), 'K-means'],
+        [wx.NewId(), 'Arbol de decisión']
+
     ]
     childs = []
     plus = None
@@ -118,6 +131,7 @@ class FileCircle(Circle):
         self.hijos = []
 
 
+
 class FilterCircle(Circle):
     def __init__(self, pos, diameter, mainW):
         super().__init__(pos, diameter, mainW)
@@ -140,6 +154,9 @@ class characterCircle(Circle):
         # TODO get another image
         self.img = wx.Image('./Images/CaracteristicasIMG.png', wx.BITMAP_TYPE_ANY)
         self.img = self.img.Scale(diameter, diameter)
+        self.hijos = []
+
+
 
     def onDoubleClick(self, event):
         Circle.plus.removeImg()
@@ -172,3 +189,30 @@ class ArtifactCircle(Circle):
         if self.mainW.artifactW is None:
             self.mainW.artifactW = ArtifactEliminationWindow(self.mainW)
         self.mainW.artifactW.Show()
+
+
+class KmeansCircle(Circle):
+
+    def __init__(self, pos, diameter, mainW):
+        super().__init__(pos, diameter, mainW)
+        self.img = wx.Image('./Images/Grafica.png', wx.BITMAP_TYPE_ANY)
+        self.img = self.img.Scale(diameter, diameter)
+
+    def onDoubleClick(self, event):
+        Circle.plus.removeImg()
+        if self.mainW.kmeansW is None:
+            self.mainW.kmeansW = KMeansWindow(self.mainW)
+        self.mainW.kmeansW.Show()
+
+class DtreeCircle(Circle):
+
+    def __init__(self, pos, diameter, mainW):
+        super().__init__(pos, diameter, mainW)
+        self.img = wx.Image('./Images/Grafica.png', wx.BITMAP_TYPE_ANY)
+        self.img = self.img.Scale(diameter, diameter)
+
+    def onDoubleClick(self, event):
+        Circle.plus.removeImg()
+        if self.mainW.treeW is None:
+            self.mainW.treeW = DecisionTreeWindow(self.mainW)
+        self.mainW.treeW.Show()

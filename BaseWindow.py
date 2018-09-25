@@ -23,7 +23,9 @@ class BaseWindow(wx.Frame):
         self.preBPFW = None
         self.characterWindow = None
         self.artifactW = None
+        self.kmeansW = None
         self.corrW = None
+        self.treeW = None
         # create the menu bar that we don't need yet
         self.makeMenuBar()
         # create the status bar
@@ -118,6 +120,15 @@ class BaseWindow(wx.Frame):
     def onCRRClose(self):
         # so we can create another
         self.corrW = None
+
+    def onKMClose(self):
+        # so we can create another
+        self.kmeansW = None
+
+    def onDTClose(self):
+        # so we can create another
+        self.treeW = None
+
 
     def makeMenuBar(self):
         """
