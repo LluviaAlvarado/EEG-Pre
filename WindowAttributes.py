@@ -15,12 +15,14 @@ class WindowAttributes(wx.Frame):
     window that contains opciones para caratersar
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, eegs , p, actions):
         wx.Frame.__init__(self, parent, -1, "Caracterizar")
         self.SetSize(1000, 600)
         self.Centre()
+        self.actions = actions
         self.project = parent.project
-
+        self.eegs = eegs
+        self.parent = p
         # Variables a considerar
         self.amountHF = 1  # la cantidad de salidas que quieren del fft
         self.setofData = []  # La matriz que contiene el set de datos final
@@ -85,7 +87,7 @@ class WindowAttributes(wx.Frame):
         leftPnl.SetSizer(leftSizer)
         rightPnl = wx.Panel(self, size=(700, 600))
         # table of sets
-        self.table = GridTab(rightPnl, self.project)
+        self.table = GridTab(rightPnl, eegs)
         rightSizer = wx.BoxSizer(wx.VERTICAL)
         rightSizer.Add(self.table, 0, wx.EXPAND | wx.ALL, 1)
         rightPnl.SetSizer(rightSizer)
@@ -115,9 +117,9 @@ class WindowAttributes(wx.Frame):
     def onClose(self, event):
         self.replaceDefault(event)
         self.check(event)
-        self.GetParent().windowDB = self.setofData
-        self.GetParent().windowSelec = self.table.columLabes
-        self.GetParent().onCHClose()
+        self.parent.windowDB = self.setofData
+        self.parent.windowSelec = self.table.columLabes
+        self.parent.onCloseModule()
         self.Destroy()
 
     def replaceDefault(self, event):
@@ -150,7 +152,7 @@ class WindowAttributes(wx.Frame):
         return result
 
     def applyFFT(self, selectedCH):
-        eegs = self.GetParent().project.EEGS
+        eegs = self.eegs
         # setting MV to the project
         self.GetParent().project.windowMagFase = WindowCharacterization().getMagFase(eegs, self.amountHF, selectedCH)
 
@@ -167,18 +169,38 @@ class WindowAttributes(wx.Frame):
                 pass
 
     def applyAUC(self, selectedCH):
-        eegs = self.GetParent().project.EEGS
+        eegs = self.eegs
         # setting AUC to the project
         self.GetParent().project.windowAUC = WindowCharacterization().getAUC(eegs, selectedCH)
 
     def applyMV(self, selectedCH):
-        eegs = self.GetParent().project.EEGS
+        eegs = self.eegs
         self.GetParent().project.windowMinMaxVolt = WindowCharacterization().getMV(eegs, selectedCH)
+
+    def ReDo(self, actions):
+        selectedAT = actions[0]
+        selectedCH = actions[1]
+        selecCH = actions[2]
+        for opc in selectedAT:
+            if opc == 0 or opc == 1:
+                # Transformada rápida de Fourier(Magnitud y Fase)
+                self.applyFFT(selectedCH)
+            elif opc == 2:
+                # Area bajo la curva
+                self.applyAUC(selectedCH)
+            elif opc == 3:
+                # Voltaje maximo
+                self.applyMV(selectedCH)
+            elif opc == 4:
+                # Voltaje maximo
+                self.applyMV(selectedCH)
+        self.table.setValues(self.project, selectedAT, selecCH, self.amountHF)
 
     def apply(self, event):
         selectedAT = self.opcATList.GetCheckedItems()
         selectedCH = self.opcCHList.GetCheckedItems()
         selecCH = self.opcCHList.GetCheckedStrings()
+        self.actions = [selectedAT, selectedCH, selecCH]
         for opc in selectedAT:
             if opc == 0 or opc == 1:
                 # Transformada rápida de Fourier(Magnitud y Fase)
@@ -197,20 +219,21 @@ class WindowAttributes(wx.Frame):
 
 class GridTab(wx.Panel):
 
-    def __init__(self, p, project):
+    def __init__(self, p, eegs):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=p.Size)
         self.baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         self.table = wx.grid.Grid(self, size=self.Size)
-        self.table.CreateGrid(len(project.EEGS), 8)
+        self.table.CreateGrid(len(eegs), 8)
         self.project = []
         self.selecdAT = []
         self.columLabes = []
         self.selecdCH = []
         self.hf = []
         self.tam = []
+        self.eegs = eegs
 
         i = 0
-        for eeg in project.EEGS:
+        for eeg in eegs:
             self.table.SetRowLabelValue(i, eeg.name)
             i += 1
         self.table.AlwaysShowScrollbars(True, False)
@@ -242,7 +265,7 @@ class GridTab(wx.Panel):
         if 1 in self.selecdAT:
             num_of_col = num_of_col - (1 * l) + (self.hf * l)
             self.tam[1] = self.hf
-        self.table.AppendRows(len(self.project.EEGS))
+        self.table.AppendRows(len(self.eegs))
         self.table.AppendCols(num_of_col + 1)
 
         labes = ["EM", "EF", "Area_bajo_la_curva", "Voltaje_máximo", "Voltaje_mínimo"]
@@ -256,7 +279,7 @@ class GridTab(wx.Panel):
                         else:
                             self.columLabes.append(str(i) + "_" + labes[y])
         i = 0
-        for eeg in self.project.EEGS:
+        for eeg in self.eegs:
             self.table.SetRowLabelValue(i, eeg.name)
             i += 1
         i = 0
@@ -273,7 +296,7 @@ class GridTab(wx.Panel):
         wMV = self.project.windowMinMaxVolt
         info = [wMF, wMF, wAUC, wMV, wMV]
         dataEEG = []
-        for eeg in range(len(self.project.EEGS)):
+        for eeg in range(len(self.eegs)):
             data = []
             for i in range(len(self.selecdCH)):
                 for y in self.selecdAT:
@@ -290,7 +313,7 @@ class GridTab(wx.Panel):
                             else:
                                 data.append(info[y][eeg][x + i])
             dataEEG.append(data)
-        for row in range(len(self.project.EEGS)):
+        for row in range(len(self.eegs)):
             for col in range(self.table.NumberCols - 1):
                 self.table.SetCellValue(row, col, str(dataEEG[row][col]))
                 self.table.SetReadOnly(row, col, True)

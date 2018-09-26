@@ -4,6 +4,7 @@ class Project:
 
     def __init__(self):
         self.EEGS = []
+        self.moduleTree = None
         self.name = "new"
         self.frequency = None
         self.duration = None
@@ -20,6 +21,9 @@ class Project:
         self.windowMinMaxVolt = None
         self.windowDB = None
         self.windowSelec = None
+
+    def setTree(self, tree):
+        self.moduleTree = tree
 
     def updateWindowInfo(self, l, tbe):
         self.windowLength = l

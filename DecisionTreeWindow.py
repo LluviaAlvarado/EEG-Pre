@@ -9,10 +9,14 @@ from DecisionTree import *
 
 class DecisionTreeWindow(wx.Frame):
 
-    def __init__(self, parent):
+    def __init__(self, parent, wDB, labels, actions, p):
         wx.Frame.__init__(self, parent, -1, "Árbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.SetSize(300, 250)
         self.Centre()
+        self.actions = actions
+        self.pbutton = p
+        self.data = wDB
+        self.labels = labels
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.baseSizer = wx.BoxSizer(wx.VERTICAL)
         self.H1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -39,14 +43,19 @@ class DecisionTreeWindow(wx.Frame):
         self.baseSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
 
         self.pnl.SetSizer(self.baseSizer)
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-    def onClose(self, event):
-        self.GetParent().onDTClose()
+    def OnClose(self, event):
+        self.pbutton.onCloseModule()
         self.Destroy()
 
+    def ReDo(self, actions):
+        # TODO fix when module finished
+        pass
+
     def dtree(self, event):
-        data = self.GetParent().windowDB
+        self.actions = [self.mlC.GetValue(), self.mmC.GetValue()]
+        data = self.data
         self.db = []
         self.target = []
         for r in range(len(data)):

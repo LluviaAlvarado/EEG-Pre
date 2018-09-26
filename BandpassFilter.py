@@ -29,14 +29,16 @@ class PreBPFW(wx.Frame):
         open visualisation window
         """
 
-    def __init__(self, parent):
+    def __init__(self, parent, eegs, actions, p):
 
         wx.Frame.__init__(self, parent, -1, "Pre configuración del filtrado", )
         self.SetSize(500, 500)
         self.Centre()
+        self.pbutton = p
         self.BPFwindow = None
         self.waves = self.defaultWaves()
-
+        self.eegs = eegs
+        self.actions = actions
         self.customWaves = []
         # create base panel in the frame
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
@@ -85,10 +87,10 @@ class PreBPFW(wx.Frame):
 
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-    def onClose(self, event):
-        self.GetParent().onBPClose()
+    def OnClose(self, event):
+        self.pbutton.onCloseModule()
         self.Destroy()
 
     def GetSelected(self):
@@ -162,17 +164,17 @@ class PreBPFW(wx.Frame):
         return name, lowF, higF, flag
 
     def export(self, event):
-        exportEEGS(self.GetParent().project)
+        exportEEGS(self.GetParent().project, self.eegs)
 
     def applyFilter(self, event):
         self.GetParent().setStatus("Filtrando...", 1)
-        eegs = self.GetParent().project.EEGS
+        eegs = self.eegs
         flag = False
         new = []
         for eeg in eegs:
             # applying for each band
-            timestep = 1 / eeg.frequency
             bands = self.GetSelected()
+            self.actions = bands
             if len(bands) > 0:
                 flag = True
             for band in bands:
@@ -191,6 +193,7 @@ class PreBPFW(wx.Frame):
                 # adding band limits to name
                 neweeg.name += "_" + str(band.lowFrequency) + "-" + str(band.hiFrequency)
                 new.append(neweeg)
+        self.eegs.extend(new)
         self.GetParent().project.addMany(new)
         self.GetParent().setStatus("", 0)
         if flag:
@@ -206,3 +209,34 @@ class PreBPFW(wx.Frame):
         if self.BPFwindow is not None:
             self.BPFwindow.Hide()
         self.BPFwindow = BFPWindow(self)
+
+    def ReDo(self, actions):
+        # this redo's the filtering after forward
+        self.GetParent().setStatus("Filtrando...", 1)
+        eegs = self.eegs
+        new = []
+        for eeg in eegs:
+            # applying for each band
+            bands = actions
+            self.actions = bands
+            if len(bands) > 0:
+                flag = True
+            for band in bands:
+                channels = eeg.channels
+                neweeg = deepcopy(eeg)
+                neweeg.channels = []
+                for ch in channels:
+                    fourier = np.fft.rfft(ch.readings, len(ch.readings))
+                    for i in range(len(fourier)):
+                        if i < band.lowFrequency or i > band.hiFrequency:
+                            fourier[i] = 0.0
+                    # adding new filtered channel
+                    filtered = np.fft.irfft(fourier)
+                    fl = Channel(ch.label, filtered)
+                    neweeg.channels.append(fl)
+                # adding band limits to name
+                neweeg.name += "_" + str(band.lowFrequency) + "-" + str(band.hiFrequency)
+                new.append(neweeg)
+        self.eegs.extend(new)
+        self.GetParent().project.addMany(new)
+        self.GetParent().setStatus("", 0)

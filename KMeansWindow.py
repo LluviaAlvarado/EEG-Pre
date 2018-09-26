@@ -9,11 +9,14 @@ from KMeans import *
 
 class KMeansWindow(wx.Frame):
 
-    def __init__(self, parent):
+    def __init__(self, parent, wDB, actions, p):
         wx.Frame.__init__(self, parent, -1, "K-Means", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.SetSize(230, 290)
         self.Centre()
         self.k = None
+        self.pbutton = p
+        self.actions = actions
+        self.data = wDB
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.baseSizer = wx.BoxSizer(wx.VERTICAL)
         self.H1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -53,28 +56,37 @@ class KMeansWindow(wx.Frame):
         self.baseSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
+    def OnClose(self, event):
+        self.pbutton.onCloseModule()
+        self.Destroy()
+
+    def ReDo(self, actions):
+        self.db = []
+        for r in range(len(self.data)):
+            t = []
+            for c in range(len(self.data[r]) - 1):
+                t.append(self.data[r][c])
+            self.db.append(t)
+        self.k = KMeans(self.db, actions[0], actions[1], actions[2], actions[3])
+        self.viewButton.Enable()
 
     def kmeans(self, event):
-        self.data = self.GetParent().windowDB
         self.db = []
         for r in range(len(self.data)):
             t = []
             for c in range(len(self.data[r])-1):
                 t.append(self.data[r][c])
             self.db.append(t)
-        self.k = KMeans(self.db,self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue())
+        self.actions = [self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue()]
+        self.k = KMeans(self.db, self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue())
         self.viewButton.Enable()
 
 
     def openview(self, event):
         v = KMeansV(self, self.data, self.k, self.GetParent().windowSelec, self.GetParent().project.EEGS)
         v.Show()
-
-    def onClose(self, event):
-        self.GetParent().onKMClose()
-        self.Destroy()
 
 
 class KMeansV(wx.Frame):

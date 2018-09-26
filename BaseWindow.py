@@ -1,9 +1,11 @@
 import _pickle
 import gzip
+import os
 
 from ModuleManager import *
 from Project import *
-
+from copy import deepcopy
+from WindowDialog import WindowSaveOnExit
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
 
 
@@ -12,20 +14,10 @@ class BaseWindow(wx.Frame):
     def __init__(self, *args, **kw):
         super(BaseWindow, self).__init__(*args, **kw)
         self.Maximize(True)
-        width, height = self.GetSize()
         self.currentDirectory = os.getcwd()
-        self.workArea = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.VSCROLL | wx.HSCROLL | wx.BORDER_SUNKEN)
-        self.circleMngr = CircleManager(self.workArea, width, height, self)
         self.project = Project()
+        self.moduleManager = ModuleManager(self, self.project)
         self.aux = Project()
-        # to just open 1 files window
-        self.filesWindow = None
-        self.preBPFW = None
-        self.characterWindow = None
-        self.artifactW = None
-        self.kmeansW = None
-        self.corrW = None
-        self.treeW = None
         # create the menu bar that we don't need yet
         self.makeMenuBar()
         # create the status bar
@@ -101,35 +93,6 @@ class BaseWindow(wx.Frame):
         else:
             return False
 
-    def onFWClose(self):
-        # so we can create another
-        self.filesWindow = None
-
-    def onBPClose(self):
-        # so we can create another
-        self.preBPFW = None
-
-    def onCHClose(self):
-        # so we can create another
-        self.characterWindow = None
-
-    def onARClose(self):
-        # so we can create another
-        self.artifactW = None
-
-    def onCRRClose(self):
-        # so we can create another
-        self.corrW = None
-
-    def onKMClose(self):
-        # so we can create another
-        self.kmeansW = None
-
-    def onDTClose(self):
-        # so we can create another
-        self.treeW = None
-
-
     def makeMenuBar(self):
         """
         A menu bar is composed of menus, which are composed of menu items.
@@ -204,6 +167,7 @@ class BaseWindow(wx.Frame):
         dlg.Destroy()
         if result == wx.ID_OK:
             self.setStatus("Guardando...", 1)
+            self.project.setTree(self.moduleManager.GetTree())
             # Saving the new name for the project
             name = str(path).split("\\")
             name = name[len(name) - 1].split(".")[0]
@@ -246,11 +210,8 @@ class BaseWindow(wx.Frame):
             f = gzip.open(path, 'rb')
             self.project = _pickle.load(f)
             f.close()
-        # update the file window if opened
-        if self.filesWindow is not None:
-            self.filesWindow.Destroy()
-            self.filesWindow = FilesWindow(self)
-            self.filesWindow.Show()
-            self.setAux(self.project)
+        # close all open windows
+        self.moduleManager.closeWindows()
+        self.setAux(self.project)
         dlg.Destroy()
         self.setStatus("", 0)

@@ -12,10 +12,11 @@ class FilesWindow(wx.Frame):
     open the window editor
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, p):
         wx.Frame.__init__(self, parent, -1, "Editor de EEGs", )
         self.SetSize(500, 500)
         self.Centre()
+        self.pbutton = p
         # window editor instance so only 1 is opened
         self.windowEditor = None
         # create base panel in the frame
@@ -68,18 +69,18 @@ class FilesWindow(wx.Frame):
         self.buttonSizer.Add(self.saveButton, 0, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
-        self.Bind(wx.EVT_CLOSE, self.onClose)
         self.filePicker = wx.FileDialog(self.pnl, message="Elige los archivos de EEG",
                                         defaultDir=os.getcwd(),
                                         wildcard="Todos (*.*)|*.*|(*.edf)|*.edf|(*.gdf)|*.gdf|(*.acq)|*.acq",
                                         style=wx.FD_OPEN | wx.FD_MULTIPLE)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def OnClose(self, event):
+        self.pbutton.onCloseModule()
+        self.Destroy()
 
     def export(self, event):
-        exportEEGS(self.GetParent().project)
-
-    def onClose(self, event):
-        self.GetParent().onFWClose()
-        self.Destroy()
+        exportEEGS(self.GetParent().project, self.GetParent().project.EEGS)
 
     def loadFiles(self, event):
         if self.filePicker.ShowModal() == wx.ID_CANCEL:

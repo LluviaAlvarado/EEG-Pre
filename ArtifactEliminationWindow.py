@@ -16,11 +16,14 @@ class ArtifactEliminationWindow(wx.Frame):
         opens a visualisation window
         """
 
-    def __init__(self, parent):
+    def __init__(self, parent, eegs, actions, p):
 
         wx.Frame.__init__(self, parent, -1, "Eliminación de Artefactos con FastICA")
         self.SetSize(250, 250)
         self.Centre()
+        self.pbutton = p
+        self.eegs = eegs
+        self.actions = actions
         self.viewer = None
         self.icas = []
         self.BPFwindow = None
@@ -45,22 +48,35 @@ class ArtifactEliminationWindow(wx.Frame):
         self.baseSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.exportButton, -1, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-    def onClose(self, event):
-        self.GetParent().onARClose()
+    def OnClose(self, event):
+        self.pbutton.onCloseModule()
         self.Destroy()
+
+    def ReDo(self, actions):
+        # this redo's the automatic elimination after forward
+        if len(actions) > 0:
+            # setting cursor to wait to inform user
+            self.GetParent().setStatus("Buscando Artefactos...", 1)
+            self.loading = WorkingAnimation(self.GetParent(), 'search')
+            self.loading.Play()
+            # saving the current state of EEGs
+            for eeg in self.eegs:
+                eeg.SaveState()
+            threading.Thread(target=self.apply, args=[actions]).start()
+
 
     def export(self, event):
         # setting cursor to wait to inform user
         self.GetParent().setStatus("Exportando...", 1)
-        exportEEGS(self.GetParent().project)
+        exportEEGS(self.GetParent().project, self.eegs)
         self.GetParent().setStatus("", 0)
 
     def applyFastICA(self, event):
         self.GetParent().setStatus("Buscando Componentes...", 1)
         # saving the current state of EEGs
-        for eeg in self.GetParent().project.EEGS:
+        for eeg in self.eegs:
             eeg.SaveState()
         self.FastICA()
         self.viewButton.Enable()
@@ -95,8 +111,9 @@ class ArtifactEliminationWindow(wx.Frame):
             self.loading = WorkingAnimation(self.GetParent(), 'search')
             self.loading.Play()
             # saving the current state of EEGs
-            for eeg in self.GetParent().project.EEGS:
+            for eeg in self.eegs:
                 eeg.SaveState()
+            self.actions = artifactSelected
             threading.Thread(target=self.apply, args=[artifactSelected]).start()
 
     def removeEOG(self):
@@ -114,7 +131,7 @@ class ArtifactEliminationWindow(wx.Frame):
     def FastICA(self):
         # to remove eye blink and muscular artifacts we
         # will use fastICA then wavelets
-        eegs = self.GetParent().project.EEGS
+        eegs = self.eegs
         self.icas = []
         for eeg in eegs:
             matrix = []
@@ -143,7 +160,7 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def EliminateComponents(self):
         self.GetParent().setStatus("Eliminando Artefactos...", 1)
-        eegs = self.GetParent().project.EEGS
+        eegs = self.eegs
         eliminateArtifacts(eegs, self.icas)
         self.GetParent().setStatus("", 0)
         NotificationMessage(title="¡Exito!", message="Se han eliminado los artefactos.").Show()

@@ -47,14 +47,14 @@ def readEOGSCSV(path):
     return r
 
 
-def exportEEGS(project):
+def exportEEGS(project, eegs):
     pathPicker = wx.DirDialog(None, "Exportar en:", getcwd(),
                              wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
     if pathPicker.ShowModal() != wx.ID_CANCEL:
         writer = FileReaderWriter()
         windows = []
         windowsExist = False
-        for eeg in project.EEGS:
+        for eeg in eegs:
             writer.writeFile(eeg, project.name, pathPicker.GetPath())
             if len(eeg.windows) > 0:
                 windowsExist = True
