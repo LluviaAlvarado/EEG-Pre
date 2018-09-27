@@ -33,6 +33,50 @@ class WindowDialog(wx.Dialog):
     def close(self, event):
         self.Close(True)
 
+class ModuleHint(wx.Frame):
+
+    def __init__(self, parent, module, ps):
+        wx.Frame.__init__(self, parent, pos=ps, size=(220, 120))
+        self.SetWindowStyle(wx.FRAME_FLOAT_ON_PARENT | wx.BORDER_DOUBLE)
+        self.SetBackgroundColour(wx.Colour(230, 230, 250, 50))
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        info = ""
+        title = ""
+        if module == 0:
+            title = "Módulo de Archivos."
+            info = "Carga y Visualiza EEG.\n Edita Ventanas."
+        elif module == 1:
+            title = "Módulo de Filtrado\npor Bandas."
+            info = "Filtra EEGs por las\n bandas que necesites."
+        elif module == 2:
+            title = "Módulo de Eliminación\n de Artefactos."
+            info = "Elimina artefactos de manera \nautomática o manual."
+        elif module == 3:
+            title = "Módulo de Caracterización\n de Ventanas."
+            info = "Obtén características importantes \nde las ventanas de los EEG\npara su análisis."
+        elif module == 4:
+            title = "Módulo de K-Means."
+            info = "Herramienta de aprendizaje para\nclasificación automática y \nanálisis de ventanas."
+        elif module == 5:
+            title = "Módulo de Árbol\n de Decisión."
+            info = "Herramienta de aprendizaje para\nclasificación y \nanálisis de ventanas."
+        elif module == 6:
+            title = "Módulo de Filtrado\n por Bandas."
+            info = "Filtra EEGs por las \nbandas que necesites."
+        elif module == 7:
+            title = "Módulo de Filtrado\n por Bandas."
+            info = "Filtra EEGs por las \nbandas que necesites."
+        tt = wx.StaticText(panel, label=title, style=wx.ALIGN_CENTRE_HORIZONTAL)
+        tt.SetFont(wx.Font(12, wx.DECORATIVE, wx.NORMAL, wx.BOLD))
+        it = wx.StaticText(panel, label=info, style=wx.ALIGN_CENTRE_HORIZONTAL)
+        sizer.AddSpacer(5)
+        sizer.Add(tt, 0, wx.EXPAND | wx.ALL, 5)
+        sizer.AddSpacer(5)
+        sizer.Add(it, 0, wx.EXPAND | wx.ALL, 5)
+        panel.SetSizer(sizer)
+
+
 class WorkingAnimation(wx.Frame):
 
     def __init__(self, parent, type):

@@ -199,11 +199,7 @@ class PreBPFW(wx.Frame):
         if flag:
             self.viewButton.Enable()
             self.exportButton.Enable()
-        # refresh file window if it is opened
-        if self.GetParent().filesWindow is not None:
-            self.GetParent().filesWindow.Destroy()
-            self.GetParent().filesWindow = FilesWindow(self.GetParent())
-            self.GetParent().filesWindow.Show()
+
 
     def openView(self, event):
         if self.BPFwindow is not None:

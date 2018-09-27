@@ -52,12 +52,12 @@ class BFPWindow(wx.Frame):
             self.SetCursor(myCursor)
 
     def fillnavigationTabs(self, prev):
-        eegs = self.GetParent().GetParent().project.EEGS
+        eegs = self.GetParent().eegs
         for eeg in eegs:
             self.addNav(eeg, prev)
 
     def addNav(self, e, prev):
-        page = tab(self.navigationTabs, self.project, e.name, prev)
+        page = tab(self.navigationTabs, self.project, e.name, prev, self.GetParent().eegs)
         self.navigationTabs.AddPage(page, e.name)
 
     def onClose(self, event):
@@ -68,10 +68,11 @@ class tab(wx.Panel):
     '''Panel that contains graph of an EEG
     and window tools'''
 
-    def __init__(self, p, project, name, prev):
+    def __init__(self, p, project, name, prev, eegs):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size[0] - 10, p.Size[1] - 10))
         self.project = project
         self.name = name
+        self.eegs = eegs
         # frame will contain the base container of window editor and eeg tabs
         frameSizer = wx.BoxSizer(wx.VERTICAL)
         # EEG tabs
@@ -99,7 +100,7 @@ class tab(wx.Panel):
         self.eegTabs.AddPage(page, e.name)
 
     def fillEEGTabs(self, prev):
-        eegs = self.GetParent().GetParent().project.EEGS
+        eegs = self.eegs
         for eeg in eegs:
             if self.name in eeg.name:
                 self.addTab(eeg, prev)

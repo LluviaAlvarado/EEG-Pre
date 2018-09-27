@@ -200,6 +200,7 @@ class FilesWindow(wx.Frame):
                     # adding eeg to list
                     eeg.setName(name)
                     self.GetParent().project.EEGS.append(eeg)
+                    self.pbutton.eegs.append(eeg)
                 else:
                     # show error with file
                     errorFiles.append([name, 0])
