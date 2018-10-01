@@ -162,13 +162,14 @@ class FileReaderWriter:
             self.setError(3)
             return None
         # getting how many samples per second
-        frecuency = signals.shape[1] / _dfFile.datarecord_duration
+        duration = _dfFile.datarecord_duration * _dfFile.datarecords_in_file
+        frecuency = signals.shape[1] / duration
         # getting if the signals where prefiltered
         try:
             filtr = _dfFile.getPrefilter()
         except:
             filtr = None
-        return EEGData(frecuency, _dfFile.datarecord_duration, signals, filtr, labels)
+        return EEGData(frecuency, duration, signals, filtr, labels)
 
     def read_GDF(self, fileAddress):
         try:

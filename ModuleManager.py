@@ -36,17 +36,35 @@ class ModuleManager(wx.Panel):
         wx.Panel.__init__(self, parent, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.levels = []
+        # saves de sizer containing the current possibles for elimination
+        self.psizer = None
         self.modules = ModuleTree(self, project.EEGS)
         # this class contains the whole project data
         self.project = project
-        # solo filtrado, artefactos y caracterizacion tienen EEGs
         self.SetSizer(self.sizer)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.HidePossible)
+        self.Bind(wx.EVT_LEFT_DOWN, self.HidePossible)
+
+    def ForwardChanges(self, r):
+        self.modules.ForwardChanges(r)
 
     def SetStatusText(self, text):
         self.GetParent().SetStatusText(text)
 
     def setStatus(self, text, mouse):
         self.GetParent().setStatus(text, mouse)
+
+    def HidePossible(self, event=None):
+        if self.psizer is not None:
+            l = 0
+            for child in self.psizer.GetChildren():
+                if child.Window.bw:
+                    self.psizer.Hide(child.Window)
+                    self.psizer.Remove(l)
+                else:
+                    l += 1
+        if event is not None:
+            event.Skip()
 
     def ShowPossibleModules(self, p, modules):
         if p.lv == len(self.levels):
@@ -67,14 +85,9 @@ class ModuleManager(wx.Panel):
             else:
                 i = self.levels[p.lv].GetMIdx(p)
                 sizer = self.levels[p.lv].childs[i]
+        self.psizer = sizer
         # first lets clean the current ones
-        l = 0
-        for child in sizer.GetChildren():
-            if child.Window.bw:
-                sizer.Hide(child.Window)
-                sizer.Remove(l)
-            else:
-                l += 1
+        self.HidePossible()
         for m in modules:
             btn = ModuleButton(self, m, p.eegs, p.lv+1, p, True)
             sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 5)
@@ -88,13 +101,9 @@ class ModuleManager(wx.Panel):
             i = self.levels[m.parent.lv].GetMIdx(m.parent)
             sizer = self.levels[m.parent.lv].childs[i]
         m.bw = False
-        l = 0
-        for child in sizer.GetChildren():
-            if child.Window.bw:
-                sizer.Hide(child.Window)
-                sizer.Remove(l)
-            else:
-                l += 1
+        self.psizer = sizer
+        # first lets clean the current ones
+        self.HidePossible()
         if m.parent.lv < len(self.levels) - 1:
             # add childs to next level
             self.levels[m.lv].AddChild()

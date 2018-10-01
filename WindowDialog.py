@@ -214,3 +214,30 @@ class WindowAutoAE(wx.Dialog):
     def apply(self, event):
         self.applied = True
         self.Close(True)
+
+class EEGSelection(wx.Dialog):
+    def __init__(self, parent, eegs):
+        wx.Dialog.__init__(self, parent, title="Seleccione los EEG a correlacionar:",
+                           size=(500, 150))
+        self.applied = False
+        baseSizer = wx.BoxSizer(wx.VERTICAL)
+        self.eeg1 = wx.ComboBox(self, choices=eegs)
+        self.eeg1.SetSelection(0)
+        self.eeg2 = wx.ComboBox(self, choices=eegs)
+        self.eeg2.SetSelection(0)
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer.Add(self.eeg1, 0, wx.EXPAND | wx.ALL, 2)
+        hsizer.Add(self.eeg2, 0, wx.EXPAND | wx.ALL, 2)
+        apply = wx.Button(self, label="Correlacionar")
+        apply.Bind(wx.EVT_BUTTON, self.apply)
+        baseSizer.Add(hsizer, 0, wx.EXPAND | wx.ALL, 5)
+        baseSizer.Add(apply, 0, wx.EXPAND | wx.ALL, 5)
+        self.SetSizer(baseSizer)
+        self.Center()
+
+    def close(self, event):
+        self.Close(True)
+
+    def apply(self, event):
+        self.applied = True
+        self.Close(True)

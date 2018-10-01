@@ -119,6 +119,7 @@ class WindowAttributes(wx.Frame):
         self.check(event)
         self.parent.windowDB = self.setofData
         self.parent.windowSelec = self.table.columLabes
+        self.GetParent().ForwardChanges(self.parent)
         self.parent.onCloseModule()
         self.Destroy()
 

@@ -2,9 +2,11 @@
 from Utils import msToReading, sampleToMS, ReadEOGS
 import numpy as np
 from scipy.stats.stats import pearsonr
-import scipy.signal as signal
+import os
 import peakutils
 import pywt
+from math import ceil
+from FileReaderWriter import FileReaderWriter
 
 
 def autoRemoveEOG(icas):
@@ -27,7 +29,7 @@ def autoRemoveEOG(icas):
                 newE = []
                 # the patterns have a sample rate of 200Hz
                 sampAdd = diff * 200
-                timesEOG = sampAdd / len(EOGS[0])
+                timesEOG = int(sampAdd / len(EOGS[0]))
                 for e in EOGS:
                     extension = e * timesEOG
                     e.extend(extension)
@@ -40,7 +42,7 @@ def autoRemoveEOG(icas):
                     new = []
                     for i in range(len(e)):
                         new.append(e[i])
-                        pad = [0] * int(abs(sDiff) / len(e))
+                        pad = [e[i]] * int(abs(sDiff) / len(e))
                         new.extend(pad)
                     newE.append(new)
                 EOGS = newE
@@ -48,9 +50,10 @@ def autoRemoveEOG(icas):
                 newE = []
                 for e in EOGS:
                     new = []
-                    for i in range(len(e)):
+                    i = 0
+                    while i < len(e):
                         new.append(e[i])
-                        i += int(abs(sDiff) / len(e))
+                        i += ceil(len(e) / sDiff)
                     newE.append(new)
                 EOGS = newE
         sDiff = len(EOGS[0]) - len(ica.components[0])
@@ -77,74 +80,81 @@ def autoRemoveEOG(icas):
                 mean2 += correlation[1]
             mean = mean / len(EOGS)
             mean2 = mean2 / len(EOGS)
-            if abs(mean) > 0.6 or abs(mean2) > 0.6:
+            if abs(mean) > 0.2 or abs(mean2) > 0.2:
                 # this is an EOG component
+                print("lo hizo 0")
                 c = np.array([0.0] * len(c))
             newC.append(c)
         ica.components = newC
 
 def autoRemoveECG(icas, f, d):
-    # making ECG template
-    # The "Daubechies" wavelet is a rough approximation to a real,
-    # single, heart beat ("pqrst") signal
-    pqrst = signal.wavelets.daub(10)
-    # Add the gap after the pqrst when the heart is resting.
-    samples_rest = 10
-    zero_array = np.zeros(samples_rest, dtype=float)
-    pqrst_full = np.concatenate([pqrst, zero_array])
-    for ica in icas:
-        # next we compare with ECG pattern, the ones with
-        # high correlation will be analyzed
-        # Simulated Beats per minute rate
-        # For a health, athletic, person, 60 is resting, 180 is intensive exercising
-        bpm = 60
-        bps = bpm / 60
-        # Simumated period of time in seconds that the ecg is captured in
-        capture_length = ica.duration
-        # Caculate the number of beats in capture time period
-        # Round the number to simplify things
-        num_heart_beats = int(capture_length * bps)
-        # Concatonate together the number of heart beats needed
-        ecg_template = np.tile(pqrst_full, num_heart_beats)
-        diff = int(len(ica.components[0]) - len(ecg_template))
-        if diff != 0:
+    path = os.getcwd() + "\\src\\ECG.edf"
+    ecg = FileReaderWriter().read_EDF(path)
+    duration = ecg.duration
+    frequency = ecg.frequency
+    ecg = ecg.additionalData[0].readings
+    # make ECG same length if icas
+    if icas[0].duration != duration:
+        diff = icas[0].duration - duration
+        if diff < 0:
+            # getting just the amount of time
+            ecg = ecg.additionalData[0].readings[0:int(ecg.frequency * icas[0].duration)]
+        else:
+            # getting just the amount of time and padding samples
+            sampAdd = diff * frequency
+            timesECG = int(sampAdd / len(ecg))
+            aux = ecg
+            for i in range(timesECG):
+                ecg = np.append(ecg, aux)
+        # making same sampling rate
+        sDiff = len(ecg) - len(icas[0].components[0])
+        if sDiff < 0:
             new = []
-            if diff < 0:
-                for i in range(len(ecg_template)):
-                    new.append(ecg_template[i])
-                    i += int(abs(diff) / len(ecg_template))
-            else:
-                for i in range(len(ecg_template)):
-                    new.append(ecg_template[i])
-                    pad = [0] * int(diff / len(ecg_template))
-                    new.extend(pad)
-            ecg_template = new
-            diff = int(len(ica.components[0]) - len(ecg_template))
-            if diff != 0:
-                if diff < 0:
-                    ecg_template = ecg_template[0:(len(ecg_template) - diff)]
-                else:
-                    ecg_template.extend([0] * diff)
+            for i in range(len(ecg)):
+                new.append(ecg[i])
+                pad = [ecg[i]] * int(abs(sDiff) / len(ecg))
+                new.extend(pad)
+            ecg = new
+        elif sDiff > 0:
+            new = []
+            i = 0
+            while i < len(ecg):
+                new.append(ecg[i])
+                i += ceil(len(ecg) / sDiff)
+            ecg = new
+        sDiff = len(ecg) - len(icas[0].components[0])
+        if sDiff < 0:
+            pad = [0] * abs(sDiff)
+            try:
+                ecg.extend(pad)
+            except:
+                ecg = np.append(ecg, pad)
+        elif sDiff > 0:
+            new = ecg[0:int(len(ecg) - sDiff)]
+            ecg = new
+    for ica in icas:
+        ecg_template = ecg
         # checking correlation
         newC = []
         for c in ica.components:
             correlation = pearsonr(c, ecg_template)
-            if abs(correlation[0]) > 0.6 or abs(correlation[1]) > 0.6:
+            if abs(correlation[0]) >= 0.6 or abs(correlation[1]) >= 0.6:
                 # checking peaks
                 dist = len(c) / ica.duration / 2
-                peaks = peakutils.indexes(c, thres=0.6, min_dist=dist)
+                peaks = peakutils.indexes(c, min_dist=dist)
                 if len(peaks) != 0:
                     # testing periodicity}
-                    F = 0.0
+                    F = []
                     for i in range(len(peaks) - 1):
                         t = float(sampleToMS(peaks[i + 1], f, d) - sampleToMS(peaks[i], f, d))
-                        F += 1 / t
+                        F.append(1 / (t/1000))
                     # median frequency of peaks
-                    F = F / len(peaks)
+                    m = np.median(F)
                     # if it is between min and max of heart rate
-                    N = F * (1 + 0.25) - F * (1 - 0.25)
-                    if (2 / 3) <= F <= 3:
-                        if N >= int(0.8 * F * ica.duration):
+                    F = np.array(F)
+                    N = np.where(np.logical_and(F >= m*0.75, F <= m*1.25))
+                    if (2 / 3) <= m <= 3:
+                        if len(N[0]) >= int(0.7 * m * ica.duration):
                             # this is an ECG component
                             c = np.array([0.0] * len(c))
             newC.append(c)
@@ -158,42 +168,44 @@ def autoRemoveBlink(icas, frequency, duration):
             Ca4 = pywt.downcoef('a', c, 'Haar', mode='symmetric', level=4)
             # padding to make map to time domain
             new = []
+            pad = int((len(c) - len(Ca4)) / len(Ca4))
             for i in range(len(Ca4)):
                 new.append(Ca4[i])
-                for j in range(15):
-                    new.append(0.0)
+                for j in range(pad):
+                    new.append(Ca4[i])
             Ca4 = np.array(new)
+            # computing the mean of the negative values
+            neg = Ca4[Ca4 <= 0]
+            mean = np.sum(neg) / len(neg)
             # getting all negative peaks index in Ca4
             negative = []
             for i in range(len(Ca4)):
-                if Ca4[i] < 0:
+                if Ca4[i] < mean:
                     negative.append(i)
-            neg = Ca4[Ca4 >= 0]
-            # computing the mean of the negative peaks
-            mean = np.sum(neg) / len(neg)
             # deciding if we remove
             for n in negative:
-                if Ca4[n] < mean:
-                    # remove window of 400ms with eye blink
-                    centerMs = sampleToMS(n, frequency, duration)
-                    s = msToReading(centerMs - 200, frequency, duration)
-                    e = msToReading(centerMs + 200, frequency, duration)
-                    nSamp = frequency * duration
-                    if e >= nSamp:
-                        e = nSamp - 1
-                    maxN = 0
-                    maxI = s
-                    while s <= e:
-                        if Ca4[s] < maxN:
-                            maxN = Ca4[s]
-                            maxI = s
-                        s += 1
-                    # the maximum negative peak is turned to 0
-                    Ca4[maxI] = 0.0
+                # remove window of 400ms with eye blink
+                centerMs = sampleToMS(n, frequency, duration)
+                s = msToReading(centerMs - 200, frequency, duration)
+                e = msToReading(centerMs + 200, frequency, duration)
+                nSamp = frequency * duration
+                if s < 0:
+                    s = 0
+                if e >= nSamp:
+                    e = nSamp - 1
+                maxN = 0
+                maxI = s
+                while s < e:
+                    if Ca4[s] < maxN:
+                        maxN = Ca4[s]
+                        maxI = s
+                    s += 1
+                # the maximum negative peak is turned to 0
+                Ca4[maxI] = 0.0
             # returning Ca4 to original shape
             ca = []
             for i in range(len(Ca4)):
-                if i % 16 == 0:
+                if i % (pad+1) == 0:
                     ca.append(Ca4[i])
             # applying reverse wavelet
             component = pywt.upcoef('a', ca, 'Haar', level=4)
@@ -216,8 +228,8 @@ def autoRemoveMuscular(icas):
                 new.append(0.0)
             waveletC[1] = np.array(new)
             # getting the wavelet power spectral density
-            # dividing the component into x frames of a half of a second each
-            x = int(ica.duration) * 2
+            # dividing the component into x frames of a second each
+            x = int(ica.duration)
             frameL = int(len(new) / x)
             S1 = []
             S2 = []

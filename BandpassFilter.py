@@ -194,21 +194,23 @@ class PreBPFW(wx.Frame):
                 neweeg.name += "_" + str(band.lowFrequency) + "-" + str(band.hiFrequency)
                 new.append(neweeg)
         self.eegs.extend(new)
+        self.pbutton.eegs = self.eegs
+        self.GetParent().ForwardChanges(self.pbutton)
         self.GetParent().project.addMany(new)
         self.GetParent().setStatus("", 0)
         if flag:
             self.viewButton.Enable()
             self.exportButton.Enable()
 
-
     def openView(self, event):
         if self.BPFwindow is not None:
             self.BPFwindow.Hide()
         self.BPFwindow = BFPWindow(self)
 
-    def ReDo(self, actions):
+    def ReDo(self, actions, es):
         # this redo's the filtering after forward
         self.GetParent().setStatus("Filtrando...", 1)
+        self.eegs = es
         eegs = self.eegs
         new = []
         for eeg in eegs:

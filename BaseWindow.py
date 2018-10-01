@@ -6,6 +6,7 @@ from ModuleManager import *
 from Project import *
 from copy import deepcopy
 from WindowDialog import WindowSaveOnExit
+from CorrelationWindow import CorrelationWindow
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
 
 
@@ -23,7 +24,12 @@ class BaseWindow(wx.Frame):
         # create the status bar
         self.CreateStatusBar()
         self.SetStatusText("")
+
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def HidePossible(self, event):
+        self.moduleManager.HidePossible()
+        event.Skip()
 
     def OnClose(self, event):
         if self.__eq__() == False:
@@ -117,6 +123,8 @@ class BaseWindow(wx.Frame):
         # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(-1, "&Ayuda")
+        #TODO quitar correlacion
+        corrItem = helpMenu.Append(-1, "&Correlación")
         # Make the menu bar and add the two menus to it. The '&' defines
         # that the next letter is the "mnemonic" for the menu item. On the
         # platforms that support it those letters are underlined and can be
@@ -135,6 +143,10 @@ class BaseWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnLoad, loadSessionItem)
         self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
+        self.Bind(wx.EVT_MENU, self.correlacionar, corrItem)
+
+    def correlacionar(self, e):
+        CorrelationWindow(self).Show()
 
     def setStatus(self, st, mouse):
         self.SetStatusText(st)

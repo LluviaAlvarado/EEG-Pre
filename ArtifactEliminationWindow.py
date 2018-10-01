@@ -54,7 +54,8 @@ class ArtifactEliminationWindow(wx.Frame):
         self.pbutton.onCloseModule()
         self.Destroy()
 
-    def ReDo(self, actions):
+    def ReDo(self, actions, eegs):
+        self.eegs = eegs
         # this redo's the automatic elimination after forward
         if len(actions) > 0:
             # setting cursor to wait to inform user
@@ -81,11 +82,6 @@ class ArtifactEliminationWindow(wx.Frame):
         self.FastICA()
         self.viewButton.Enable()
         self.exportButton.Enable()
-        # refresh file window if it is opened
-        if self.GetParent().filesWindow is not None:
-            self.GetParent().filesWindow.Destroy()
-            self.GetParent().filesWindow = FilesWindow(self.GetParent())
-            self.GetParent().filesWindow.Show()
         self.openCompView(event)
         self.GetParent().setStatus("", 0)
 
@@ -161,7 +157,9 @@ class ArtifactEliminationWindow(wx.Frame):
     def EliminateComponents(self):
         self.GetParent().setStatus("Eliminando Artefactos...", 1)
         eegs = self.eegs
+        self.pbutton.eegs = eegs
         eliminateArtifacts(eegs, self.icas)
+        self.GetParent().ForwardChanges(self.pbutton)
         self.GetParent().setStatus("", 0)
         NotificationMessage(title="¡Exito!", message="Se han eliminado los artefactos.").Show()
 

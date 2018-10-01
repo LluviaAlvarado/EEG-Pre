@@ -20,7 +20,7 @@ class FastICA():
 
     # actual FastICA algorithm part 1: just creating matrix of independent components
     def separateComponents(self):
-        self.ica = ICA(n_components=len(self.signals[0]))
+        self.ica = ICA(n_components=len(self.signals[0]), max_iter=300)
         self.components = np.matrix.transpose(self.ica.fit_transform(self.signals))
         self.amUnits = [np.amax(self.components), np.amin(self.components)]
         self.selectedComponents = list(range(len(self.components)))

@@ -102,6 +102,7 @@ class ModuleButton(wx.BitmapButton):
         self.hint.Close()
 
     def ShowModules(self, e):
+        self.GetParent().HidePossible()
         self.GetParent().ShowPossibleModules(self, self.GetPosible())
 
     def isChildren(self, m):
@@ -159,6 +160,7 @@ class ModuleButton(wx.BitmapButton):
         if self.bw:
             self.GetParent().AddModule(self)
         else:
+            self.GetParent().HidePossible()
             if self.window is None:
                 self.actions = []
                 if self.module == 0:
@@ -180,31 +182,33 @@ class ModuleButton(wx.BitmapButton):
                 else:
                     pass
             self.window.Show()
+        e.Skip()
 
     def onCloseModule(self):
         self.window = None
 
     def updateEEGS(self, eegs):
         self.eegs = eegs
-        if self.module == 0:
-            self.window = FilesWindow(self.GetParent(), self)
-        elif self.module == 1:
-            self.window = PreBPFW(self.GetParent(), self.eegs, self)
-        elif self.module == 2:
-            self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self)
-        elif self.module == 3:
-            self.window = WindowAttributes(self.GetParent(), self.eegs, self)
-        elif self.module == 4:
-            self.window = KMeansWindow(self.GetParent(), self.windowDB, self)
-        elif self.module == 5:
-            self.window = DecisionTreeWindow(self.GetParent(), self.windowDB, self.windowSelec, self)
-        elif self.module == 6:
-            self.window = PreBPFW(self.GetParent(), self.eegs, self)
-        elif self.module == 7:
-            self.window = PreBPFW(self.GetParent(), self.eegs, self)
-        else:
-            pass
-        self.window.ReDo(self.actions)
+        if self.window is None:
+            if self.module == 0:
+                self.window = FilesWindow(self.GetParent(), self)
+            elif self.module == 1:
+                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+            elif self.module == 2:
+                self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
+            elif self.module == 3:
+                self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
+            elif self.module == 4:
+                self.window = KMeansWindow(self.GetParent(), self.windowDB, self.actions, self)
+            elif self.module == 5:
+                self.window = DecisionTreeWindow(self.GetParent(), self.windowDB, self.windowSelec, self.actions, self)
+            elif self.module == 6:
+                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+            elif self.module == 7:
+                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+            else:
+                pass
+        self.window.ReDo(self.actions, eegs)
 
 
 class ModuleTree():

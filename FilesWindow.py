@@ -200,7 +200,6 @@ class FilesWindow(wx.Frame):
                     # adding eeg to list
                     eeg.setName(name)
                     self.GetParent().project.EEGS.append(eeg)
-                    self.pbutton.eegs.append(eeg)
                 else:
                     # show error with file
                     errorFiles.append([name, 0])
@@ -220,6 +219,8 @@ class FilesWindow(wx.Frame):
                 currentAmount += 1
         # showing errors that ocurred
         self.showErrorFiles(errorFiles)
+        self.pbutton.eegs = self.GetParent().project.EEGS
+        self.GetParent().ForwardChanges(self.pbutton)
         # returning normal cursor
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
@@ -301,6 +302,8 @@ class FilesWindow(wx.Frame):
         self.GetParent().project.EEGS.remove(self.GetParent().project.EEGS[index])
         # update listbox
         self.filesList.Delete(index)
+        self.pbutton.eegs = self.GetParent().project.EEGS
+        self.GetParent().ForwardChanges(self.pbutton)
         # if no more files left
         if len(self.GetParent().project.EEGS) == 0:
             self.GetParent().project.reset()
@@ -318,3 +321,6 @@ class FilesWindow(wx.Frame):
     def onWEClose(self):
         # so we can create another
         self.windowEditor = None
+
+    def ReDo(self, actions, eegs):
+        pass

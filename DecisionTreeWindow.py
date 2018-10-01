@@ -49,7 +49,7 @@ class DecisionTreeWindow(wx.Frame):
         self.pbutton.onCloseModule()
         self.Destroy()
 
-    def ReDo(self, actions):
+    def ReDo(self, actions, eegs):
         # TODO fix when module finished
         pass
 
