@@ -106,13 +106,13 @@ class FileReaderWriter:
         # extracting basic data of the eeg file
         fileName, fileExt = os.path.splitext(fileAddress)
         # reading the important data depending on the extension
-        if fileExt == ".mat":
+        if fileExt.lower() == ".mat":
             eeg = self.readMAT(fileAddress)
-        elif fileExt == ".edf":
+        elif fileExt.lower() == ".edf":
             eeg = self.read_EDF(fileAddress)
-        elif fileExt == ".gdf":
+        elif fileExt.lower() == ".gdf":
             eeg = self.read_GDF(fileAddress)
-        elif fileExt == ".acq":
+        elif fileExt.lower() == ".acq":
             eeg = self.readACQ(eegFile)
         else:
             self.setError(1)

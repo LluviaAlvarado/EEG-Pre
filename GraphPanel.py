@@ -326,7 +326,7 @@ class graphPanel(wx.Panel):
                             else:
                                 ny2 = (((pChannels[j].readings[inci] - amUnits[1]) * ((y + hSpace) - y)) / (
                                         amUnits[0] - amUnits[1])) + y
-                            dc.SetPen(wx.GREY_PEN)
+                            dc.SetPen(wx.RED_PEN)
                             if abs(ny - ny2) > 3 or (x + incx) > 3:
                                 dc.DrawLine(x, ny, x + incx, ny2)
                             else:
