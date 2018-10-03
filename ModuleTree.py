@@ -210,9 +210,9 @@ class ModuleButton(wx.BitmapButton):
             elif self.module == 5:
                 self.window = DecisionTreeWindow(self.GetParent(), self.windowDB, self.windowSelec, self.actions, self)
             elif self.module == 6:
-                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+                self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
             elif self.module == 7:
-                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+                self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
             else:
                 pass
         self.window.ReDo(self.actions, eegs)

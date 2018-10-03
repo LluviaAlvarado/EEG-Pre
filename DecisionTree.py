@@ -14,12 +14,12 @@ class DecisionTree:
     and an array Y of integer values, size [n_samples],
     holding the class labels for the training samples'''
 
-    def __init__(self, data, target, labels):
+    def __init__(self, data, target, labels, md, min):
         self.data = data
         self.target = target
         X_train, X_test, y_train, y_test = train_test_split(self.data, self.target, stratify=self.target,
                                                             random_state=42)
-        clf = tree.DecisionTreeClassifier(random_state=0)
+        clf = tree.DecisionTreeClassifier(random_state=0, max_depth=md, min_samples_leaf=min)
         clf.fit(X_train, y_train)
         #print('Accuracy on the training subset: '+ str(format(clf.score(X_train, y_train))))
         #print('Accuracy on the test subset:'+str(format(clf.score(X_test, y_test))))

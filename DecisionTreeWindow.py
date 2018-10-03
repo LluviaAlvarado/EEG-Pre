@@ -73,7 +73,7 @@ class DecisionTreeWindow(wx.Frame):
             self.db.append(t)
         for r in range(len(data)):
             self.target.append(data[r-1][len(data[r])-1])
-        dtree = DecisionTree(self.db, self.target, self.labels)
+        dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.Value())
 
         tv = treeView(self, dtree)
         tv.Show()
@@ -120,6 +120,4 @@ class treeView(wx.Frame):
         path = dlg.GetPath()
         dlg.Destroy()
         if result == wx.ID_OK:
-            # Saving the new name for the project
-            name = str(path).split("\\")
             copyfile("tree.png", path)

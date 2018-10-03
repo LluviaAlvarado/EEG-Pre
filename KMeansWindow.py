@@ -94,8 +94,6 @@ class KMeansWindow(wx.Frame):
     def openview(self, event):
         v = KMeansV(self, self.data, self.k, self.parent.windowSelec, self.GetParent().project.EEGS)
         v.Show()
-        #sw = SilhouetteWindow(self, self.k, self.db, self.parent.windowSelec)
-        #sw.Show()
 
 
 class KMeansV(wx.Frame):
