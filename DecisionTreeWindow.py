@@ -21,16 +21,9 @@ class DecisionTreeWindow(wx.Frame):
         self.actions = actions
         self.pbutton = p
         self.data = wDB
-        data = self.data
         self.db = []
         self.target = []
-        for r in range(len(data)):
-            t = []
-            for c in range(len(data[r]) - 1):
-                t.append(data[r][c])
-            self.db.append(t)
-        for r in range(len(data)):
-            self.target.append(data[r - 1][len(data[r]) - 1])
+        self.getData()
         self.labels = labels
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.baseSizer = wx.BoxSizer(wx.VERTICAL)
@@ -67,7 +60,6 @@ class DecisionTreeWindow(wx.Frame):
         self.Destroy()
 
     def ReDo(self, actions, eegs):
-        # TODO fix when module finished
         dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.GetValue())
         tv = treeView(self, dtree)
 
@@ -78,6 +70,17 @@ class DecisionTreeWindow(wx.Frame):
         tv = treeView(self, dtree)
         tv.Show()
 
+    def getData(self):
+        data = self.data
+        for r in range(len(data)):
+            t = []
+            for c in range(len(data[r]) - 1):
+                t.append(data[r][c])
+            self.db.append(t)
+        for r in range(len(data)):
+            self.target.append(data[r - 1][len(data[r]) - 1])
+
+
 
 class treeView(wx.Frame):
 
@@ -85,31 +88,35 @@ class treeView(wx.Frame):
         wx.Frame.__init__(self, parent, -1, "Arbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Centre()
         self.Maximize()
-        p = wx.Panel(self, size=(300, 1000), style=wx.TAB_TRAVERSAL)
-        self.pnl = scrolled.ScrolledPanel(p, size=(2000, 2000),style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
-        self.pnl.SetBackgroundColour(wx.WHITE)
-        pn = wx.Panel(p,size=(300, 1000), style= wx.TAB_TRAVERSAL)
-        self.baseSizer = wx.BoxSizer(wx.HORIZONTAL)
-        s =wx.BoxSizer(wx.HORIZONTAL)
-        infoSizer = wx.BoxSizer(wx.VERTICAL)
-        infoLabel = wx.StaticText(pn, label="Opciones: ")
+        basePanel = wx.Panel(self, size=(300, 1000), style=wx.TAB_TRAVERSAL)
+        baseSizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.imgPanel = scrolled.ScrolledPanel(basePanel, size=(2000, 2000), style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.imgPanel.SetBackgroundColour(wx.WHITE)
+        self.imgPanel.SetAutoLayout(1)
+        self.imgPanel.SetupScrolling()
+        self.imgSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         pydotplus.graph_from_dot_data(dtree.dotfile.getvalue()).write_png("tree.png")
         png = wx.Image("tree.png", wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        bitmap =wx.StaticBitmap(self.pnl, -1, png, (10, 5), (png.GetWidth(), png.GetHeight()))
-        applyButton = wx.Button(pn, label="Salvar como .PNG")
+        bitmap = wx.StaticBitmap(self.imgPanel, -1, png, (10, 5), (png.GetWidth(), png.GetHeight()))
+
+        opcPanel = wx.Panel(basePanel, size=(300, 1000), style=wx.TAB_TRAVERSAL)
+        opcSizer = wx.BoxSizer(wx.VERTICAL)
+        infoLabel = wx.StaticText(opcPanel, label="Opciones: ")
+        applyButton = wx.Button(opcPanel, label="Salvar como .PNG")
         applyButton.Bind(wx.EVT_BUTTON, self.OnSave)
-        pn.SetSizer(infoSizer)
-        infoSizer.Add(infoLabel)
-        infoSizer.Add(applyButton)
-        #self.baseSizer.Add(pn)
-        self.pnl.SetSizer(self.baseSizer)
-        self.pnl.SetAutoLayout(1)
-        self.pnl.SetupScrolling()
-        self.baseSizer.Add(bitmap,0, wx.EXPAND | wx.ALL, 5)
-        s.Add(pn,0, wx.EXPAND | wx.ALL, 5)
-        s.Add(self.pnl,0, wx.EXPAND | wx.ALL, 5)
-        p.SetSizer(s)
+
+        opcPanel.SetSizer(opcSizer)
+        opcSizer.Add(infoLabel)
+        opcSizer.Add(applyButton)
+
+        self.imgPanel.SetSizer(self.imgSizer)
+        self.imgSizer.Add(bitmap, 0, wx.EXPAND | wx.ALL, 5)
+
+        baseSizer.Add(opcPanel, 0, wx.EXPAND | wx.ALL, 5)
+        baseSizer.Add(self.imgPanel, 0, wx.EXPAND | wx.ALL, 5)
+        basePanel.SetSizer(baseSizer)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
     def OnClose(self, event):
