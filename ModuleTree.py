@@ -138,7 +138,7 @@ class ModuleButton(wx.BitmapButton):
             if not self.isChildren(3):
                 posible.append(3)
         elif self.module == 1:
-            # filter can add artifact and attributes
+            # filter can add artifact and attributes.
             if not self.isChildren(2):
                 posible.append(2)
             if not self.isChildren(3):
