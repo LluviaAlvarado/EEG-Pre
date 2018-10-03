@@ -4,8 +4,7 @@ from FilesWindow import *
 from Channel import *
 from BPFWindow import *
 from WindowDialog import WindowCustomWave
-from Utils import exportEEGS
-
+from Utils import exportEEGS, eeg_copy
 
 class frequencyBand:
     def __init__(self, name, lowFrequency, hiFrequency):
@@ -171,6 +170,10 @@ class PreBPFW(wx.Frame):
         eegs = self.eegs
         flag = False
         new = []
+        tmp = None
+        if len(eegs) > 0:
+            tmp = deepcopy(eegs[0])
+            tmp.clear()
         for eeg in eegs:
             # applying for each band
             bands = self.GetSelected()
@@ -179,7 +182,7 @@ class PreBPFW(wx.Frame):
                 flag = True
             for band in bands:
                 channels = eeg.channels
-                neweeg = deepcopy(eeg)
+                neweeg = eeg_copy(eeg, tmp)
                 neweeg.channels = []
                 for ch in channels:
                     fourier = np.fft.rfft(ch.readings, len(ch.readings))

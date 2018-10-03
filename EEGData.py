@@ -27,6 +27,18 @@ class EEGData:
         self. windows = []
         self.prev = None
 
+    def clear(self):
+        self.name = ""
+        self.system10_20 = System10_20()
+        self.frequency = 0
+        self.duration = 0
+        self.filterHz = 0
+        self.amUnits = [0, 0]
+        self.additionalData = []
+        self.channels =[]
+        self.windows = []
+        self.prev = None
+
     def setSelected(self, sel):
         self.selectedCh = sel
 

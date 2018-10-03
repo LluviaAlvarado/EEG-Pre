@@ -6,7 +6,10 @@ from WindowAttributes import WindowAttributes
 from KMeansWindow import KMeansWindow
 from DecisionTreeWindow import DecisionTreeWindow
 from WindowDialog import ModuleHint
-from copy import deepcopy
+from SilhouetteWindow import SilhouetteWindow
+from RandIndexWindow import RandIndexWindow
+from Utils import eegs_copy
+from copy import copy, deepcopy
 
 
 class Module():
@@ -32,12 +35,16 @@ class ModuleButton(wx.BitmapButton):
     def __init__(self, parent, module, eegs, lv=0, p=None, bw=False):
         self.module = module
         self.bw = bw
+        self.km = None
         bmp = self.GetBMP(bw)
         wx.BitmapButton.__init__(self, parent, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=bmp, size=(bmp.GetWidth(), bmp.GetHeight()))
         self.parent = p
         self.lv = lv
         self.children = []
-        self.eegs = deepcopy(eegs)
+        tmp = None
+        if len(eegs) > 0:
+            tmp = deepcopy(eegs[0])
+        self.eegs = eegs_copy(eegs, tmp)
         self.actions = []
         self.windowDB = None
         self.windowSelec = None
@@ -52,36 +59,36 @@ class ModuleButton(wx.BitmapButton):
         if bw:
             #TODO agregar imagenes grises
             if self.module == 1:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/gFiltradoIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 2:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/gEliminacionAIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 3:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/gCaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 4:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/gKmeansIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 5:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/gArbolDIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 6:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/gSilhouetteIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 7:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/gRandindexIMG.png", wx.BITMAP_TYPE_PNG)
         else:
             if self.module == 0:
                 bmp = wx.Bitmap("Images/ArchivoIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 1:
-                bmp = wx.Bitmap("Images/Grafica.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 2:
                 bmp = wx.Bitmap("Images/FiltradoIMG.png", wx.BITMAP_TYPE_PNG)
+            elif self.module == 2:
+                bmp = wx.Bitmap("Images/EliminacionAIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 3:
                 bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 4:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/KmeansIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 5:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/ArbolDIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 6:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/SilhouetteIMG.png", wx.BITMAP_TYPE_PNG)
             elif self.module == 7:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
+                bmp = wx.Bitmap("Images/RandindexIMG.png", wx.BITMAP_TYPE_PNG)
         return bmp
 
     def Hover(self, e):
@@ -172,13 +179,13 @@ class ModuleButton(wx.BitmapButton):
                 elif self.module == 3:
                     self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
                 elif self.module == 4:
-                    self.window = KMeansWindow(self.GetParent(), self.windowDB, self.actions, self)
+                    self.window = KMeansWindow(self.GetParent(), self.parent, self.actions, self)
                 elif self.module == 5:
-                    self.window = DecisionTreeWindow(self.GetParent(), self.windowDB, self.windowSelec, self.actions, self)
+                    self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
                 elif self.module == 6:
-                    self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+                    self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
                 elif self.module == 7:
-                    self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+                    self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
                 else:
                     pass
             self.window.Show()

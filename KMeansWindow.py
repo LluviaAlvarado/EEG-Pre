@@ -1,11 +1,17 @@
 # Imports
+import matplotlib
+matplotlib.use('WXAgg')
 import wx.lib.agw.buttonpanel
 import wx.lib.scrolledpanel
-
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 # Local Imports
 from WindowEditor import *
 from KMeans import *
+from sklearn.metrics import silhouette_samples, silhouette_score
+from SilhouetteWindow import *
+
 
 class KMeansWindow(wx.Frame):
 
@@ -16,7 +22,8 @@ class KMeansWindow(wx.Frame):
         self.k = None
         self.pbutton = p
         self.actions = actions
-        self.data = wDB
+        self.parent = wDB
+        self.data = wDB.windowDB
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.baseSizer = wx.BoxSizer(wx.VERTICAL)
         self.H1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -33,7 +40,7 @@ class KMeansWindow(wx.Frame):
         self.iterC = wx.SpinCtrl(self.pnl, value="10", style=wx.SP_ARROW_KEYS, min=1, max=10000, initial=1)
 
         epochsLabel = wx.StaticText(self.pnl, label="Numero de epocas:")
-        self.epochsC = wx.SpinCtrl(self.pnl, value="300", style=wx.SP_ARROW_KEYS, min=1, max=100, initial=1)
+        self.epochsC = wx.SpinCtrl(self.pnl, value="300", style=wx.SP_ARROW_KEYS, min=1, max=1000, initial=1)
 
         applyButton = wx.Button(self.pnl, label="Aplicar")
         applyButton.Bind(wx.EVT_BUTTON, self.kmeans)
@@ -81,12 +88,14 @@ class KMeansWindow(wx.Frame):
             self.db.append(t)
         self.actions = [self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue()]
         self.k = KMeans(self.db, self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue())
+        self.parent.km = self.k
         self.viewButton.Enable()
 
-
     def openview(self, event):
-        v = KMeansV(self, self.data, self.k, self.GetParent().windowSelec, self.GetParent().project.EEGS)
+        v = KMeansV(self, self.data, self.k, self.parent.windowSelec, self.GetParent().project.EEGS)
         v.Show()
+        #sw = SilhouetteWindow(self, self.k, self.db, self.parent.windowSelec)
+        #sw.Show()
 
 
 class KMeansV(wx.Frame):
@@ -119,8 +128,7 @@ class KMeansV(wx.Frame):
         self.Tabs.AddPage(page, "Todos")
         page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 1, self.name)
         self.Tabs.AddPage(page, "Clusters")
-        #page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 2)
-        #self.Tabs.AddPage(page, "Grafica")
+
 
 
 class GridTab(wx.Panel):

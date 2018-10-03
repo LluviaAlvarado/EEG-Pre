@@ -1,10 +1,15 @@
 # Imports
+import os
 import wx.lib.agw.buttonpanel
 import wx.lib.scrolledpanel
+import wx.lib.scrolledpanel as scrolled
 
 # Local Imports
+from shutil import copyfile
 from WindowEditor import *
 from DecisionTree import *
+
+wildcard = "Portable Network Graphics (*.png)|*.png"
 
 
 class DecisionTreeWindow(wx.Frame):
@@ -51,6 +56,9 @@ class DecisionTreeWindow(wx.Frame):
 
     def ReDo(self, actions, eegs):
         # TODO fix when module finished
+        dtree = DecisionTree(self.db, self.target, self.labels)
+        tv = treeView(self, dtree)
+        tv.Show()
         pass
 
     def dtree(self, event):
@@ -65,8 +73,8 @@ class DecisionTreeWindow(wx.Frame):
             self.db.append(t)
         for r in range(len(data)):
             self.target.append(data[r-1][len(data[r])-1])
-        dtree = DecisionTree(self.db, self.target)
-        print("")
+        dtree = DecisionTree(self.db, self.target, self.labels)
+
         tv = treeView(self, dtree)
         tv.Show()
 
@@ -75,13 +83,43 @@ class treeView(wx.Frame):
 
     def __init__(self, parent, dtree):
         wx.Frame.__init__(self, parent, -1, "Arbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
-        self.SetSize(300, 250)
         self.Centre()
-        self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
-        self.baseSizer = wx.BoxSizer(wx.VERTICAL)
+        self.Maximize()
+        self.SetSize(700, 500)
+        self.pnl = scrolled.ScrolledPanel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.pnl.SetBackgroundColour(wx.WHITE)
+        pn = wx.Panel(self.pnl,size=(300, 1000), style= wx.TAB_TRAVERSAL)
+        pn.SetBackgroundColour(wx.LIGHT_GREY)
+        self.baseSizer = wx.BoxSizer(wx.HORIZONTAL)
+        infoSizer = wx.BoxSizer(wx.VERTICAL)
+        infoLabel = wx.StaticText(pn, label="Opciones: ")
 
-        tree = wx.TreeCtrl()
-        tree.AddRoot("tree",data=dtree)
-
-        self.baseSizer.Add(tree,0, wx.EXPAND | wx.ALL, 5)
+        pydotplus.graph_from_dot_data(dtree.dotfile.getvalue()).write_png("tree.png")
+        png = wx.Image("tree.png", wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        bitmap =wx.StaticBitmap(self.pnl, -1, png, (10, 5), (png.GetWidth(), png.GetHeight()))
+        applyButton = wx.Button(pn, label="Salvar como .PNG")
+        applyButton.Bind(wx.EVT_BUTTON, self.OnSave)
+        pn.SetSizer(infoSizer)
+        infoSizer.Add(infoLabel)
+        infoSizer.Add(applyButton)
+        self.baseSizer.Add(pn)
+        self.pnl.SetAutoLayout(1)
+        self.pnl.SetupScrolling()
+        self.baseSizer.Add(bitmap,0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def OnClose(self, event):
+        os.remove("tree.png")
+        self.Destroy()
+
+    def OnSave(self, event):
+        dlg = wx.FileDialog(self, "Guardar como", os.getcwd(), "", wildcard, \
+                            wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        result = dlg.ShowModal()
+        path = dlg.GetPath()
+        dlg.Destroy()
+        if result == wx.ID_OK:
+            # Saving the new name for the project
+            name = str(path).split("\\")
+            copyfile("tree.png", path)

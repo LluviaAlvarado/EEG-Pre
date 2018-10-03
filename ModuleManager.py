@@ -30,6 +30,7 @@ class Level():
             i += 1
         return -1
 
+
 class ModuleManager(wx.Panel):
 
     def __init__(self, parent, project):
@@ -93,7 +94,6 @@ class ModuleManager(wx.Panel):
             sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 5)
         self.sizer.Layout()
 
-
     def AddModule(self, m):
         if m.parent.lv == 0:
             sizer = self.levels[m.parent.lv].childs[0]
@@ -112,6 +112,9 @@ class ModuleManager(wx.Panel):
 
     def GetTree(self):
         return self.modules.SaveTree()
+
+    def SetStatusText(self, s):
+        pass
 
     def closeWindows(self):
         self.modules.closeAll()

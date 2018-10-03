@@ -62,11 +62,11 @@ class ModuleHint(wx.Frame):
             title = "Módulo de Árbol\n de Decisión."
             info = "Herramienta de aprendizaje para\nclasificación y \nanálisis de ventanas."
         elif module == 6:
-            title = "Módulo de Filtrado\n por Bandas."
-            info = "Filtra EEGs por las \nbandas que necesites."
+            title = "Módulo de Silhouette."
+            info = "Herramienta para\nel análisis de clusters."
         elif module == 7:
-            title = "Módulo de Filtrado\n por Bandas."
-            info = "Filtra EEGs por las \nbandas que necesites."
+            title = "Módulo de Rand index."
+            info = "Herramienta para\nel análisis de clusters."
         tt = wx.StaticText(panel, label=title, style=wx.ALIGN_CENTRE_HORIZONTAL)
         tt.SetFont(wx.Font(12, wx.DECORATIVE, wx.NORMAL, wx.BOLD))
         it = wx.StaticText(panel, label=info, style=wx.ALIGN_CENTRE_HORIZONTAL)

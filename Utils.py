@@ -3,6 +3,7 @@ from os import listdir, getcwd, remove
 from os.path import isfile, join
 import wx
 from FileReaderWriter import FileReaderWriter
+from copy import copy, deepcopy
 
 
 # changes the value for printable purposes
@@ -82,3 +83,34 @@ def writeWindowFiles(project, windows, path):
         # writing windowFiles
         FileReaderWriter().writeWindowFiles(windows, file, txt, project.windowLength,
                 project.windowTBE)
+
+
+def eegs_copy(eegs, tmp):
+    copy_eegs = []
+    copi = 0
+    if tmp != None:
+        tmp.clear()
+        copy_eegs = []
+        for eeg in eegs:
+            copy_eegs.append(eeg_copy(eeg,tmp))
+    return copy_eegs
+
+def eeg_copy(eeg, tmp):
+    copi = copy(tmp)
+    copy_eeg = copy(eeg)
+    channels = []
+    for i in copy_eeg.channels:
+        channels.append(copy(i))
+    copi.channels = channels
+    windows = []
+    for w in copy_eeg.windows:
+        windows.append(copy(w))
+    copi.windows = windows
+    copi.additionalData = copy_eeg.additionalData
+    copi.amUnits = copy_eeg.amUnits
+    copi.duration = copy_eeg.duration
+    copi.filterHz = copy_eeg.filterHz
+    copi.frequency = copy_eeg.frequency
+    copi.name = copy_eeg.name
+    copi.prev = copy_eeg.prev
+    return copi

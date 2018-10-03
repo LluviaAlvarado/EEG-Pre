@@ -185,6 +185,12 @@ class BaseWindow(wx.Frame):
             name = name[len(name) - 1].split(".")[0]
             self.project.name = name
             f = gzip.open(path, 'wb')
+            _pickle.dump(len(self.project.EEGS), f, protocol=4)
+            for i in range(len(self.project.EEGS)):
+                _pickle.dump(self.project.EEGS[i], f, protocol=4)
+            self.project.EEGS = []
+            _pickle.dump(self.project.moduleTree.modules, f, protocol=4)
+            self.project.moduleTree = []
             _pickle.dump(self.project, f, protocol=4)
             f.close()
             self.setStatus("", 0)
@@ -214,16 +220,22 @@ class BaseWindow(wx.Frame):
                 self.setStatus("Cargando...", 1)
                 path = dlg.GetPath()
                 f = gzip.open(path, 'rb')
+                lent = _pickle.load(f)
+                EEGS = []
+                for i in range(lent):
+                    EEGS.append(_pickle.load(f))
                 self.project = _pickle.load(f)
+                self.project.EEGS = EEGS
                 f.close()
                 self.setAux(self.project)
             self.setStatus("Cargando...", 1)
             path = dlg.GetPath()
             f = gzip.open(path, 'rb')
-            self.project = _pickle.load(f)
+            EEg = _pickle.load(f)
+            EEG2 = _pickle.load(f)
             f.close()
         # close all open windows
         self.moduleManager.closeWindows()
-        self.setAux(self.project)
+        #self.setAux(self.project)
         dlg.Destroy()
         self.setStatus("", 0)

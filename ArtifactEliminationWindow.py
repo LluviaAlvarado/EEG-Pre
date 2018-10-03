@@ -7,7 +7,7 @@ from FastICA import *
 import threading
 from wx.adv import NotificationMessage
 from ArtifactElimination import *
-from Utils import exportEEGS
+from Utils import exportEEGS, eeg_copy
 
 
 class ArtifactEliminationWindow(wx.Frame):
@@ -77,8 +77,11 @@ class ArtifactEliminationWindow(wx.Frame):
     def applyFastICA(self, event):
         self.GetParent().setStatus("Buscando Componentes...", 1)
         # saving the current state of EEGs
+        if len(self.eegs) > 0:
+            tmp = deepcopy(self.eegs[0])
         for eeg in self.eegs:
-            eeg.SaveState()
+            save = eeg_copy(eeg, tmp)
+            eeg.setSaveState(save)
         self.FastICA()
         self.viewButton.Enable()
         self.exportButton.Enable()

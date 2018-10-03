@@ -21,4 +21,4 @@ class KMeans:
         self.clusters = self.kmean.cluster_centers_
 
     def predict(self, data):
-        self.kmean.predict(data)
+        return self.kmean.fit_predict(np.array(data))
