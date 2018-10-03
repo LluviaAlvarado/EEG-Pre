@@ -208,7 +208,7 @@ class ModuleButton(wx.BitmapButton):
             elif self.module == 4:
                 self.window = KMeansWindow(self.GetParent(), self.windowDB, self.actions, self)
             elif self.module == 5:
-                self.window = DecisionTreeWindow(self.GetParent(), self.windowDB, self.windowSelec, self.actions, self)
+                self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
             elif self.module == 6:
                 self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
             elif self.module == 7:

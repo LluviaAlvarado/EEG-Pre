@@ -16,17 +16,27 @@ class DecisionTreeWindow(wx.Frame):
 
     def __init__(self, parent, wDB, labels, actions, p):
         wx.Frame.__init__(self, parent, -1, "Árbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
-        self.SetSize(300, 250)
+        self.SetSize(300, 210)
         self.Centre()
         self.actions = actions
         self.pbutton = p
         self.data = wDB
+        data = self.data
+        self.db = []
+        self.target = []
+        for r in range(len(data)):
+            t = []
+            for c in range(len(data[r]) - 1):
+                t.append(data[r][c])
+            self.db.append(t)
+        for r in range(len(data)):
+            self.target.append(data[r - 1][len(data[r]) - 1])
         self.labels = labels
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.baseSizer = wx.BoxSizer(wx.VERTICAL)
         self.H1 = wx.BoxSizer(wx.HORIZONTAL)
         self.H2 = wx.BoxSizer(wx.HORIZONTAL)
-        titleLabel = wx.StaticText(self.pnl, label="Nombre: ")
+        titleLabel = wx.StaticText(self.pnl, label="Nombre del árbol: ")
         titleTex = wx.TextCtrl(self.pnl, value="")
 
         mlLabel = wx.StaticText(self.pnl, label="Limite maximo de niveles:")
@@ -34,8 +44,10 @@ class DecisionTreeWindow(wx.Frame):
         mmLabel = wx.StaticText(self.pnl, label="Mín de muestras requeridas por hoja:")
         self.mmC = wx.SpinCtrl(self.pnl, value="1", style=wx.SP_ARROW_KEYS, min=1, max=100, initial=1)
 
-        self.baseSizer.Add(titleLabel, -1, wx.EXPAND, 5)
-        self.baseSizer.Add(titleTex, -1, wx.EXPAND | wx.ALL, 5)
+        hbox = wx.BoxSizer()
+        hbox.Add(titleLabel, proportion=0, flag=wx.RIGHT, border=5)
+        hbox.Add(titleTex, proportion=1, flag=wx.EXPAND)
+        self.baseSizer.Add(hbox, -1, wx.EXPAND | wx.ALL, 5)
         self.H1.Add(mlLabel, -1, wx.EXPAND | wx.ALL, 5)
         self.H1.Add(self.mlC, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.H1, -1, wx.EXPAND | wx.ALL, 5)
@@ -56,24 +68,12 @@ class DecisionTreeWindow(wx.Frame):
 
     def ReDo(self, actions, eegs):
         # TODO fix when module finished
-        dtree = DecisionTree(self.db, self.target, self.labels)
+        dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.GetValue())
         tv = treeView(self, dtree)
-        tv.Show()
-        pass
 
     def dtree(self, event):
         self.actions = [self.mlC.GetValue(), self.mmC.GetValue()]
-        data = self.data
-        self.db = []
-        self.target = []
-        for r in range(len(data)):
-            t = []
-            for c in range(len(data[r]) - 1):
-                t.append(data[r][c])
-            self.db.append(t)
-        for r in range(len(data)):
-            self.target.append(data[r-1][len(data[r])-1])
-        dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.Value())
+        dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.GetValue())
 
         tv = treeView(self, dtree)
         tv.Show()
@@ -85,12 +85,12 @@ class treeView(wx.Frame):
         wx.Frame.__init__(self, parent, -1, "Arbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Centre()
         self.Maximize()
-        self.SetSize(700, 500)
-        self.pnl = scrolled.ScrolledPanel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        p = wx.Panel(self, size=(300, 1000), style=wx.TAB_TRAVERSAL)
+        self.pnl = scrolled.ScrolledPanel(p, size=(2000, 2000),style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.pnl.SetBackgroundColour(wx.WHITE)
-        pn = wx.Panel(self.pnl,size=(300, 1000), style= wx.TAB_TRAVERSAL)
-        pn.SetBackgroundColour(wx.LIGHT_GREY)
+        pn = wx.Panel(p,size=(300, 1000), style= wx.TAB_TRAVERSAL)
         self.baseSizer = wx.BoxSizer(wx.HORIZONTAL)
+        s =wx.BoxSizer(wx.HORIZONTAL)
         infoSizer = wx.BoxSizer(wx.VERTICAL)
         infoLabel = wx.StaticText(pn, label="Opciones: ")
 
@@ -102,11 +102,14 @@ class treeView(wx.Frame):
         pn.SetSizer(infoSizer)
         infoSizer.Add(infoLabel)
         infoSizer.Add(applyButton)
-        self.baseSizer.Add(pn)
+        #self.baseSizer.Add(pn)
+        self.pnl.SetSizer(self.baseSizer)
         self.pnl.SetAutoLayout(1)
         self.pnl.SetupScrolling()
         self.baseSizer.Add(bitmap,0, wx.EXPAND | wx.ALL, 5)
-        self.pnl.SetSizer(self.baseSizer)
+        s.Add(pn,0, wx.EXPAND | wx.ALL, 5)
+        s.Add(self.pnl,0, wx.EXPAND | wx.ALL, 5)
+        p.SetSizer(s)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
     def OnClose(self, event):
