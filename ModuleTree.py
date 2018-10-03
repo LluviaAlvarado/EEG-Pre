@@ -129,7 +129,7 @@ class ModuleButton(wx.BitmapButton):
     def GetPosible(self):
         posible = []
         if self.module == 0:
-            # file can add filter and artifact and attributes
+            # file can add filter and artifact and attributes.
             # check if they're already in children
             if not self.isChildren(1):
                 posible.append(1)
