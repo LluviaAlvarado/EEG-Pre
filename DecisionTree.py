@@ -26,4 +26,5 @@ class DecisionTree:
         self.dotfile = StringIO()
         set_l = set(self.target)
         set_l = list(set_l)
-        tree.export_graphviz(clf, out_file=self.dotfile, feature_names=labels, class_names=set_l)
+        tree.export_graphviz(clf, out_file=self.dotfile, feature_names=labels, class_names=set_l, filled=True, rounded=True,
+                         special_characters=True)

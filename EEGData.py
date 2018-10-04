@@ -45,6 +45,10 @@ class EEGData:
     def SaveState(self):
         self.prev = deepcopy(self)
 
+    def setSaveState(self, eeg):
+        self.prev = eeg
+
+
     def getChannel(self, i):
         if i < len(self.channels):
             return self.channels[i]

@@ -17,6 +17,7 @@ class ComponentViewer(wx.Frame):
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
         self.icas = icas
+        self.parent = parent
         # frame will contain the base container of window editor and eeg tabs9
         frameSizer = wx.BoxSizer(wx.VERTICAL)
         topSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -68,7 +69,7 @@ class ComponentViewer(wx.Frame):
             self.SetCursor(myCursor)
 
     def fillnavigationTabs(self):
-        eegs = self.GetParent().GetParent().project.EEGS
+        eegs = self.parent.eegs
         i = 0
         for eeg in eegs:
             self.addNav(eeg, self.icas[i])
@@ -162,7 +163,6 @@ class CGraph(wx.Panel):
         h = h - 187
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.ica = ica
-
         self.eeg = ica
         self.selected = selected
         self.toolbar = None

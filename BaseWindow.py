@@ -189,7 +189,8 @@ class BaseWindow(wx.Frame):
             for i in range(len(self.project.EEGS)):
                 _pickle.dump(self.project.EEGS[i], f, protocol=4)
             self.project.EEGS = []
-            _pickle.dump(self.project.moduleTree.modules, f, protocol=4)
+            t = self.moduleManager.GetTree()
+            _pickle.dump(t, f, protocol=4)
             self.project.moduleTree = []
             _pickle.dump(self.project, f, protocol=4)
             f.close()

@@ -1,5 +1,4 @@
 import wx
-from Utils import msToReading
 
 
 class CgraphPanel(wx.Panel):
@@ -254,6 +253,9 @@ class CgraphPanel(wx.Panel):
             channels = checked
         return channels, read
 
+    def msToReading(self, ms):
+        return int((ms * self.nSamp) / (self.ica.duration * 1000))
+
     def OnPaint(self, event=None):
         # buffered so it doesn't paint channel per channel
         if self.paint:
@@ -277,10 +279,10 @@ class CgraphPanel(wx.Panel):
                 for channel in channels:
                     x = 0
                     ms = self.strMs
-                    i = msToReading(ms, frequency, duration)
+                    i = self.msToReading(ms)
                     self.comPosition.append([c, y])
                     while i < self.nSamp:
-                        inci = msToReading(ms + timeLapse, frequency, duration)
+                        inci = self.msToReading(ms + timeLapse)
                         ny = (((channel[i] - amUnits[1]) * ((y + hSpace) - y)) / (amUnits[0] - amUnits[1])) + y
                         if inci > self.nSamp - 1:
                             ny2 = ny
@@ -292,7 +294,7 @@ class CgraphPanel(wx.Panel):
                         else:
                             dc.DrawPoint(x, ny)
                         ms += timeLapse
-                        i = msToReading(ms, frequency, duration)
+                        i = self.msToReading(ms)
                         x += incx
                     y += hSpace
                     c += 1
