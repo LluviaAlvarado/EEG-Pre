@@ -194,7 +194,7 @@ class PreBPFW(wx.Frame):
                     fl = Channel(ch.label, filtered)
                     neweeg.channels.append(fl)
                 # adding band limits to name
-                neweeg.name += "_" + str(band.lowFrequency) + "-" + str(band.hiFrequency)
+                neweeg.name += "~" + str(band.lowFrequency) + "~" + str(band.hiFrequency)
                 new.append(neweeg)
         self.eegs.extend(new)
         self.pbutton.eegs = self.eegs
@@ -236,7 +236,7 @@ class PreBPFW(wx.Frame):
                     fl = Channel(ch.label, filtered)
                     neweeg.channels.append(fl)
                 # adding band limits to name
-                neweeg.name += "_" + str(band.lowFrequency) + "-" + str(band.hiFrequency)
+                neweeg.name += "~" + str(band.lowFrequency) + "~" + str(band.hiFrequency)
                 new.append(neweeg)
         self.eegs.extend(new)
         self.GetParent().project.addMany(new)
