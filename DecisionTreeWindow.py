@@ -1,5 +1,7 @@
 # Imports
 import os
+
+import pydotplus as pydotplus
 import wx.lib.agw.buttonpanel
 import wx.lib.scrolledpanel
 import wx.lib.scrolledpanel as scrolled

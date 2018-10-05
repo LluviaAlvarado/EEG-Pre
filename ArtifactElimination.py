@@ -82,7 +82,6 @@ def autoRemoveEOG(icas):
             mean2 = mean2 / len(EOGS)
             if abs(mean) > 0.2 or abs(mean2) > 0.2:
                 # this is an EOG component
-                print("lo hizo 0")
                 c = np.array([0.0] * len(c))
             newC.append(c)
         ica.components = newC
@@ -214,11 +213,11 @@ def autoRemoveBlink(icas, frequency, duration):
 
 def autoRemoveMuscular(icas):
     for ica in icas:
-        newC = []
+        ss = []
         for c in ica.components:
-            # applying soft thresholding to denoise, removing everythin above 50Hz
+            # applying soft thresholding to denoise, removing everything above 50Hz
             c = pywt.threshold(c, 50, 'less')
-            waveletC = pywt.wavedec(c, 'Haar', level=2)
+            waveletC = pywt.wavedec(c, 'Haar', level=6)
             # wavelet[0] = Ca2 wavelet[1] = Cd2 wavelet[2] = Cd1
             # padding Cd2 to make it same length of Cd1
             new = []
@@ -228,49 +227,21 @@ def autoRemoveMuscular(icas):
                 new.append(0.0)
             waveletC[1] = np.array(new)
             # getting the wavelet power spectral density
-            # dividing the component into x frames of a second each
-            x = int(ica.duration)
-            frameL = int(len(new) / x)
-            S1 = []
-            S2 = []
-            maximums = []
-            i = 0
             # elevating to power 2 the elements of Cd1
             cd1 = np.power(waveletC[2], 2)
             # elevating to power 2 the elements of Cd2
             cd2 = np.power(waveletC[1], 2)
-            for j in range(x):
-                s1 = np.sum(cd1[i:i + frameL])
-                S1.append(s1)
-                s2 = np.sum(cd2[i:i + frameL])
-                S2.append(s2)
-                if s1 > s2:
-                    maximums.append(s1)
-                else:
-                    maximums.append(s2)
-                i += frameL
-            # calculating the mean
-            pk = np.sum(maximums) / x
-            # comparing mean to WPS
-            for i in range(x):
-                if S1[i] > pk:
-                    # make all samples in this frame 0
-                    for j in range(frameL):
-                        waveletC[2][j + (i * frameL)] = 0.0
-                if S2[i] > pk:
-                    # make all samples in this frame 0
-                    for j in range(frameL):
-                        waveletC[1][j + (i * frameL)] = 0.0
-            # returning cd2 to original shape
-            cd2 = []
-            for i in range(len(waveletC[1])):
-                if i % 2 == 0:
-                    cd2.append(waveletC[1][i])
-            waveletC[1] = np.array(cd2)
-            # applying reverse wavelet transform to get resulting component
-            component = pywt.waverec(waveletC, 'Haar')
-            newC.append(component)
-        ica.components = newC
+            s1 = np.sum(cd1)
+            s2 = np.sum(cd2)
+            if s1 > s2:
+                ss.append(s1)
+            else:
+                ss.append(s2)
+        for i in range(len(ica.components)):
+            if ss[i] > 0.2:
+                # this is an EMG artifact
+                print("hizo 0")
+                ica.components[i] = np.array([0.0] * len(ica.components[i]))
 
 
 def eliminateArtifacts(eegs, icas):
