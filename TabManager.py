@@ -18,8 +18,7 @@ class TabManager(aui.AuiNotebook):
         w = parent.GetParent().Size[0] / 6
         h = parent.GetParent().Size[1] / 2.1
         aui.AuiNotebook.__init__(self, p, size=(w, h),
-                                 style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
-                                       | aui.AUI_NB_WINDOWLIST_BUTTON)
+                                 style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE))
         # parameters for window size
         self.par = parent
         # this takes the global window length

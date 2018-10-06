@@ -196,7 +196,7 @@ class EEGTabV(wx.Panel):
     without window tools'''
 
     def __init__(self, p, e, prev):
-        wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size))
+        wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=p.Size)
         self.eeg = e
         self.eegGraph = None
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)

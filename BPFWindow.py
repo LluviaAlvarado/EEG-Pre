@@ -31,16 +31,26 @@ class BFPWindow(wx.Frame):
         # setting the cursor to loading
         self.SetStatus("", 0)
         self.Centre()
+        self.navigationTabs.GetCurrentPage().fillEEGTabs(prev)
         self.Show()
 
     def loadingNew(self, event):
         # set loading status when eeg is changed
         self.SetStatus("Loading EEG...", 0)
+        self.navigationTabs.GetCurrentPage().eegTabs.DeleteAllPages()
 
     def loadingFinished(self, event):
         # return mouse to normal after load
         event.GetEventObject().CurrentPage.Refresh()
+        self.addP()
         wx.CallLater(0, lambda: self.SetStatus("", 0))
+
+    def addP(self):
+        n = self.navigationTabs.GetCurrentPage().name
+        eegs = self.project.EEGS
+        for eeg in eegs:
+            if n in eeg.name:
+                self.navigationTabs.GetCurrentPage().addTab(eeg, False)
 
     def SetStatus(self, st, mouse):
         self.SetStatusText(st)
@@ -54,7 +64,8 @@ class BFPWindow(wx.Frame):
     def fillnavigationTabs(self, prev):
         eegs = self.GetParent().eegs
         for eeg in eegs:
-            self.addNav(eeg, prev)
+            if "~" not in eeg.name:
+                self.addNav(eeg, prev)
 
     def addNav(self, e, prev):
         page = tab(self.navigationTabs, self.project, e.name, prev, self.GetParent().eegs)
@@ -73,6 +84,7 @@ class tab(wx.Panel):
         self.project = project
         self.name = name
         self.eegs = eegs
+        self.prev = prev
         # frame will contain the base container of window editor and eeg tabs
         frameSizer = wx.BoxSizer(wx.VERTICAL)
         # EEG tabs
@@ -80,7 +92,7 @@ class tab(wx.Panel):
                                        style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                              | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
-        self.fillEEGTabs(prev)
+        #self.fillEEGTabs(prev)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
         frameSizer.Add(self.eegTabs, 0, wx.EXPAND, 3)
