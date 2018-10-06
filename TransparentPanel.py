@@ -21,6 +21,7 @@ class zoomPanel(wx.Panel):
     def MovingMouse(self, pos):
         self.zEnd = pos
         if self.zoom and self.zStart is not None:
+            self.GetParent().Refresh()
             self.OnPaint()
 
     def OnClickReleased(self, pos):
@@ -38,7 +39,6 @@ class zoomPanel(wx.Panel):
 
     # needs to repaint the eegraph and adds the zoom rectangle
     def OnPaint(self):
-        # self.GetParent().graph.paint = True
         dc = wx.ClientDC(self)
         gc = wx.GraphicsContext.Create(dc)
         if self.zoom:
@@ -51,12 +51,17 @@ class zoomPanel(wx.Panel):
                     w = 0
                     h = 0
                 else:
-                    w = self.zEnd[0] - self.zStart[0]
-                    h = self.zEnd[1] - self.zStart[1]
-                path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
+                    if self.zEnd[1] >= self.zStart[1]:
+                        w = self.zEnd[0] - self.zStart[0]
+                        h = self.zEnd[1] - self.zStart[1]
+                        path.AddRectangle(self.zStart[0], self.zStart[1], w, h)
+                    else:
+                        w = self.zStart[0] - self.zEnd[0]
+                        h = self.zStart[1] - self.zEnd[1]
+                        path.AddRectangle(self.zEnd[0], self.zEnd[1], w, h)
                 gc.FillPath(path)
                 gc.StrokePath(path)
-            self.GetParent().Refresh()
+
 
 
 class windowPanel(wx.Panel):

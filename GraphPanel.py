@@ -189,6 +189,10 @@ class graphPanel(wx.Panel):
             self.resetZoom()
 
     def setZoom(self, start, end):
+        if start[1] > end[1]:
+            temp = start
+            start = end
+            end = temp
         # adding this zoom to the pile
         self.zoomPile.append([self.strMs, self.timeLapse, self.incx, self.strCh, self.endCh, self.msShowing])
         self.zoom = True
@@ -211,7 +215,7 @@ class graphPanel(wx.Panel):
                 break
             i += 1
         self.endCh = i + 1
-        if self.endCh <= self.strCh:
+        if self.endCh == self.strCh:
             self.endCh = self.strCh + 1
         tmpE = self.endCh - self.strCh
         self.strCh += tmpS

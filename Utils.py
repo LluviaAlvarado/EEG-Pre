@@ -87,13 +87,13 @@ def writeWindowFiles(project, windows, path):
 
 def eegs_copy(eegs, tmp):
     copy_eegs = []
-    copi = 0
     if tmp != None:
         tmp.clear()
         copy_eegs = []
         for eeg in eegs:
-            copy_eegs.append(eeg_copy(eeg,tmp))
+            copy_eegs.append(eeg_copy(eeg, tmp))
     return copy_eegs
+
 
 def eeg_copy(eeg, tmp):
     copi = copy(tmp)
@@ -105,8 +105,11 @@ def eeg_copy(eeg, tmp):
     windows = []
     for w in copy_eeg.windows:
         windows.append(copy(w))
+    additional = []
+    for i in copy_eeg.additionalData:
+        additional.append(copy(i))
+    copi.additionalData = additional
     copi.windows = windows
-    copi.additionalData = copy_eeg.additionalData
     copi.amUnits = copy_eeg.amUnits
     copi.duration = copy_eeg.duration
     copi.filterHz = copy_eeg.filterHz

@@ -187,7 +187,7 @@ class FilesWindow(wx.Frame):
         # setting cursor to wait to inform user
         myCursor = wx.Cursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
-        self.GetParent().SetStatusText("Cargando Archivos...")
+        self.GetParent().setStatus("Cargando Archivos...", 1)
         reader = FileReaderWriter()
         errorFiles = []
         currentAmount = len(self.GetParent().project.EEGS)
@@ -225,11 +225,11 @@ class FilesWindow(wx.Frame):
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
         if len(self.GetParent().project.EEGS) < 1:
-            self.GetParent().SetStatusText("Esperando por Archivos de EEG...")
+            self.GetParent().setStatus("Esperando por Archivos de EEG...", 0)
         else:
             self.windowButton.Enable()
             self.saveButton.Enable()
-            self.GetParent().SetStatusText("")
+            self.GetParent().setStatus("", 0)
 
     def checkProjectEEGs(self, errorFiles):
         EEGS = self.GetParent().project.EEGS
@@ -298,18 +298,19 @@ class FilesWindow(wx.Frame):
 
     def removeFile(self, event):
         index = self.filesList.GetSelection()
-        # remove from the egg list
-        self.GetParent().project.EEGS.remove(self.GetParent().project.EEGS[index])
-        # update listbox
-        self.filesList.Delete(index)
-        self.pbutton.eegs = self.GetParent().project.EEGS
-        self.GetParent().ForwardChanges(self.pbutton)
-        # if no more files left
-        if len(self.GetParent().project.EEGS) == 0:
-            self.GetParent().project.reset()
-            self.windowButton.Disable()
-            self.saveButton.Disable()
-            self.windowCSV.SetLabel("No se ha cargado un archivo .csv")
+        if len(self.GetParent().project.EEGS) > 0:
+            # remove from the egg list
+            self.GetParent().project.EEGS.remove(self.GetParent().project.EEGS[index])
+            # update listbox
+            self.filesList.Delete(index)
+            self.pbutton.eegs = self.GetParent().project.EEGS
+            self.GetParent().ForwardChanges(self.pbutton)
+            # if no more files left
+            if len(self.GetParent().project.EEGS) == 0:
+                self.GetParent().project.reset()
+                self.windowButton.Disable()
+                self.saveButton.Disable()
+                self.windowCSV.SetLabel("No se ha cargado un archivo .csv")
 
     def openWindowEditor(self, event):
         index = event.GetEventObject().Selection

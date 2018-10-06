@@ -87,7 +87,7 @@ class WorkingAnimation(wx.Frame):
         sizer = wx.BoxSizer(wx.VERTICAL)
         image = None
         message = ""
-        self.SetWindowStyle(wx.STAY_ON_TOP | wx.FRAME_FLOAT_ON_PARENT)
+        self.SetWindowStyle(wx.FRAME_FLOAT_ON_PARENT)
         if type == 'search':
             image = os.getcwd() + "\\src\\searching.gif"
             message = "Eliminando Artefactos..."

@@ -9,7 +9,7 @@ from WindowDialog import ModuleHint
 from SilhouetteWindow import SilhouetteWindow
 from RandIndexWindow import RandIndexWindow
 from Utils import eegs_copy
-from copy import copy, deepcopy
+from copy import deepcopy
 
 
 class Module():
@@ -168,26 +168,27 @@ class ModuleButton(wx.BitmapButton):
             self.GetParent().AddModule(self)
         else:
             self.GetParent().HidePossible()
-            if self.window is None:
-                self.actions = []
-                if self.module == 0:
-                    self.window = FilesWindow(self.GetParent(), self)
-                elif self.module == 1:
-                    self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
-                elif self.module == 2:
-                    self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
-                elif self.module == 3:
-                    self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
-                elif self.module == 4:
-                    self.window = KMeansWindow(self.GetParent(), self.parent, self.actions, self)
-                elif self.module == 5:
-                    self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
-                elif self.module == 6:
-                    self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
-                elif self.module == 7:
-                    self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
-                else:
-                    pass
+            if self.window is not None:
+                self.window.Hide()
+            self.actions = []
+            if self.module == 0:
+                self.window = FilesWindow(self.GetParent(), self)
+            elif self.module == 1:
+                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+            elif self.module == 2:
+                self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
+            elif self.module == 3:
+                self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
+            elif self.module == 4:
+                self.window = KMeansWindow(self.GetParent(), self.parent, self.actions, self)
+            elif self.module == 5:
+                self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
+            elif self.module == 6:
+                self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
+            elif self.module == 7:
+                self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
+            else:
+                pass
             self.window.Show()
         e.Skip()
 
@@ -195,7 +196,10 @@ class ModuleButton(wx.BitmapButton):
         self.window = None
 
     def updateEEGS(self, eegs):
-        self.eegs = eegs
+        tmp = None
+        if len(eegs) > 0:
+            tmp = deepcopy(eegs[0])
+        self.eegs = eegs_copy(eegs, tmp)
         if self.window is None:
             if self.module == 0:
                 self.window = FilesWindow(self.GetParent(), self)

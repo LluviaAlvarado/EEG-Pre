@@ -49,9 +49,6 @@ class ModuleManager(wx.Panel):
     def ForwardChanges(self, r):
         self.modules.ForwardChanges(r)
 
-    def SetStatusText(self, text):
-        self.GetParent().SetStatusText(text)
-
     def setStatus(self, text, mouse):
         self.GetParent().setStatus(text, mouse)
 
@@ -112,9 +109,6 @@ class ModuleManager(wx.Panel):
 
     def GetTree(self):
         return self.modules.SaveTree()
-
-    def SetStatusText(self, s):
-        pass
 
     def closeWindows(self):
         self.modules.closeAll()

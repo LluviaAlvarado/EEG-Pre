@@ -240,7 +240,6 @@ def autoRemoveMuscular(icas):
         for i in range(len(ica.components)):
             if ss[i] > 0.2:
                 # this is an EMG artifact
-                print("hizo 0")
                 ica.components[i] = np.array([0.0] * len(ica.components[i]))
 
 

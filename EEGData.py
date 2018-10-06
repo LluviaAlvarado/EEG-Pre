@@ -54,7 +54,10 @@ class EEGData:
             return self.channels[i]
         else:
             try:
-                return self.additionalData[i]
+                if len(self.channels) == 0:
+                    return self.additionalData[i]
+                else:
+                    return self.additionalData[i - len(self.channels)]
             except:
                 return None
 

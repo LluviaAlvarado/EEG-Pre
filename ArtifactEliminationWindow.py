@@ -57,7 +57,7 @@ class ArtifactEliminationWindow(wx.Frame):
     def ReDo(self, actions, eegs):
         self.eegs = eegs
         # this redo's the automatic elimination after forward
-        if len(actions) > 0:
+        if len(actions) > 0 and len(self.eegs) > 0:
             # setting cursor to wait to inform user
             self.GetParent().setStatus("Buscando Artefactos...", 1)
             self.loading = WorkingAnimation(self.GetParent(), 'search')
@@ -107,12 +107,13 @@ class ArtifactEliminationWindow(wx.Frame):
         if apply:
             # setting cursor to wait to inform user
             self.GetParent().setStatus("Buscando Artefactos...", 1)
-            self.loading = WorkingAnimation(self.GetParent(), 'search')
+            self.loading = WorkingAnimation(self, 'search')
             self.loading.Play()
             # saving the current state of EEGs
             for eeg in self.eegs:
                 eeg.SaveState()
             self.actions = artifactSelected
+            self.pbutton.actions = artifactSelected
             threading.Thread(target=self.apply, args=[artifactSelected]).start()
 
     def removeEOG(self):
