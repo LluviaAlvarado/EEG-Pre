@@ -12,7 +12,7 @@ from Utils import eegs_copy
 from copy import deepcopy
 
 
-class Module():
+class Module:
     '''windows:
     0 = File
     1 = Filter
@@ -22,24 +22,23 @@ class Module():
     5 = D Tree
     6 = Silhouette
     7 = Randindex'''
-    def __init__(self, w, lv, p=None, eegs=[], ch=[]):
+    def __init__(self, w, p=None, eegs=[], ch=[], db=None, sel=None):
         self.eegs = eegs
         self.parent = p
         self.children = ch
         self.window = w
-        self.lv = lv
+        self.windowDB = db
+        self.windowSelec = sel
 
 
-class ModuleButton(wx.BitmapButton):
+class ModuleButton:
 
-    def __init__(self, parent, module, eegs, lv=0, p=None, bw=False):
+    def __init__(self, id, parent, module, eegs, p=None):
+        self.ID = id
         self.module = module
-        self.bw = bw
         self.km = None
-        bmp = self.GetBMP(bw)
-        wx.BitmapButton.__init__(self, parent, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=bmp, size=(bmp.GetWidth(), bmp.GetHeight()))
         self.parent = p
-        self.lv = lv
+        self.parentWindow = parent
         self.children = []
         tmp = None
         if len(eegs) > 0:
@@ -50,67 +49,9 @@ class ModuleButton(wx.BitmapButton):
         self.windowSelec = None
         self.hint = None
         self.window = None
-        self.Bind(wx.EVT_BUTTON, self.OpenModule)
-        self.Bind(wx.EVT_ENTER_WINDOW, self.Hover)
-        self.Bind(wx.EVT_LEAVE_WINDOW, self.UnHover)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.ShowModules)
 
-    def GetBMP(self, bw):
-        if bw:
-            #TODO agregar imagenes grises
-            if self.module == 1:
-                bmp = wx.Bitmap("Images/gFiltradoIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 2:
-                bmp = wx.Bitmap("Images/gEliminacionAIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 3:
-                bmp = wx.Bitmap("Images/gCaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 4:
-                bmp = wx.Bitmap("Images/gKmeansIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 5:
-                bmp = wx.Bitmap("Images/gArbolDIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 6:
-                bmp = wx.Bitmap("Images/gSilhouetteIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 7:
-                bmp = wx.Bitmap("Images/gRandindexIMG.png", wx.BITMAP_TYPE_PNG)
-        else:
-            if self.module == 0:
-                bmp = wx.Bitmap("Images/ArchivoIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 1:
-                bmp = wx.Bitmap("Images/FiltradoIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 2:
-                bmp = wx.Bitmap("Images/EliminacionAIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 3:
-                bmp = wx.Bitmap("Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 4:
-                bmp = wx.Bitmap("Images/KmeansIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 5:
-                bmp = wx.Bitmap("Images/ArbolDIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 6:
-                bmp = wx.Bitmap("Images/SilhouetteIMG.png", wx.BITMAP_TYPE_PNG)
-            elif self.module == 7:
-                bmp = wx.Bitmap("Images/RandindexIMG.png", wx.BITMAP_TYPE_PNG)
-        return bmp
-
-    def Hover(self, e):
-        if self.bw:
-            # when a possible is hovered it shows colored img
-            bmp = self.GetBMP(False)
-            self.SetBitmap(bmp)
-        x = self.Position.x + self.Size[0]
-        y = self.Position.y + self.Size[1] / 2
-        self.hint = ModuleHint(self, self.module, wx.Point(x, y))
-        self.hint.Show()
-
-    def UnHover(self, e):
-        if self.bw:
-            # when a possible is un-hovered it shows gray img
-            bmp = self.GetBMP(True)
-            self.SetBitmap(bmp)
-        self.hint.Close()
-
-    def ShowModules(self, e):
-        self.GetParent().HidePossible()
-        self.GetParent().ShowPossibleModules(self, self.GetPosible())
+    def GetParent(self):
+        return self.parentWindow
 
     def isChildren(self, m):
         for ch in self.children:
@@ -126,7 +67,7 @@ class ModuleButton(wx.BitmapButton):
             i += 1
         return -1
 
-    def GetPosible(self):
+    def GetPossible(self):
         posible = []
         if self.module == 0:
             # file can add filter and artifact and attributes.
@@ -163,34 +104,31 @@ class ModuleButton(wx.BitmapButton):
                 posible.append(7)
         return posible
 
-    def OpenModule(self, e):
-        if self.bw:
-            self.GetParent().AddModule(self)
+    def OpenModule(self):
+        self.GetParent().HidePossible()
+        if self.window is not None:
+            self.window.Hide()
+        self.actions = []
+        if self.module == 0:
+            self.window = FilesWindow(self.GetParent(), self)
+        elif self.module == 1:
+            self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+        elif self.module == 2:
+            self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
+        elif self.module == 3:
+            self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
+        elif self.module == 4:
+            self.window = KMeansWindow(self.GetParent(), self.parent, self.actions, self)
+        elif self.module == 5:
+            self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
+        elif self.module == 6:
+            self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
+        elif self.module == 7:
+            self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
         else:
-            self.GetParent().HidePossible()
-            if self.window is not None:
-                self.window.Hide()
-            self.actions = []
-            if self.module == 0:
-                self.window = FilesWindow(self.GetParent(), self)
-            elif self.module == 1:
-                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
-            elif self.module == 2:
-                self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
-            elif self.module == 3:
-                self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
-            elif self.module == 4:
-                self.window = KMeansWindow(self.GetParent(), self.parent, self.actions, self)
-            elif self.module == 5:
-                self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
-            elif self.module == 6:
-                self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
-            elif self.module == 7:
-                self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
-            else:
-                pass
-            self.window.Show()
-        e.Skip()
+            pass
+        self.window.Show()
+        self.window.Raise()
 
     def onCloseModule(self):
         self.window = None
@@ -222,12 +160,12 @@ class ModuleButton(wx.BitmapButton):
         self.window.ReDo(self.actions, eegs)
 
 
-class ModuleTree():
+class ModuleTree:
 
     def __init__(self, parent, eegs):
+        self.idCount = 0
         self.parent = parent
-        self.root = ModuleButton(parent, 0, eegs)
-        parent.sizer.Add(self.root, 0, wx.CENTER | wx.ALL, 2)
+        self.root = ModuleButton(self.idCount, parent, 0, eegs)
 
     def closeW(self, r):
         for c in r.children:
@@ -239,17 +177,19 @@ class ModuleTree():
         self.closeW(self.root)
 
     def AddModule(self, module):
+        self.idCount += 1
+        module.ID = self.idCount
         module.parent.children.append(module)
 
-    def searchTree(self, r, mod, lv, l):
+    def searchTree(self, r, id):
         if len(r.children) > 0:
             for c in r.children:
-                 return self.searchTree(c, mod, lv, l+1)
-        if r.module == mod and l == lv:
+                 return self.searchTree(c, id)
+        if r.ID == id:
             return r
 
-    def GetModule(self, module, lv):
-        m = self.searchTree(self.root, module, lv, 0)
+    def GetModule(self, id):
+        m = self.searchTree(self.root, id)
         return m
 
     def DeleteModule(self, p):
@@ -269,7 +209,7 @@ class ModuleTree():
         chr = []
         for c in r.children:
             self.convertTree(c, chr)
-        ch.append(Module(r.module, r.lv, r.parent, r.eegs, chr))
+        ch.append(Module(r.module, r.parent, r.eegs, chr, r.windowDB, r.windowSelec))
 
     def SaveTree(self):
         ch = []
@@ -282,7 +222,10 @@ class ModuleTree():
         chr = []
         for c in r.children:
             self.createTree(c, chr)
-        button = ModuleButton(self.parent, r.module, r.eegs, r.lv, r.parent)
+        button = ModuleButton(self.idCount, self.parent, r.module, r.eegs, r.parent)
+        self.idCount += 1
+        button.windowDB = r.windowDB
+        button.windowSelec = r.windowSelec
         button.children = chr
         ch.append(button)
 

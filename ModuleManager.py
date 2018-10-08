@@ -1,48 +1,46 @@
 import wx
 from ModuleTree import ModuleTree, ModuleButton
+from WindowDialog import ModuleHint
+from os import getcwd
 '''This class manages the module tree from the main menu'''
-class Level():
-
-    def __init__(self, sizer, n):
-        self.sizer = sizer
-        self.childs = []
-        for i in range(n):
-            self.AddChild()
-
-    def AddChild(self):
-        s = wx.BoxSizer(wx.HORIZONTAL)
-        self.childs.append(s)
-        self.sizer.AddSpacer(10)
-        self.sizer.Add(s, 0, wx.EXPAND | wx.ALL, 5)
-
-    def GetLevelModules(self):
-        m = 0
-        for ch in self.childs:
-            m += ch.GetItemCount()
-        return m
-
-    def GetMIdx(self, p):
-        i = 0
-        for ch in self.childs:
-            for child in ch.GetChildren():
-                if child.Window == p:
-                    return i
-            i += 1
-        return -1
-
 
 class ModuleManager(wx.Panel):
 
     def __init__(self, parent, project):
         wx.Panel.__init__(self, parent, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.levels = []
-        # saves de sizer containing the current possibles for elimination
-        self.psizer = None
+        self.treeView = wx.TreeCtrl(self, size=self.GetParent().GetSize(), style=wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
         self.modules = ModuleTree(self, project.EEGS)
+        #110x110px size of button images
+        image_list = wx.ImageList(110, 110)
+        image_list.Add(wx.Image(getcwd()+"/Images/ArchivoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/FiltradoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/gFiltradoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/EliminacionAIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/gEliminacionAIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/gCaracteristicasIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/KmeansIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/gKmeansIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/ArbolDIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/gArbolDIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/SilhouetteIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/gSilhouetteIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/RandindexIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd()+"/Images/gRandindexIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        self.treeView.AssignImageList(image_list)
+        # adding the root to tree view
+        self.root = self.treeView.AddRoot("")
+        id = self.treeView.AppendItem(self.root, "", 0)
+        self.treeView.SetItemData(id, self.modules.root)
+        self.pModules = []
         # this class contains the whole project data
         self.project = project
+        self.sizer.Add(self.treeView, 0, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(self.sizer)
+        self.treeView.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OpenModule)
+        self.treeView.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.ShowPossibleModules)
+        self.treeView.Bind(wx.EVT_TREE_SEL_CHANGED, self.ModuleSelected)
         self.Bind(wx.EVT_RIGHT_DOWN, self.HidePossible)
         self.Bind(wx.EVT_LEFT_DOWN, self.HidePossible)
 
@@ -52,63 +50,109 @@ class ModuleManager(wx.Panel):
     def setStatus(self, text, mouse):
         self.GetParent().setStatus(text, mouse)
 
-    def HidePossible(self, event=None):
-        if self.psizer is not None:
-            l = 0
-            for child in self.psizer.GetChildren():
-                if child.Window.bw:
-                    self.psizer.Hide(child.Window)
-                    self.psizer.Remove(l)
-                else:
-                    l += 1
-        if event is not None:
-            event.Skip()
-
-    def ShowPossibleModules(self, p, modules):
-        if p.lv == len(self.levels):
-            # create new level for children
-            s = wx.BoxSizer(wx.HORIZONTAL)
-            if p.lv == 0:
-                n = 1
-                i = 0
-            else:
-                n = self.levels[p.lv-1].GetLevelModules()
-                i = self.levels[p.lv-1].GetMIdx(p)
-            self.levels.append(Level(s, n))
-            sizer = self.levels[len(self.levels)-1].childs[i]
-            self.sizer.Add(s, 0, wx.ALIGN_CENTER | wx.ALL, 0)
-        else:
-            if p.parent is None:
-                sizer = self.levels[p.lv].childs[0]
-            else:
-                i = self.levels[p.lv].GetMIdx(p)
-                sizer = self.levels[p.lv].childs[i]
-        self.psizer = sizer
-        # first lets clean the current ones
+    def OpenModule(self, e):
         self.HidePossible()
-        for m in modules:
-            btn = ModuleButton(self, m, p.eegs, p.lv+1, p, True)
-            sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 5)
-        self.sizer.Layout()
+        # this is needed to set focus on new frame
+        wx.CallAfter(self.openM, e.GetItem())
 
-    def AddModule(self, m):
-        if m.parent.lv == 0:
-            sizer = self.levels[m.parent.lv].childs[0]
-        else:
-            i = self.levels[m.parent.lv].GetMIdx(m.parent)
-            sizer = self.levels[m.parent.lv].childs[i]
-        m.bw = False
-        self.psizer = sizer
-        # first lets clean the current ones
+    def openM(self, item):
+        self.treeView.GetItemData(item).OpenModule()
+
+    def ModuleSelected(self, e):
+        idm = self.treeView.GetItemData(e.GetItem()).ID
+        for m in self.pModules:
+            if m.ID == idm:
+                self.treeView.SetItemImage(e.GetItem(), self.getImage(m.module, False))
+                self.AddModule(idm)
+                return
         self.HidePossible()
-        if m.parent.lv < len(self.levels) - 1:
-            # add childs to next level
-            self.levels[m.lv].AddChild()
-        self.sizer.Layout()
-        self.modules.AddModule(m)
+        #TODO poner informacion en la ventana del log
+
+    def getItem(self, module):
+        return self.searchTree(self.treeView.RootItem, module)
+
+    def searchTree(self, item, module):
+        childr = self.treeView.GetChildrenCount(item, False)
+        itm = None
+        if childr > 0:
+            (child, cookie) = self.treeView.GetFirstChild(item)
+            while child.IsOk():
+                if self.treeView.GetItemData(child) == module:
+                    itm = child
+                if itm is None:
+                    itm = self.searchTree(child, module)
+                (child, cookie) = self.treeView.GetNextChild(item, cookie)
+        return itm
+
+    def getImage(self, p, g):
+        image = 0
+        if g:
+            if p == 1:
+                image = 2
+            elif p == 2:
+                image = 4
+            elif p == 3:
+                image = 6
+            elif p == 4:
+                image = 8
+            elif p == 5:
+                image = 10
+            elif p == 6:
+                image = 12
+            elif p == 7:
+                image = 14
+        else:
+            if p == 1:
+                image = 1
+            elif p == 2:
+                image = 3
+            elif p == 3:
+                image = 5
+            elif p == 4:
+                image = 7
+            elif p == 5:
+                image = 9
+            elif p == 6:
+                image = 11
+            elif p == 7:
+                image = 13
+        return image
+
+    def HidePossible(self, e=None):
+        for m in self.pModules:
+            self.treeView.Delete(self.getItem(m))
+        self.pModules.clear()
+
+    def ShowPossibleModules(self, e):
+        # first hiding the actual possibles
+        self.HidePossible()
+        parent = self.treeView.GetItemData(e.GetItem())
+        if parent is not None:
+            possible = parent.GetPossible()
+            self.pModules = []
+            i = 1
+            for p in possible:
+                image = self.getImage(p, True)
+                idx = self.treeView.AppendItem(e.GetItem(), "", image)
+                module = ModuleButton(self.modules.idCount+i, self, p, parent.eegs, parent)
+                self.treeView.SetItemData(idx, module)
+                self.pModules.append(module)
+                i += 1
+            self.treeView.Expand(e.GetItem())
+
+    def AddModule(self, idm):
+        i = 0
+        for m in self.pModules:
+            if m.ID == idm:
+                break
+            i += 1
+        module = self.pModules.pop(i)
+        self.HidePossible()
+        self.modules.AddModule(module)
 
     def GetTree(self):
         return self.modules.SaveTree()
 
     def closeWindows(self):
+        self.HidePossible()
         self.modules.closeAll()

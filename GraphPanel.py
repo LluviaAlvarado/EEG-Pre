@@ -52,15 +52,12 @@ class graphPanel(wx.Panel):
         if self.move:
             if self.strMove is not None:
                 self.endMove = event.GetPosition()
-                self.moveGraph()
-                self.strMove = self.endMove
         else:
             self.GetParent().zoomP.MovingMouse(event.GetPosition())
         if self.newWin:
             self.GetParent().windowP.MovingMouse(event.GetPosition())
 
     def OnClickReleased(self, event):
-
         if self.move:
             if self.strMove is not None:
                 self.endMove = event.GetPosition()
@@ -98,7 +95,7 @@ class graphPanel(wx.Panel):
             # making sure it is a valid index
             if self.strCh < 0 or self.endCh < 0:
                 self.strCh = 0
-                self.endCh = chansShowing
+                self.endCh = self.strCh + chansShowing
             if self.strCh > len(self.eeg.channels) - 1 or self.endCh > self.totalChan - 1:
                 self.strCh = self.totalChan - chansShowing
                 self.endCh = self.totalChan

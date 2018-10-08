@@ -48,15 +48,12 @@ class CgraphPanel(wx.Panel):
         if self.move:
             if self.strMove is not None:
                 self.endMove = event.GetPosition()
-                self.moveGraph()
-                self.strMove = self.endMove
         else:
             self.GetParent().zoomP.MovingMouse(event.GetPosition())
         if self.newWin:
             self.GetParent().windowP.MovingMouse(event.GetPosition())
 
     def OnClickReleased(self, event):
-
         if self.move:
             if self.strMove is not None:
                 self.endMove = event.GetPosition()
@@ -75,7 +72,6 @@ class CgraphPanel(wx.Panel):
             pos = self.comPosition
             start = self.strMove
             end = self.endMove
-
             if len(pos) < 2:
                 compH = self.Size[1]
             else:
@@ -183,6 +179,10 @@ class CgraphPanel(wx.Panel):
             self.resetZoom()
 
     def setZoom(self, start, end):
+        if start[1] > end[1]:
+            temp = start
+            start = end
+            end = temp
         # adding this zoom to the pile
         self.zoomPile.append([self.strMs, self.timeLapse, self.incx, self.strComp, self.endComp, self.msShowing])
         self.zoom = True
