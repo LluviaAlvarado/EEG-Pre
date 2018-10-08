@@ -16,14 +16,13 @@ class ArtifactEliminationWindow(wx.Frame):
         opens a visualisation window
         """
 
-    def __init__(self, parent, eegs, actions, p):
+    def __init__(self, parent, eegs, p):
 
         wx.Frame.__init__(self, parent, -1, "Eliminación de Artefactos con FastICA")
         self.SetSize(250, 250)
         self.Centre()
         self.pbutton = p
         self.eegs = eegs
-        self.actions = actions
         self.viewer = None
         self.icas = []
         self.BPFwindow = None
@@ -112,7 +111,6 @@ class ArtifactEliminationWindow(wx.Frame):
             # saving the current state of EEGs
             for eeg in self.eegs:
                 eeg.SaveState()
-            self.actions = artifactSelected
             self.pbutton.actions = artifactSelected
             threading.Thread(target=self.apply, args=[artifactSelected]).start()
 

@@ -15,11 +15,10 @@ class WindowAttributes(wx.Frame):
     window that contains opciones para caratersar
     """
 
-    def __init__(self, parent, eegs , p, actions):
+    def __init__(self, parent, eegs, p):
         wx.Frame.__init__(self, parent, -1, "Caracterizar")
         self.SetSize(1000, 600)
         self.Centre()
-        self.actions = actions
         self.project = parent.project
         self.eegs = eegs
         self.parent = p
@@ -201,7 +200,7 @@ class WindowAttributes(wx.Frame):
         selectedAT = self.opcATList.GetCheckedItems()
         selectedCH = self.opcCHList.GetCheckedItems()
         selecCH = self.opcCHList.GetCheckedStrings()
-        self.actions = [selectedAT, selectedCH, selecCH]
+        self.parent.actions = [selectedAT, selectedCH, selecCH]
         for opc in selectedAT:
             if opc == 0 or opc == 1:
                 # Transformada rápida de Fourier(Magnitud y Fase)

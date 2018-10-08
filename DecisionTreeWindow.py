@@ -16,11 +16,10 @@ wildcard = "Portable Network Graphics (*.png)|*.png"
 
 class DecisionTreeWindow(wx.Frame):
 
-    def __init__(self, parent, wDB, labels, actions, p):
+    def __init__(self, parent, wDB, labels, p):
         wx.Frame.__init__(self, parent, -1, "Árbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.SetSize(300, 210)
         self.Centre()
-        self.actions = actions
         self.pbutton = p
         self.data = wDB
         self.db = []
@@ -62,11 +61,11 @@ class DecisionTreeWindow(wx.Frame):
         self.Destroy()
 
     def ReDo(self, actions, eegs):
-        dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.GetValue())
+        dtree = DecisionTree(self.db, self.target, self.labels, actions[0], actions[1])
         tv = treeView(self, dtree)
 
     def dtree(self, event):
-        self.actions = [self.mlC.GetValue(), self.mmC.GetValue()]
+        self.pbutton.actions = [self.mlC.GetValue(), self.mmC.GetValue()]
         dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.GetValue())
 
         tv = treeView(self, dtree)

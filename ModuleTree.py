@@ -112,15 +112,15 @@ class ModuleButton:
         if self.module == 0:
             self.window = FilesWindow(self.GetParent(), self)
         elif self.module == 1:
-            self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+            self.window = PreBPFW(self.GetParent(), self.eegs, self)
         elif self.module == 2:
             self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
         elif self.module == 3:
-            self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
+            self.window = WindowAttributes(self.GetParent(), self.eegs, self)
         elif self.module == 4:
-            self.window = KMeansWindow(self.GetParent(), self.parent, self.actions, self)
+            self.window = KMeansWindow(self.GetParent(), self.parent, self)
         elif self.module == 5:
-            self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
+            self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self)
         elif self.module == 6:
             self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
         elif self.module == 7:
@@ -138,19 +138,21 @@ class ModuleButton:
         if len(eegs) > 0:
             tmp = deepcopy(eegs[0])
         self.eegs = eegs_copy(eegs, tmp)
+        if len(self.eegs) == 0:
+            self.actions = []
         if self.window is None:
             if self.module == 0:
                 self.window = FilesWindow(self.GetParent(), self)
             elif self.module == 1:
-                self.window = PreBPFW(self.GetParent(), self.eegs, self.actions, self)
+                self.window = PreBPFW(self.GetParent(), self.eegs, self)
             elif self.module == 2:
-                self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
+                self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self)
             elif self.module == 3:
-                self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
+                self.window = WindowAttributes(self.GetParent(), self.eegs, self)
             elif self.module == 4:
-                self.window = KMeansWindow(self.GetParent(), self.windowDB, self.actions, self)
+                self.window = KMeansWindow(self.GetParent(), self.windowDB, self)
             elif self.module == 5:
-                self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self.actions, self)
+                self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self)
             elif self.module == 6:
                 self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
             elif self.module == 7:

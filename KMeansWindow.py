@@ -15,13 +15,12 @@ from SilhouetteWindow import *
 
 class KMeansWindow(wx.Frame):
 
-    def __init__(self, parent, wDB, actions, p):
+    def __init__(self, parent, wDB, p):
         wx.Frame.__init__(self, parent, -1, "K-Means", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.SetSize(230, 290)
         self.Centre()
         self.k = None
         self.pbutton = p
-        self.actions = actions
         self.parent = wDB
         self.data = wDB.windowDB
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
@@ -86,7 +85,7 @@ class KMeansWindow(wx.Frame):
             for c in range(len(self.data[r])-1):
                 t.append(self.data[r][c])
             self.db.append(t)
-        self.actions = [self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue()]
+        self.pbutton.actions = [self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue()]
         self.k = KMeans(self.db, self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue())
         self.parent.km = self.k
         self.viewButton.Enable()

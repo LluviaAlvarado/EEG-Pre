@@ -28,7 +28,7 @@ class PreBPFW(wx.Frame):
         open visualisation window
         """
 
-    def __init__(self, parent, eegs, actions, p):
+    def __init__(self, parent, eegs, p):
 
         wx.Frame.__init__(self, parent, -1, "Pre configuración del filtrado", )
         self.SetSize(500, 500)
@@ -37,7 +37,6 @@ class PreBPFW(wx.Frame):
         self.BPFwindow = None
         self.waves = self.defaultWaves()
         self.eegs = eegs
-        self.actions = actions
         self.customWaves = []
         # create base panel in the frame
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
@@ -76,7 +75,6 @@ class PreBPFW(wx.Frame):
         applyButton.Bind(wx.EVT_BUTTON, self.applyFilter)
         self.viewButton = wx.Button(self.pnl, label="Visualizar")
         self.viewButton.Bind(wx.EVT_BUTTON, self.openView)
-        self.viewButton.Disable()
         self.exportButton = wx.Button(self.pnl, label="Exportar")
         self.exportButton.Bind(wx.EVT_BUTTON, self.export)
         self.exportButton.Disable()
@@ -177,7 +175,7 @@ class PreBPFW(wx.Frame):
         for eeg in eegs:
             # applying for each band
             bands = self.GetSelected()
-            self.actions = bands
+            self.pbutton.actions = bands
             if len(bands) > 0:
                 flag = True
             for band in bands:
@@ -199,10 +197,8 @@ class PreBPFW(wx.Frame):
         self.eegs.extend(new)
         self.pbutton.eegs = self.eegs
         self.GetParent().ForwardChanges(self.pbutton)
-        self.GetParent().project.addMany(new)
         self.GetParent().setStatus("", 0)
         if flag:
-            self.viewButton.Enable()
             self.exportButton.Enable()
 
     def openView(self, event):
@@ -216,6 +212,7 @@ class PreBPFW(wx.Frame):
         self.eegs = es
         eegs = self.eegs
         new = []
+        flag = False
         for eeg in eegs:
             # applying for each band
             bands = actions
@@ -239,5 +236,6 @@ class PreBPFW(wx.Frame):
                 neweeg.name += "~" + str(band.lowFrequency) + "~" + str(band.hiFrequency)
                 new.append(neweeg)
         self.eegs.extend(new)
-        self.GetParent().project.addMany(new)
         self.GetParent().setStatus("", 0)
+        if flag:
+            self.exportButton.Enable()
