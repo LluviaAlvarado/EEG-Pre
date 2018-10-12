@@ -1,64 +1,74 @@
 import numpy as np
+from Utils import sampleToMS
 
-class WindowCharacterization():
+
+class WindowCharacterization:
 
     def getMV(self, eegs, ch):
-        MV = []
         MVE = []
+        # gets the max-min voltaje of eeg and ms when it happened
         for eeg in eegs:
             MV = []
-            for channel in ch:
-                maxs = []
-                mins = []
-                for w in eeg.windows:
-                    max = np.amax(w.readings[channel])
-                    min = np.amin(w.readings[channel])
-                    maxs.append(max)
-                    mins.append(min)
-                    # getting the average max voltage per window
-                max = np.average(maxs)
-                min = np.average(mins)
-                MV.append([min, max])
+            max = 0
+            msmax = 0
+            min = 0
+            msmin = 0
+            for i in ch:
+                mx = np.amax(eeg.channels[i].readings)
+                mn = np.amin(eeg.channels[i].ch.readings)
+                if mx > max:
+                    max = mx
+                    imax = np.argmax(ch.readings)
+                    msmax = sampleToMS(imax, eeg.frequency, eeg.duration)
+                if mn < min:
+                    min = mn
+                    imin = np.argmin(ch.readings)
+                    msmin = sampleToMS(imin, eeg.frequency, eeg.duration)
+            MV.append([[min, msmin], [max, msmax]])
             MVE.append(MV)
         return MVE
 
-    def getMagFase(self, eegs, amountHF, ch):
-        MagFaseE = []
+    def getFas(self, eegs, n, ch):
+        FasE = []
         for eeg in eegs:
-            MagFas = []
-            for channel in ch:
-                ffts = []
-                Mag = []
-                Fase =[]
-                for w in eeg.windows:
-                    fourier = np.fft.rfft(w.readings[channel], len(w.readings[channel]))
-                    index = int((len(w.readings[channel]) / 2) - amountHF)
-                    group = []
-                    for i in range(index, int(len(w.readings[channel]) / 2)):
-                        group.append(fourier[i])
-                    ffts.append(group)
-                    for i in range(amountHF):
-                        aux = []
-                        for fft in ffts:
-                            aux.append(fft[i])
-                        fft = np.average(aux)
-                        # getting the magnitude and fase for each value of fft
-                        magnitude = np.sqrt(np.exp2(fft.real) + np.exp2(fft.imag))
-                        fase = np.arctan((np.exp2(fft.imag) / np.exp2(fft.real)))
-                        Mag.append(magnitude)
-                        Fase.append(fase)
-                for i in range(amountHF):
-                    n = i
-                    fc =[]
-                    fm =[]
-                    for u in range(len(eeg.windows)):
-                        fc.append(Fase[n])
-                        fm.append(Mag[n])
-                        n += amountHF
-                    MagFas.append([np.average(fm), np.average(fc)])
-                    i += amountHF
-            MagFaseE.append(MagFas)
-        return MagFaseE
+            Fase = []
+            frFas = []
+            for i in range(n):
+                Fase.append(0)
+                frFas.append(0)
+            for i in ch:
+                fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
+                mags = []
+                for v in range(len(fft)):
+                    # getting the fase for each value of fft
+                    fase = np.arctan((np.exp2(fft.imag) / np.exp2(fft.real)))
+                    for j in range(n):
+                        if fase > Fase[j]:
+                            Fase[j] = fase
+                            frFas[j] = v
+            FasE.append([Fase, frFas])
+        return FasE
+
+    def getMag(self, eegs, n, ch):
+        MagE = []
+        for eeg in eegs:
+            Mag = []
+            msMag = []
+            for i in range(n):
+                Mag.append(0)
+                msMag.append(0)
+            for i in ch:
+                fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
+                mags = []
+                for v in range(len(fft)):
+                    # getting the magnitude for each value of fft
+                    magnitude = np.sqrt(np.exp2(fft[v].real) + np.exp2(fft[v].imag))
+                    for j in range(n):
+                        if magnitude > Mag[j]:
+                            Mag[j] = magnitude
+                            msMag[j] = v
+            MagE.append([Mag, msMag])
+        return MagE
 
     def getAUC(self, eegs, ch):
         AUCE =[]

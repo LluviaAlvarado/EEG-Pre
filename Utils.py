@@ -80,9 +80,8 @@ def writeWindowFiles(project, windows, path):
             # deleting the prev file and txt
             remove(file)
             remove(txt)
-        # writing windowFiles
-        FileReaderWriter().writeWindowFiles(windows, file, txt, project.windowLength,
-                project.windowTBE)
+    # writing windowFiles
+    FileReaderWriter().writeWindowFiles(windows, file, txt, project.windowLength, project.windowTBE)
 
 
 def eegs_copy(eegs, tmp):

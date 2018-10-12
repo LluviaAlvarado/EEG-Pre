@@ -11,6 +11,17 @@ class WindowEEG:
         # contains the readings of the selected channels just for this window
         self.readings = self.fillReadings(eeg)
 
+    def GetSE(self):
+        start = self.stimulus - self.TBE
+        end = start + self.length
+        return start, end
+
+    def GetReadsUpTo(self, e):
+        frequency = len(self.readings) / self.length
+        start = self.stimulus - self.TBE
+        e = int((e - start)*frequency)
+        return self.readings[0:e]
+
     def fillReadings(self, eeg):
         readings = []
         for ch in eeg.channels:
@@ -21,7 +32,7 @@ class WindowEEG:
             srd = int((start * totalReadings) / (eeg.duration * 1000))
             erd = int((end * totalReadings) / (eeg.duration * 1000))
             row = []
-            for i in range(srd, erd + 1):
+            for i in range(srd, erd):
                 row.append(ch.readings[i])
             readings.append(row)
         return readings

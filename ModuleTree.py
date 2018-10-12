@@ -116,7 +116,7 @@ class ModuleButton:
         elif self.module == 2:
             self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self)
         elif self.module == 3:
-            self.window = WindowAttributes(self.GetParent(), self.eegs, self)
+            self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
         elif self.module == 4:
             self.window = KMeansWindow(self.GetParent(), self.parent, self)
         elif self.module == 5:
@@ -132,6 +132,11 @@ class ModuleButton:
 
     def onCloseModule(self):
         self.window = None
+
+    def CreateConcatenated(self):
+        # only works for file window
+        self.window = FilesWindow(self.GetParent(), self)
+        self.window.setButtonEEGs()
 
     def updateEEGS(self, eegs):
         tmp = None

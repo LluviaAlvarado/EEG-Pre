@@ -15,7 +15,7 @@ class WindowAttributes(wx.Frame):
     window that contains opciones para caratersar
     """
 
-    def __init__(self, parent, eegs, p):
+    def __init__(self, parent, eegs, p, actions):
         wx.Frame.__init__(self, parent, -1, "Caracterizar")
         self.SetSize(1000, 600)
         self.Centre()

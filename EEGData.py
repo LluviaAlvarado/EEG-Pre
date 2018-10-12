@@ -2,7 +2,7 @@
 from the EEG files'''
 # lib imports
 import numpy as np
-from copy import deepcopy
+from copy import deepcopy, copy
 # local imports
 from Channel import *
 from System10_20 import *
@@ -48,7 +48,6 @@ class EEGData:
     def setSaveState(self, eeg):
         self.prev = eeg
 
-
     def getChannel(self, i):
         if i < len(self.channels):
             return self.channels[i]
@@ -68,6 +67,24 @@ class EEGData:
     def addWindow(self, w):
         self.windows.append(w)
 
+    def SortWindows(self):
+        if len(self.windows) > 1:
+            # orders windows from shortest time to longer
+            w = []
+            i = 0
+            dtype = [('idx', int), ('start', float)]
+            for win in self.windows:
+                start, end = win.GetSE()
+                w.append((i, start))
+                i += 1
+            w = np.array(w, dtype=dtype)
+            w = np.sort(w, order='start')
+            aux = []
+            for i in range(len(w)):
+                idx = w[i]['idx']
+                aux.append(self.windows[idx])
+            self.windows = aux
+
     # adds windows loaded by a csv
     def addMultipleWindows(self, windows, l, tbe):
         for st in windows:
@@ -79,21 +96,26 @@ class EEGData:
     def removeWindow(self, i):
         self.windows.remove(self.windows[i])
 
-    def windowOverlap(self):
-        # TODO check window overlap
-        return False
-
     def concatenateWindows(self):
-        concatenated = EEGData()
-        concatenated.filter = self.filter
-        # TODO concatenate windows
+        if len(self.windows) == 0:
+            return self
+        self.SortWindows()
+        channels = []
+        for ch in self.channels:
+            channels.append(Channel(ch.label, []))
+        for w in range(len(self.windows)-1):
+            for i in range(len(channels)):
+                reads = self.windows[w].readings[i]
+                start, end = self.windows[w].GetSE()
+                s, e = self.windows[w+1].GetSE()
+                if start <= s <= end:
+                    # there's overlapping
+                    reads = self.windows[w].GetReadsUpTo(s)
+                channels[i].readings.extend(reads)
+        concatenated = copy(self)
+        concatenated.channels = channels
+        concatenated.duration = len(channels[0].readings) / self.frequency
         return concatenated
-
-    def createConcatenatedEEG(self):
-        new = None
-        if not self.windowOverlap():
-            new = self.concatenateWindows()
-        return new
 
     def copyChannel(self, ch, labels):
         # making all labels 10/1 or 10/20 system

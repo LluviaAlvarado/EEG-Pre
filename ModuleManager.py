@@ -141,6 +141,8 @@ class ModuleManager(wx.Panel):
             for p in possible:
                 image = self.getImage(p, True)
                 idx = self.treeView.AppendItem(e.GetItem(), "", image)
+                if parent.module == 0:
+                    parent.CreateConcatenated()
                 module = ModuleButton(self.modules.idCount + i, self, p, parent.eegs, parent)
                 self.treeView.SetItemData(idx, module)
                 self.pModules.append(module)

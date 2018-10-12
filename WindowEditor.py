@@ -286,7 +286,10 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         self.buttons.append(self.btnMove)
         self.Bind(wx.EVT_BUTTON, self.Move, self.btnMove)
 
+        if self.graph.windowP is not None:
+            self.graph.windowP.setWindowState(0)
         if edit:
+            self.graph.windowP.setWindowState(2)
             self.btnNewwin = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_NEWWIN,
                                                                wx.Bitmap("src/new_window.png", wx.BITMAP_TYPE_PNG),
                                                                shortHelp='Nueva Ventana')
@@ -295,17 +298,17 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
             self.buttons.append(self.btnNewwin)
             self.Bind(wx.EVT_BUTTON, self.newWindow, self.btnNewwin)
 
-        self.all_w = wx.Bitmap("src/all_windows.png", wx.BITMAP_TYPE_PNG)
-        self.no_w = wx.Bitmap("src/no_windows.png", wx.BITMAP_TYPE_PNG)
-        self.sel_w = wx.Bitmap("src/selected_window.png", wx.BITMAP_TYPE_PNG)
+            self.all_w = wx.Bitmap("src/all_windows.png", wx.BITMAP_TYPE_PNG)
+            self.no_w = wx.Bitmap("src/no_windows.png", wx.BITMAP_TYPE_PNG)
+            self.sel_w = wx.Bitmap("src/selected_window.png", wx.BITMAP_TYPE_PNG)
 
-        # button for change view
-        self.btnView = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_VIEW,
-                                                         self.all_w,
-                                                         shortHelp='Todas las ventanas')
-        self.AddButton(self.btnView)
-        self.buttons.append(self.btnView)
-        self.Bind(wx.EVT_BUTTON, self.changeview, self.btnView)
+            # button for change view
+            self.btnView = wx.lib.agw.buttonpanel.ButtonInfo(self, self.ID_VIEW,
+                                                             self.all_w,
+                                                             shortHelp='Todas las ventanas')
+            self.AddButton(self.btnView)
+            self.buttons.append(self.btnView)
+            self.Bind(wx.EVT_BUTTON, self.changeview, self.btnView)
         ica = 0
         if self.graph.ica == None:
             max = self.graph.eeg.amUnits[0]

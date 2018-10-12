@@ -221,8 +221,7 @@ class FilesWindow(wx.Frame):
                 currentAmount += 1
         # showing errors that ocurred
         self.showErrorFiles(errorFiles)
-        self.pbutton.eegs = self.GetParent().project.EEGS
-        self.GetParent().ForwardChanges(self.pbutton)
+        self.SendOutputs()
         # returning normal cursor
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
@@ -308,8 +307,7 @@ class FilesWindow(wx.Frame):
             self.GetParent().project.EEGS.remove(self.GetParent().project.EEGS[index])
             # update listbox
             self.filesList.Delete(index)
-            self.pbutton.eegs = self.GetParent().project.EEGS
-            self.GetParent().ForwardChanges(self.pbutton)
+            self.SendOutputs()
             # if no more files left
             if len(self.GetParent().project.EEGS) == 0:
                 self.GetParent().project.reset()
@@ -330,3 +328,14 @@ class FilesWindow(wx.Frame):
 
     def ReDo(self, actions, eegs):
         pass
+
+    def SendOutputs(self):
+        # sends to children only an eeg with the selected windows
+        self.setButtonEEGs()
+        self.GetParent().ForwardChanges(self.pbutton)
+
+    def setButtonEEGs(self):
+        concatenated = []
+        for eeg in self.GetParent().project.EEGS:
+            concatenated.append(eeg.concatenateWindows())
+        self.pbutton.eegs = concatenated
