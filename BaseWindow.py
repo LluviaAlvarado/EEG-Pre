@@ -1,12 +1,15 @@
 import _pickle
 import gzip
 import os
+from copy import deepcopy
 
+from ConsoleW import *
+from CorrelationWindow import CorrelationWindow
+from HintWindow import *
 from ModuleManager import *
 from Project import *
-from copy import deepcopy
 from WindowDialog import WindowSaveOnExit
-from CorrelationWindow import CorrelationWindow
+
 wildcard = "EEG Pre Processing Project (*.eppp)|*.eppp"
 
 
@@ -17,15 +20,33 @@ class BaseWindow(wx.Frame):
         self.Maximize(True)
         self.currentDirectory = os.getcwd()
         self.project = Project()
-        self.moduleManager = ModuleManager(self, self.project)
+        self.pnl = wx.Panel(self, size=self.Size, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        collap = wx.Panel(self.pnl, size=(230, self.Size[1]), style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.hintPnl = HintPanel(collap)
+        self.logPnl = ConsolePanel(collap)
+
+        self.moduleManager = ModuleManager(self.pnl, self.project, self.logPnl)
         self.aux = Project()
         # create the menu bar that we don't need yet
         self.makeMenuBar()
+        csizer = wx.BoxSizer(wx.VERTICAL)
+
+        csizer.Add(self.hintPnl)
+        csizer.Add(self.logPnl)
+
+        collap.SetSizer(csizer)
+
         # create the status bar
         self.CreateStatusBar()
         self.SetStatusText("")
-
+        self.sizer.Add(collap)
+        self.sizer.Add(self.moduleManager)
+        self.pnl.SetSizer(self.sizer)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+        # self.logThread = threading.Thread(target=log_task, args=(self.logPnl,))
+        # self.logThread.start()
 
     def HidePossible(self, event):
         self.moduleManager.HidePossible()
@@ -102,7 +123,7 @@ class BaseWindow(wx.Frame):
     def makeMenuBar(self):
         """
         A menu bar is composed of menus, which are composed of menu items.
-        This method builds a set of menus and binds handlers to be called
+        This method builds a se of menus and binds handlers to be called
         when the menu item is selected.
         """
 
@@ -123,7 +144,7 @@ class BaseWindow(wx.Frame):
         # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(-1, "&Ayuda")
-        #TODO quitar correlacion
+        # TODO quitar correlacion
         corrItem = helpMenu.Append(-1, "&Correlación")
         # Make the menu bar and add the two menus to it. The '&' defines
         # that the next letter is the "mnemonic" for the menu item. On the
@@ -237,6 +258,29 @@ class BaseWindow(wx.Frame):
             f.close()
         # close all open windows
         self.moduleManager.closeWindows()
-        #self.setAux(self.project)
+        # self.setAux(self.project)
         dlg.Destroy()
         self.setStatus("", 0)
+
+
+def log_task(panel):
+    load = ["\\", "|", "/", "-"]
+    o = 0
+    while panel.process:
+        if o == 4: o = 0
+        #  if panel.process:
+        tam = 0
+        for j in range(panel.logconsole.GetNumberOfLines()):
+            tam += len(panel.logconsole.GetLineText(j)) + 2
+        tam -= 2
+        panel.logconsole.Remove(tam - 1, tam)
+        panel.append_txt(load[o])
+        #  else:
+        #      text = ""
+        #      if panel.message != "":
+        #          currentDT = datetime.datetime.now()
+        #          text = currentDT.strftime("%H:%M:%S") + " " + panel.message
+        #      panel.append_txt(text)
+        #      panel.message = ""
+        time.sleep(.01)
+        o += 1

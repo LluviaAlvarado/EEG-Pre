@@ -66,7 +66,6 @@ class ArtifactEliminationWindow(wx.Frame):
                 eeg.SaveState()
             threading.Thread(target=self.apply, args=[actions]).start()
 
-
     def export(self, event):
         # setting cursor to wait to inform user
         self.GetParent().setStatus("Exportando...", 1)
@@ -182,5 +181,3 @@ class ArtifactEliminationWindow(wx.Frame):
         if self.BPFwindow is not None:
             self.BPFwindow.Hide()
         self.BPFwindow = BFPWindow(self, True)
-
-

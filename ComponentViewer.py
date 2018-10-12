@@ -24,10 +24,10 @@ class ComponentViewer(wx.Frame):
         # button to eliminate artifacts
         eliminate = wx.Button(self, label="Eliminar Artefactos")
         eliminate.Bind(wx.EVT_BUTTON, self.Eliminate)
-        frameSizer.Add(eliminate, 0,  wx.ALIGN_RIGHT, 1)
+        frameSizer.Add(eliminate, 0, wx.ALIGN_RIGHT, 1)
         frameSizer.Add(topSizer, 0, wx.EXPAND | wx.ALL, 1)
         # EEG tabs
-        self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]-15),
+        self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
                                               style=aui.AUI_NB_DEFAULT_STYLE ^ (
                                                       aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                                     | aui.AUI_NB_WINDOWLIST_BUTTON)
@@ -37,7 +37,6 @@ class ComponentViewer(wx.Frame):
         frameSizer.Add(self.navigationTabs, 0, wx.EXPAND | wx.ALL, 3)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.SetSizer(frameSizer)
-
         # creating a status bar to inform user of process
         self.CreateStatusBar()
         # setting the cursor to loading
@@ -51,7 +50,7 @@ class ComponentViewer(wx.Frame):
         self.Close()
 
     def loadingNew(self, event):
-        # set loading status when eeg is changed
+        # se loading status when eeg is changed
         self.SetStatus("Loading EEG...", 0)
 
     def loadingFinished(self, event):
@@ -126,7 +125,7 @@ class ComponentTab(wx.Panel):
         leftPnl.SetSizer(componentContainer)
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 5)
         # component graphic information right side
-        rightPnl = wx.Panel(self, size=self.Size)
+        rightPnl = wx.Panel(self, size=(self.Size[0], self.Size[1] - 20))
         graphContainer = wx.BoxSizer(wx.VERTICAL)
         # panel for component graph
         self.graph = CGraph(rightPnl, self.ica, self.componentList, True)
@@ -164,6 +163,7 @@ class CGraph(wx.Panel):
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.ica = ica
         self.eeg = ica
+        self.windowP = None
         self.selected = selected
         self.toolbar = None
         # baseSizer

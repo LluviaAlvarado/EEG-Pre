@@ -1,12 +1,12 @@
-#imports
+﻿# imports
 from sklearn.externals.six import StringIO
 import pydotplus
 from sklearn import tree
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
-from sklearn.model_selection import cross_val_score
 import os
-os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
+
+os.environ["PATH"] += os.pathsep + 'Graphviz2.38/bin/'
+
 
 class DecisionTree:
     '''takes as input two arrays:
@@ -21,10 +21,11 @@ class DecisionTree:
                                                             random_state=42)
         clf = tree.DecisionTreeClassifier(random_state=0, max_depth=md, min_samples_leaf=min)
         clf.fit(X_train, y_train)
-        #print('Accuracy on the training subset: '+ str(format(clf.score(X_train, y_train))))
-        #print('Accuracy on the test subset:'+str(format(clf.score(X_test, y_test))))
+        self.ATr = 'Precisión del entrenamiento:   ' + str(format(clf.score(X_train, y_train)))
+        self.ATe = 'Precisión :   ' + str(format(clf.score(X_test, y_test)))
         self.dotfile = StringIO()
         set_l = set(self.target)
         set_l = list(set_l)
-        tree.export_graphviz(clf, out_file=self.dotfile, feature_names=labels, class_names=set_l, filled=True, rounded=True,
-                         special_characters=True)
+        tree.export_graphviz(clf, out_file=self.dotfile, feature_names=labels, class_names=set_l, filled=True,
+                             rounded=True,
+                             special_characters=True)

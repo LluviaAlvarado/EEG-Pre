@@ -1,5 +1,6 @@
 # Imports
 import matplotlib
+
 matplotlib.use('WXAgg')
 import wx.lib.agw.buttonpanel
 import wx.lib.scrolledpanel
@@ -21,8 +22,10 @@ class KMeansWindow(wx.Frame):
         self.Centre()
         self.k = None
         self.pbutton = p
+        self.data = []
         self.parent = wDB
-        self.data = wDB.windowDB
+        if wDB != None:
+            self.data = wDB.windowDB
         self.pnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.baseSizer = wx.BoxSizer(wx.VERTICAL)
         self.H1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -68,25 +71,28 @@ class KMeansWindow(wx.Frame):
         self.pbutton.onCloseModule()
         self.Destroy()
 
-    def ReDo(self, actions):
+    def ReDo(self, actions, eegs):
+        self.db = []
+        if self.data != []:
+            for r in range(len(self.data)):
+                t = []
+                for c in range(len(self.data[r]) - 1):
+                    t.append(self.data[r][c])
+                self.db.append(t)
+            self.k = KMeans(self.db, actions[0], actions[1], actions[2], actions[3])
+            self.viewButton.Enable()
+
+    def kmeans(self, event):
         self.db = []
         for r in range(len(self.data)):
             t = []
             for c in range(len(self.data[r]) - 1):
                 t.append(self.data[r][c])
             self.db.append(t)
-        self.k = KMeans(self.db, actions[0], actions[1], actions[2], actions[3])
-        self.viewButton.Enable()
-
-    def kmeans(self, event):
-        self.db = []
-        for r in range(len(self.data)):
-            t = []
-            for c in range(len(self.data[r])-1):
-                t.append(self.data[r][c])
-            self.db.append(t)
-        self.pbutton.actions = [self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue()]
-        self.k = KMeans(self.db, self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(), self.epochsC.GetValue())
+        self.pbutton.actions = [self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(),
+                                self.epochsC.GetValue()]
+        self.k = KMeans(self.db, self.clusC.GetValue(), self.tipeC.GetStringSelection(), self.iterC.GetValue(),
+                        self.epochsC.GetValue())
         self.parent.km = self.k
         self.viewButton.Enable()
 
@@ -101,7 +107,7 @@ class KMeansV(wx.Frame):
         wx.Frame.__init__(self, p, -1, "k-Means")
         self.SetSize(600, 600)
         self.Centre()
-        self.name=[]
+        self.name = []
         for i in eeg:
             self.name.append(i.name)
         self.data = data
@@ -111,9 +117,9 @@ class KMeansV(wx.Frame):
         Pnl = wx.Panel(self, size=(600, 600))
         pnlSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.Tabs = aui.AuiNotebook(Pnl, size=(Pnl.Size),
-                                       style=aui.AUI_NB_DEFAULT_STYLE ^ (
-                                               aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
-                                             | aui.AUI_NB_WINDOWLIST_BUTTON)
+                                    style=aui.AUI_NB_DEFAULT_STYLE ^ (
+                                            aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
+                                          | aui.AUI_NB_WINDOWLIST_BUTTON)
         self.fillTabs()
         pnlSizer.Add(self.Tabs, 0, wx.EXPAND | wx.ALL, 1)
         Pnl.SetSizer(pnlSizer)
@@ -127,7 +133,6 @@ class KMeansV(wx.Frame):
         self.Tabs.AddPage(page, "Clusters")
 
 
-
 class GridTab(wx.Panel):
 
     def __init__(self, p, data, k, selected, type, eeg):
@@ -138,16 +143,16 @@ class GridTab(wx.Panel):
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         self.table = wx.grid.Grid(self)
         color = [(239, 229, 196), (222, 239, 196), (196, 239, 198),
-                 (196, 239, 236), (196, 203, 239), (229, 196, 239), (239, 196, 196),(247, 230, 230)]
+                 (196, 239, 236), (196, 203, 239), (229, 196, 239), (239, 196, 196), (247, 230, 230)]
         label = ["EM", "FM", "Area bajo la curva", "Voltaje máximo", "Voltaje mínimo"]
-        if type==0:
+        if type == 0:
             self.table.CreateGrid(len(data), len(data[0]))
-            i=0
+            i = 0
             for la in eeg:
                 self.table.SetRowLabelValue(i, la)
-                i +=1
+                i += 1
             for i in range(len(selected)):
-                    self.table.SetColLabelValue(i, selected[i])
+                self.table.SetColLabelValue(i, selected[i])
             self.table.SetColLabelValue(len(selected), "Etiqueta")
             for row in range(len(data)):
                 co = color[k.labels[row]]
@@ -159,25 +164,25 @@ class GridTab(wx.Panel):
             baseContainer.Add(self.table, 0, wx.EXPAND | wx.ALL, 0)
 
         if type == 1:
-            self.table.CreateGrid(len(self.kmeans.kmean.cluster_centers_),  len(data[0]))
+            self.table.CreateGrid(len(self.kmeans.kmean.cluster_centers_), len(data[0]))
             self.table.SetColLabelValue(0, "Cluster")
             u = 1
             for i in range(len(selected)):
-                self.table.SetColLabelValue(i+1, selected[i])
+                self.table.SetColLabelValue(i + 1, selected[i])
 
             clusters = self.kmeans.kmean.cluster_centers_
 
             for col in range(len(self.kmeans.kmean.cluster_centers_)):
-                self.table.SetCellValue(col, 0, "Centro "+str(col+1))
+                self.table.SetCellValue(col, 0, "Centro " + str(col + 1))
                 co = color[col]
                 self.table.SetCellBackgroundColour(col, 0, wx.Colour(co))
 
             for row in range(len(clusters)):
                 co = color[row]
                 for col in range(len(clusters[row])):
-                    self.table.SetCellValue(row, col+1, str(clusters[row][col]))
-                    self.table.SetReadOnly(row, col+1, True)
-                    self.table.SetCellBackgroundColour(row, col+1, wx.Colour(co))
+                    self.table.SetCellValue(row, col + 1, str(clusters[row][col]))
+                    self.table.SetReadOnly(row, col + 1, True)
+                    self.table.SetCellBackgroundColour(row, col + 1, wx.Colour(co))
             self.table.AutoSize()
             baseContainer.Add(self.table, 0, wx.EXPAND | wx.ALL, 0)
         if type == 2:
@@ -187,7 +192,7 @@ class GridTab(wx.Panel):
             rightpnl = wx.Panel(self, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
             rightSizer = wx.BoxSizer(wx.VERTICAL)
             labels = []
-            u=0
+            u = 0
             for i in range(len(selected)):
                 for y in range(selected[i]):
                     if selected[i] > 1:
@@ -209,10 +214,11 @@ class GridTab(wx.Panel):
             baseContainer.Add(rightpnl, 0, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(baseContainer)
 
+
 class Scaterplot(wx.Panel):
 
     def __init__(self, parent, data, k, selected):
-        wx.Panel.__init__(self, parent, size=(500,600),
+        wx.Panel.__init__(self, parent, size=(500, 600),
                           style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.data = data
         self.selceted = selected
@@ -228,15 +234,14 @@ class Scaterplot(wx.Panel):
     def SetCanvas(self, X, Y):
         B = np.asmatrix(self.data)
         self.sideX = B[:, X]
-        self.DrawX= []
+        self.DrawX = []
         self.DrawY = []
         self.sideY = B[:, Y]
-        p =max(self.sideX)[0]
-        for i in range( len(self.sideX)):
-            self.DrawX.append(self.changeRange(self.sideX[i],max(self.sideX)[0],min(self.sideX)[0],20, 400))
+        p = max(self.sideX)[0]
+        for i in range(len(self.sideX)):
+            self.DrawX.append(self.changeRange(self.sideX[i], max(self.sideX)[0], min(self.sideX)[0], 20, 400))
         for i in self.sideY:
             self.DrawY.append(self.changeRange(self.sideY[i], max(self.sideY)[0], min(self.sideY)[0], 20, 490))
-
 
     def OnPaint(self, event=None):
         dc = wx.BufferedPaintDC(self, style=wx.BUFFER_CLIENT_AREA)
@@ -245,12 +250,6 @@ class Scaterplot(wx.Panel):
         dc.DrawLine(20, 20, 20, 490)
         dc.DrawLine(20, 490, 400, 490)
 
-
         dc.SetPen(wx.Pen(wx.BLACK, 2))
         for i in range(len(self.DrawX)):
-            dc.DrawPoint(self.DrawX[i],self.DrawY[i])
-
-
-
-
-
+            dc.DrawPoint(self.DrawX[i], self.DrawY[i])

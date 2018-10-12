@@ -63,9 +63,9 @@ class zoomPanel(wx.Panel):
                 gc.StrokePath(path)
 
 
-
 class windowPanel(wx.Panel):
     '''a transparent panel over the eegraph to draw windows'''
+
     def __init__(self, parent, over):
         wx.Panel.__init__(self, parent, size=(over.Size[0], over.Size[1]), pos=(60, 0))
         # vars for windows
@@ -99,7 +99,7 @@ class windowPanel(wx.Panel):
             state 1 = only selected window shows
             state 2 = all windows are showed'''
         self.windowState = state
-        #self.update()
+        self.update()
         self.GetParent().Refresh()
         self.Refresh()
 
@@ -141,7 +141,7 @@ class windowPanel(wx.Panel):
             w = end - start
             h = self.Size[1]
             path.AddRectangle(start, 0, w, h)
-            #drawing stimulus
+            # drawing stimulus
             sx = self.msToPixel(window.stimulus, msE)
             gc.StrokeLine(sx, 0, sx, h)
             gc.DrawPath(path)
@@ -195,7 +195,7 @@ class windowPanel(wx.Panel):
         msS = self.GetParent().graph.strMs
         ms = int(self.pixelToMs(self.est.GetPosition()[0]) + msS)
         self.GetParent().GetParent().GetParent().createNewWindow(ms, self.windowTBE)
-        l = len(self.GetParent().GetParent().GetParent().tabManager.GetChildren())-4
+        l = len(self.GetParent().GetParent().GetParent().tabManager.GetChildren()) - 4
         self.GetParent().GetParent().GetParent().tabManager.SetSelection(l)
 
     def pixelToMs(self, apx):
@@ -217,4 +217,3 @@ class windowPanel(wx.Panel):
         self.drawWindows(gc)
         if self.fill:
             self.drawNewWindow(gc, wx.Colour(255, 0, 0, 20), wx.RED_PEN)
-

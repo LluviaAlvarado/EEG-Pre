@@ -1,5 +1,5 @@
 # Imports
-
+import datetime
 # local imports
 from FileReaderWriter import *
 from WindowEditor import *
@@ -133,7 +133,7 @@ class FilesWindow(wx.Frame):
         # setting cursor to wait to inform user
         myCursor = wx.Cursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
-        self.GetParent().SetStatusText("Cargando Ventanas...")
+        self.GetParent().setStatus("Cargando Ventanas...", 1)
         # let's read and verify the csv
         name = str(path).split("\\")
         name = name[len(name) - 1].split(".")[0]
@@ -160,7 +160,7 @@ class FilesWindow(wx.Frame):
         # returning normal cursor
         myCursor = wx.Cursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
-        self.GetParent().SetStatusText("")
+        self.GetParent().setStatus("", 0)
 
     def getWindowData(self):
         # giving a default value in ms to avoid user errors
@@ -185,6 +185,8 @@ class FilesWindow(wx.Frame):
 
     def updateList(self, filePaths):
         # setting cursor to wait to inform user
+        currentDT = datetime.datetime.now()
+        self.GetParent().log.append_txt(currentDT.strftime("%H:%M:%S") + " " + "Cargando Archivos...\n")
         myCursor = wx.Cursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
         self.GetParent().setStatus("Cargando Archivos...", 1)
@@ -230,6 +232,9 @@ class FilesWindow(wx.Frame):
             self.windowButton.Enable()
             self.saveButton.Enable()
             self.GetParent().setStatus("", 0)
+            currentDT = datetime.datetime.now()
+            self.GetParent().log.append_txt(currentDT.strftime("%H:%M:%S") + " " + "Archivos cargados...\n")
+            self.GetParent().log.process = False
 
     def checkProjectEEGs(self, errorFiles):
         EEGS = self.GetParent().project.EEGS

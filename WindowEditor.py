@@ -49,7 +49,7 @@ class WindowEditor(wx.Frame):
         self.eegTabs.ChangeSelection(i)
 
     def loadingNew(self, event):
-        # set loading status when eeg is changed
+        # se loading status when eeg is changed
         self.SetStatus("Loading EEG...", 1)
 
     def loadingFinished(self, event):
@@ -404,21 +404,24 @@ class Toolbar(wx.lib.agw.buttonpanel.ButtonPanel):
         event.Skip()
 
     def changeview(self, event):
-        self.window_s += 1
-        if self.window_s > 2:
-            self.window_s = 0
-        if self.window_s == 0:
-            self.btnView.SetBitmap(self.all_w)
-
-            self.btnView.SetShortHelp("Todas las ventanas")
-        if not self.edit and self.window_s == 1:
+        if self.graph.windowP != None:
             self.window_s += 1
-        if self.window_s == 1:
-            self.btnView.SetBitmap(self.sel_w)
-            self.btnView.SetShortHelp("Solo la ventana seleccionada")
-        if self.window_s == 2:
-            self.btnView.SetBitmap(self.no_w)
-            self.btnView.SetShortHelp("Ninguna ventana")
+            if self.window_s > 2:
+                self.window_s = 0
+            if self.window_s == 0:
+                self.btnView.SetBitmap(self.all_w)
+                self.graph.windowP.setWindowState(2)
+                self.btnView.SetShortHelp("Todas las ventanas")
+            if not self.edit and self.window_s == 1:
+                self.window_s += 1
+            if self.window_s == 1:
+                self.btnView.SetBitmap(self.sel_w)
+                self.graph.windowP.setWindowState(1)
+                self.btnView.SetShortHelp("Solo la ventana seleccionada")
+            if self.window_s == 2:
+                self.btnView.SetBitmap(self.no_w)
+                self.graph.windowP.setWindowState(0)
+                self.btnView.SetShortHelp("Ninguna ventana")
 
     def newWindow(self, event):
         if event.GetEventObject().GetToggled():

@@ -1,7 +1,7 @@
 # imports
 import re
 
-'''Checks the labels set to electrodes in EEG
+'''Checks the labels se to electrodes in EEG
    and converts them to standard 10/20 if possible'''
 
 

@@ -217,14 +217,15 @@ class CgraphPanel(wx.Panel):
         self.msShowing = endMs - self.strMs
         if self.msShowing < 10:
             self.msShowing = 10
-        if self.strMs + self.msShowing > 1 * 1000:
-            self.strMs = len(self.ica.components) - self.msShowing
+        if self.strMs + self.msShowing > self.ica.duration * 1000:
+            self.strMs = (self.ica.duration * 1000) - self.msShowing
         self.setSamplingRate()
         # repainting
         self.paint = True
         self.GetParent().Refresh()
         # changing channel labels
         ch, read = self.getViewChannels()
+        self.GetParent().timeRuler.update()
         self.GetParent().ampRuler.zoomManager(len(ch))
         self.GetParent().componentList.adjustment(read)
 

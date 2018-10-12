@@ -19,17 +19,20 @@ class WindowAttributes(wx.Frame):
         wx.Frame.__init__(self, parent, -1, "Caracterizar")
         self.SetSize(1000, 600)
         self.Centre()
-        self.project = parent.project
-        self.eegs = eegs
         self.parent = p
+        self.project = parent.project
+        self.parent.windowDB = []
+        self.parent.windowSelec = []
+        self.eegs = eegs
+
         # Variables a considerar
         self.amountHF = 1  # la cantidad de salidas que quieren del fft
-        self.setofData = []  # La matriz que contiene el set de datos final
+        self.setofData = []  # La matriz que contiene el se de datos final
         self.opcAttributes = ["Espectro de magnitud", "Espectro de fase", "Area bajo la curva", "Voltaje máximo",
                               "Voltaje mínimo"]
         self.opcChannels = self.project.chLabels
 
-        self.classRecord =[]
+        self.classRecord = []
         # Create visual components
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         checkSizerAT = wx.BoxSizer(wx.HORIZONTAL)
@@ -45,13 +48,17 @@ class WindowAttributes(wx.Frame):
         bmp = wx.Bitmap("src/check-all.png", wx.BITMAP_TYPE_PNG)
         ubmp = wx.Bitmap("src/uncheck.png", wx.BITMAP_TYPE_PNG)
 
-        btnAT1 = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=bmp, size=(bmp.GetWidth(), bmp.GetHeight()))
-        btnAT2 = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=ubmp, size=(ubmp.GetWidth(), ubmp.GetHeight()))
+        btnAT1 = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=bmp,
+                                 size=(bmp.GetWidth(), bmp.GetHeight()))
+        btnAT2 = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=ubmp,
+                                 size=(ubmp.GetWidth(), ubmp.GetHeight()))
         btnAT1.Bind(wx.EVT_BUTTON, self.allAT)
         btnAT2.Bind(wx.EVT_BUTTON, self.noAT)
 
-        btnCH1 = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=bmp, size=(bmp.GetWidth(), bmp.GetHeight()))
-        btnCH2 =wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=ubmp, size=(ubmp.GetWidth(), ubmp.GetHeight()))
+        btnCH1 = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=bmp,
+                                 size=(bmp.GetWidth(), bmp.GetHeight()))
+        btnCH2 = wx.BitmapButton(leftPnl, id=wx.ID_ANY, style=wx.NO_BORDER, bitmap=ubmp,
+                                 size=(ubmp.GetWidth(), ubmp.GetHeight()))
         btnCH1.Bind(wx.EVT_BUTTON, self.allCH)
         btnCH2.Bind(wx.EVT_BUTTON, self.noCH)
 
@@ -62,6 +69,9 @@ class WindowAttributes(wx.Frame):
         expLabel = wx.StaticText(leftPnl, label="Seleccione la filas para etiquetar")
         selButton = wx.Button(leftPnl, label="Etiquetar seleccion")
         selButton.Bind(wx.EVT_BUTTON, self.etiquetar)
+
+        coppyButton = wx.Button(leftPnl, label="Copy")
+        coppyButton.Bind(wx.EVT_BUTTON, self.Copy)
 
         leftSizer.Add(opcATLabel, 0, wx.EXPAND | wx.ALL, 5)
 
@@ -79,6 +89,7 @@ class WindowAttributes(wx.Frame):
         opcSizerCH.Add(btnCH2, 0, wx.EXPAND | wx.ALL, 0)
         leftSizer.Add(checkSizerCH, 0, wx.EXPAND | wx.ALL, 5)
         leftSizer.Add(applyButton, 0, wx.EXPAND | wx.ALL, 20)
+        leftSizer.Add(coppyButton, 0, wx.EXPAND | wx.ALL, 20)
 
         leftSizer.AddSpacer(130)
         leftSizer.Add(expLabel, 0, wx.EXPAND | wx.BOTTOM, 20)
@@ -94,6 +105,15 @@ class WindowAttributes(wx.Frame):
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 3)
         self.SetSizer(baseContainer)
         self.Bind(wx.EVT_CLOSE, self.onClose)
+
+    def Copy(self, event):
+        self.dataObj = wx.TextDataObject()
+        self.dataObj.SetText("Dood")
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(self.dataObj)
+            wx.TheClipboard.Close()
+        else:
+            wx.MessageBox("Unable to open the clipboard", "Error")
 
     def allAT(self, event):
         a = []
@@ -177,7 +197,7 @@ class WindowAttributes(wx.Frame):
         eegs = self.eegs
         self.GetParent().project.windowMinMaxVolt = WindowCharacterization().getMV(eegs, selectedCH)
 
-    def ReDo(self, actions):
+    def ReDo(self, actions, eegs):
         selectedAT = actions[0]
         selectedCH = actions[1]
         selecCH = actions[2]
@@ -269,7 +289,7 @@ class GridTab(wx.Panel):
         self.table.AppendCols(num_of_col + 1)
 
         labes = ["EM", "EF", "Area_bajo_la_curva", "Voltaje_máximo", "Voltaje_mínimo"]
-        self.columLabes =[]
+        self.columLabes = []
         for i in self.selecdCH:
             for y in self.selecdAT:
                 if y in self.selecdAT:

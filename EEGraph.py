@@ -13,8 +13,9 @@ class EEGraph(wx.Panel):
         w = w - (w / 5)
         self.v = v
         if v:
-            h = parent.Size[1]
+            h = parent.Size[1] + 80
             w = parent.Size[0]
+
         h = h - 187
         wx.Panel.__init__(self, parent, size=(w, h), style=wx.BORDER_SUNKEN)
         self.eeg = eeg

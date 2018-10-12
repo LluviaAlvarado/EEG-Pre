@@ -61,13 +61,13 @@ class DecisionTreeWindow(wx.Frame):
         self.Destroy()
 
     def ReDo(self, actions, eegs):
-        dtree = DecisionTree(self.db, self.target, self.labels, actions[0], actions[1])
-        tv = treeView(self, dtree)
+        pass
+        # dtree = DecisionTree(self.db, self.target, self.labels, actions[0], actions[1])
+        # tv = treeView(self, dtree)
 
     def dtree(self, event):
         self.pbutton.actions = [self.mlC.GetValue(), self.mmC.GetValue()]
         dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.GetValue())
-
         tv = treeView(self, dtree)
         tv.Show()
 
@@ -82,7 +82,6 @@ class DecisionTreeWindow(wx.Frame):
             self.target.append(data[r - 1][len(data[r]) - 1])
 
 
-
 class treeView(wx.Frame):
 
     def __init__(self, parent, dtree):
@@ -91,29 +90,44 @@ class treeView(wx.Frame):
         self.Maximize()
         basePanel = wx.Panel(self, size=(300, 1000), style=wx.TAB_TRAVERSAL)
         baseSizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.imgPanel = scrolled.ScrolledPanel(basePanel, size=(2000, 2000), style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.imgPanel = scrolled.ScrolledPanel(basePanel, size=(4000, 4000), style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.imgPanel.SetBackgroundColour(wx.WHITE)
         self.imgPanel.SetAutoLayout(1)
         self.imgPanel.SetupScrolling()
         self.imgSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.imgSizer.SetMinSize(4000, 4000)
 
         pydotplus.graph_from_dot_data(dtree.dotfile.getvalue()).write_png("tree.png")
-        png = wx.Image("tree.png", wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        bitmap = wx.StaticBitmap(self.imgPanel, -1, png, (10, 5), (png.GetWidth(), png.GetHeight()))
+        self.im = wx.Image("tree.png", wx.BITMAP_TYPE_ANY)
+        self.size = self.im.GetSize()
+        self.png = self.im.ConvertToBitmap()
+        self.bitmap = wx.StaticBitmap(self.imgPanel, -1, self.png, (10, 5), (self.png.GetWidth(), self.png.GetHeight()))
 
         opcPanel = wx.Panel(basePanel, size=(300, 1000), style=wx.TAB_TRAVERSAL)
         opcSizer = wx.BoxSizer(wx.VERTICAL)
         infoLabel = wx.StaticText(opcPanel, label="Opciones: ")
+        test = wx.StaticText(opcPanel, label=dtree.ATe)
+        train = wx.StaticText(opcPanel, label=dtree.ATr)
+
+        zoomL = wx.StaticText(opcPanel, label="Zoom: ")
+
         applyButton = wx.Button(opcPanel, label="Salvar como .PNG")
         applyButton.Bind(wx.EVT_BUTTON, self.OnSave)
+        self.sp = wx.Slider(opcPanel, value=0, minValue=0, maxValue=1000)
+        self.sp.Bind(wx.EVT_COMMAND_SCROLL_CHANGED, self.zoom)
 
         opcPanel.SetSizer(opcSizer)
         opcSizer.Add(infoLabel)
-        opcSizer.Add(applyButton)
+        opcSizer.Add(train, border=5)
+        opcSizer.Add(test, border=5)
+        opcSizer.AddSpacer(10)
+        opcSizer.Add(zoomL, border=10)
+        opcSizer.Add(self.sp, border=10)
+        opcSizer.AddSpacer(20)
+        opcSizer.Add(applyButton, border=10)
 
         self.imgPanel.SetSizer(self.imgSizer)
-        self.imgSizer.Add(bitmap, 0, wx.EXPAND | wx.ALL, 5)
+        self.imgSizer.Add(self.bitmap)
 
         baseSizer.Add(opcPanel, 0, wx.EXPAND | wx.ALL, 5)
         baseSizer.Add(self.imgPanel, 0, wx.EXPAND | wx.ALL, 5)
@@ -123,6 +137,14 @@ class treeView(wx.Frame):
     def OnClose(self, event):
         os.remove("tree.png")
         self.Destroy()
+
+    def zoom(self, event):
+        value = self.sp.GetValue()
+        bit = self.im.Scale(self.size[0] + value, self.size[1] + value, wx.IMAGE_QUALITY_HIGH)
+        self.bitmap.SetBitmap(bit.ConvertToBitmap())
+        self.bitmap.SetSize(self.size[0] + value, self.size[1] + value)
+        self.imgSizer.SetMinSize(self.size[0] + value, self.size[1] + value)
+        self.imgPanel.AdjustScrollbars()
 
     def OnSave(self, event):
         dlg = wx.FileDialog(self, "Guardar como", os.getcwd(), "", wildcard, \

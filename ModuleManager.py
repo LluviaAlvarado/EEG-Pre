@@ -1,33 +1,38 @@
+import threading
+import time
 import wx
 from ModuleTree import ModuleTree, ModuleButton
 from WindowDialog import ModuleHint
 from os import getcwd
+
 '''This class manages the module tree from the main menu'''
+
 
 class ModuleManager(wx.Panel):
 
-    def __init__(self, parent, project):
+    def __init__(self, parent, project, log):
         wx.Panel.__init__(self, parent, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.treeView = wx.TreeCtrl(self, size=self.GetParent().GetSize(), style=wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
         self.modules = ModuleTree(self, project.EEGS)
-        #110x110px size of button images
+        self.log = log
+        # 110x110px size of button images
         image_list = wx.ImageList(110, 110)
-        image_list.Add(wx.Image(getcwd()+"/Images/ArchivoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/FiltradoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/gFiltradoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/EliminacionAIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/gEliminacionAIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/gCaracteristicasIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/KmeansIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/gKmeansIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/ArbolDIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/gArbolDIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/SilhouetteIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/gSilhouetteIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/RandindexIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
-        image_list.Add(wx.Image(getcwd()+"/Images/gRandindexIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/ArchivoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/FiltradoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/gFiltradoIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/EliminacionAIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/gEliminacionAIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/CaracteristicasIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/gCaracteristicasIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/KmeansIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/gKmeansIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/ArbolDIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/gArbolDIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/SilhouetteIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/gSilhouetteIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/RandindexIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
+        image_list.Add(wx.Image(getcwd() + "/Images/gRandindexIMG.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap())
         self.treeView.AssignImageList(image_list)
         # adding the root to tree view
         self.root = self.treeView.AddRoot("")
@@ -48,11 +53,11 @@ class ModuleManager(wx.Panel):
         self.modules.ForwardChanges(r)
 
     def setStatus(self, text, mouse):
-        self.GetParent().setStatus(text, mouse)
+        self.GetParent().GetParent().setStatus(text, mouse)
 
     def OpenModule(self, e):
         self.HidePossible()
-        # this is needed to set focus on new frame
+        # this is needed to se focus on new frame
         wx.CallAfter(self.openM, e.GetItem())
 
     def openM(self, item):
@@ -60,13 +65,15 @@ class ModuleManager(wx.Panel):
 
     def ModuleSelected(self, e):
         idm = self.treeView.GetItemData(e.GetItem()).ID
+        self.GetParent().GetParent().hintPnl.changeModule(idm)
         for m in self.pModules:
             if m.ID == idm:
                 self.treeView.SetItemImage(e.GetItem(), self.getImage(m.module, False))
                 self.AddModule(idm)
                 return
         self.HidePossible()
-        #TODO poner informacion en la ventana del log
+        # self.log.AddToLog("Modulo Archivo seleccionado.\n")
+        # TODO poner informacion en la ventana del log
 
     def getItem(self, module):
         return self.searchTree(self.treeView.RootItem, module)
@@ -134,7 +141,7 @@ class ModuleManager(wx.Panel):
             for p in possible:
                 image = self.getImage(p, True)
                 idx = self.treeView.AppendItem(e.GetItem(), "", image)
-                module = ModuleButton(self.modules.idCount+i, self, p, parent.eegs, parent)
+                module = ModuleButton(self.modules.idCount + i, self, p, parent.eegs, parent)
                 self.treeView.SetItemData(idx, module)
                 self.pModules.append(module)
                 i += 1

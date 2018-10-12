@@ -114,7 +114,7 @@ class ModuleButton:
         elif self.module == 1:
             self.window = PreBPFW(self.GetParent(), self.eegs, self)
         elif self.module == 2:
-            self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self.actions, self)
+            self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self)
         elif self.module == 3:
             self.window = WindowAttributes(self.GetParent(), self.eegs, self)
         elif self.module == 4:

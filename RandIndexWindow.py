@@ -41,3 +41,5 @@ class RandIndexWindow(wx.Frame):
         self.pbutton.onCloseModule()
         self.Hide()
 
+    def ReDo(self, d, e):
+        pass

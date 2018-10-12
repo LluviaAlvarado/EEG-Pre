@@ -148,3 +148,6 @@ class SilhouetteWindow(wx.Frame):
         plt.suptitle(("Análisis de Silhouette para KMeans clustering "
                       "con %d clusters." % n_clusters),
                      fontsize=14, fontweight='bold')
+
+    def ReDo(self, d, e):
+        pass
