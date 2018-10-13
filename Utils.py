@@ -21,6 +21,10 @@ def sampleToMS(s, frequency, duration):
     return ((duration * 1000) * s) / nSamp
 
 
+def frequencyToSample(fr, frequency, duration):
+    # bit reversal to get the actual sample
+    return int('{:32b}'.format(fr)[::-1], 2)
+
 def msToReading(ms, frequency, duration):
     # ms is te sample to convert to sample/reading
     # frequency is the sample frequency of the project and duration of the project

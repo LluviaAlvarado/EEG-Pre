@@ -114,7 +114,7 @@ class FilesWindow(wx.Frame):
                 for eeg in self.GetParent().project.EEGS:
                     eeg.windows = []
         picker = wx.FileDialog(self.pnl, message="Elige el archivo de Tiempos",
-                               defaultDir="D:\Documentos\Computacion\EEG\EEG-Pre\TestFiles\\",
+                               defaultDir=os.getcwd(),
                                wildcard="CSV (*.csv)|*.csv",
                                style=wx.FD_OPEN)
         if picker.ShowModal() == wx.ID_CANCEL:

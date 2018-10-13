@@ -171,10 +171,13 @@ class WindowAttributes(wx.Frame):
         dlg.Destroy()
         return result
 
-    def applyFFT(self, selectedCH):
+    def applyMag(self, selectedCH):
         eegs = self.eegs
-        # setting MV to the project
-        self.GetParent().project.windowMagFase = WindowCharacterization().getMagFase(eegs, self.amountHF, selectedCH)
+        self.GetParent().project.windowMag = WindowCharacterization().getMag(eegs, self.amountHF, selectedCH)
+
+    def applyFase(self, selectedCH):
+        eegs = self.eegs
+        self.GetParent().project.windowFase = WindowCharacterization().getFase(eegs, self.amountHF, selectedCH)
 
     def confFFT(self, event, opc):
         if opc == 1 or opc == 0:
@@ -202,12 +205,10 @@ class WindowAttributes(wx.Frame):
         selectedCH = actions[1]
         selecCH = actions[2]
         for opc in selectedAT:
-            if opc == 0 or opc == 1:
-                # Transformada rápida de Fourier(Magnitud y Fase)
-                self.applyFFT(selectedCH)
-            elif opc == 2:
-                # Area bajo la curva
-                self.applyAUC(selectedCH)
+            if opc == 0:
+                self.applyMag(selectedCH)
+            elif opc == 1:
+                self.applyFase(selectedCH)
             elif opc == 3:
                 # Voltaje maximo
                 self.applyMV(selectedCH)
@@ -222,9 +223,10 @@ class WindowAttributes(wx.Frame):
         selecCH = self.opcCHList.GetCheckedStrings()
         self.parent.actions = [selectedAT, selectedCH, selecCH]
         for opc in selectedAT:
-            if opc == 0 or opc == 1:
-                # Transformada rápida de Fourier(Magnitud y Fase)
-                self.applyFFT(selectedCH)
+            if opc == 0:
+                self.applyMag(selectedCH)
+            elif opc == 1:
+                self.applyFase(selectedCH)
             elif opc == 2:
                 # Area bajo la curva
                 self.applyAUC(selectedCH)

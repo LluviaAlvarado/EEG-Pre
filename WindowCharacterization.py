@@ -28,7 +28,7 @@ class WindowCharacterization:
             MVE.append(MV)
         return MVE
 
-    def getFas(self, eegs, n, ch):
+    def getFase(self, eegs, n, ch):
         FasE = []
         for eeg in eegs:
             Fase = []
@@ -38,12 +38,13 @@ class WindowCharacterization:
                 frFas.append(0)
             for i in ch:
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
-                mags = []
                 for v in range(len(fft)):
                     # getting the fase for each value of fft
-                    fase = np.arctan((np.exp2(fft.imag) / np.exp2(fft.real)))
+                    real = fft.real
+                    imag = fft.imag
+                    fase = np.arctan((imag[v]**2 / real[v]**2))
                     for j in range(n):
-                        if fase > Fase[j]:
+                        if abs(fase) > abs(Fase[j]):
                             Fase[j] = fase
                             frFas[j] = v
             FasE.append([Fase, frFas])
@@ -53,21 +54,22 @@ class WindowCharacterization:
         MagE = []
         for eeg in eegs:
             Mag = []
-            msMag = []
+            frMag = []
             for i in range(n):
                 Mag.append(0)
-                msMag.append(0)
+                frMag.append(0)
             for i in ch:
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
-                mags = []
                 for v in range(len(fft)):
                     # getting the magnitude for each value of fft
-                    magnitude = np.sqrt(np.exp2(fft[v].real) + np.exp2(fft[v].imag))
+                    real = fft.real
+                    imag = fft.imag
+                    magnitude = round(np.sqrt(real[v]**2 + imag[v]**2), 2)
                     for j in range(n):
                         if magnitude > Mag[j]:
                             Mag[j] = magnitude
-                            msMag[j] = v
-            MagE.append([Mag, msMag])
+                            frMag[j] = v
+            MagE.append([Mag, frMag])
         return MagE
 
     def getAUC(self, eegs, ch):

@@ -141,23 +141,27 @@ class ModuleManager(wx.Panel):
             for p in possible:
                 image = self.getImage(p, True)
                 idx = self.treeView.AppendItem(e.GetItem(), "", image)
-                if parent.module == 0:
-                    parent.CreateConcatenated()
-                module = ModuleButton(self.modules.idCount + i, self, p, parent.eegs, parent)
+                module = ModuleButton(self.modules.idCount + i, self, p, [], parent)
                 self.treeView.SetItemData(idx, module)
                 self.pModules.append(module)
                 i += 1
             self.treeView.Expand(e.GetItem())
 
     def AddModule(self, idm):
+        self.setStatus("Agregando Módulo...", 1)
         i = 0
         for m in self.pModules:
             if m.ID == idm:
                 break
             i += 1
         module = self.pModules.pop(i)
+        if module.parent.module == 0:
+            # file window needs to concatenate eegs
+            module.parent.CreateConcatenated()
+        module.setEEGS(module.parent.eegs)
         self.HidePossible()
         self.modules.AddModule(module)
+        self.setStatus("", 0)
 
     def GetTree(self):
         return self.modules.SaveTree()

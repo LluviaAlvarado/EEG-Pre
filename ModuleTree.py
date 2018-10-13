@@ -40,10 +40,7 @@ class ModuleButton:
         self.parent = p
         self.parentWindow = parent
         self.children = []
-        tmp = None
-        if len(eegs) > 0:
-            tmp = deepcopy(eegs[0])
-        self.eegs = eegs_copy(eegs, tmp)
+        self.setEEGS(eegs)
         self.actions = []
         self.windowDB = None
         self.windowSelec = None
@@ -138,11 +135,14 @@ class ModuleButton:
         self.window = FilesWindow(self.GetParent(), self)
         self.window.setButtonEEGs()
 
-    def updateEEGS(self, eegs):
+    def setEEGS(self, eegs):
         tmp = None
         if len(eegs) > 0:
             tmp = deepcopy(eegs[0])
         self.eegs = eegs_copy(eegs, tmp)
+
+    def updateEEGS(self, eegs):
+        self.setEEGS(eegs)
         if len(self.eegs) == 0:
             self.actions = []
         if self.window is None:
