@@ -166,6 +166,19 @@ class ModuleManager(wx.Panel):
     def GetTree(self):
         return self.modules.SaveTree()
 
+    def addLoaded(self, r, ri):
+        image = self.getImage(r.module, True)
+        idx = self.treeView.AppendItem(ri, "", image)
+        self.treeView.SetItemData(idx, r)
+        for ch in r.children:
+            self.addLoaded(ch, idx)
+        self.treeView.Expand(idx)
+
+    def CreateTree(self, tree):
+        self.modules.LoadTree(tree)
+        self.treeView.DeleteAllItems()
+        self.addLoaded(self.modules.root, self.treeView.RootItem)
+
     def closeWindows(self):
         self.HidePossible()
         self.modules.closeAll()

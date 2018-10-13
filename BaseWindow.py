@@ -230,6 +230,8 @@ class BaseWindow(wx.Frame):
             defaultFile="", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_MULTIPLE
         )
         if dlg.ShowModal() == wx.ID_OK:
+            # close all open windows
+            self.moduleManager.closeWindows()
             if len(self.project.EEGS) > 0:
                 opc = 0
                 with WindowSaveOnExit(self, opc) as dl:
@@ -256,8 +258,8 @@ class BaseWindow(wx.Frame):
             EEg = _pickle.load(f)
             EEG2 = _pickle.load(f)
             f.close()
-        # close all open windows
-        self.moduleManager.closeWindows()
+        # load the tree view
+        self.moduleManager.CreateTree(self.project.modularTree)
         # self.setAux(self.project)
         dlg.Destroy()
         self.setStatus("", 0)
