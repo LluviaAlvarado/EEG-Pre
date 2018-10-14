@@ -103,15 +103,20 @@ class EEGData:
         channels = []
         for ch in self.channels:
             channels.append(Channel(ch.label, []))
-        for w in range(len(self.windows)-1):
+        if len(self.windows) == 1:
             for i in range(len(channels)):
-                reads = self.windows[w].readings[i]
-                start, end = self.windows[w].GetSE()
-                s, e = self.windows[w+1].GetSE()
-                if start <= s <= end:
-                    # there's overlapping
-                    reads = self.windows[w].GetReadsUpTo(s)
+                reads = self.windows[0].readings[i]
                 channels[i].readings.extend(reads)
+        else:
+            for w in range(len(self.windows)-1):
+                for i in range(len(channels)):
+                    reads = self.windows[w].readings[i]
+                    start, end = self.windows[w].GetSE()
+                    s, e = self.windows[w+1].GetSE()
+                    if start <= s <= end:
+                        # there's overlapping
+                        reads = self.windows[w].GetReadsUpTo(s)
+                    channels[i].readings.extend(reads)
         concatenated = copy(self)
         concatenated.channels = channels
         concatenated.duration = len(channels[0].readings) / self.frequency
