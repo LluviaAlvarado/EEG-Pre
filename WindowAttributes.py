@@ -237,6 +237,7 @@ class WindowAttributes(wx.Frame):
         selectedCH = self.opcCHList.GetCheckedItems()
         selecCH = self.opcCHList.GetCheckedStrings()
         self.actions = [selectedAT, selectedCH, selecCH]
+        self.GetParent().setStatus("Calculando características...", 1)
         for opc in selectedAT:
             if opc == 0:
                 self.applyMag(selectedCH)
@@ -252,6 +253,7 @@ class WindowAttributes(wx.Frame):
                 # Voltaje maximo
                 self.applyMV(selectedCH)
         self.table.setValues(self.project, selectedAT, selecCH, self.amountHF)
+        self.GetParent().setStatus("", 0)
 
 
 class GridTab(wx.Panel):

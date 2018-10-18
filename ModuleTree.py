@@ -43,7 +43,7 @@ class ModuleButton:
         self.parentWindow = parent
         self.children = []
         self.setEEGS(eegs)
-        self.actions = None
+        self.actions = []
         self.windowDB = None
         self.windowSelec = None
         self.hint = None

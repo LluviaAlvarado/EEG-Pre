@@ -75,15 +75,10 @@ class WindowCharacterization:
     def getAUC(self, eegs, ch):
         AUCE =[]
         for eeg in eegs:
-            AUC = []
-            for channel in ch:
-                areas = []
-                for w in eeg.windows:
-                    dx = 1
-                    area = np.trapz(w.readings[channel], dx=dx)
-                    areas.append(area)
-                    # getting the average area per window
-                area = np.average(areas)
-                AUC.append(area)
-            AUCE.append(AUC)
+            areas = []
+            for i in ch:
+                dx = 1
+                area = np.trapz(eeg.channels[i].readings, dx=dx)
+                areas.append(area)
+            AUCE.append(areas)
         return AUCE
