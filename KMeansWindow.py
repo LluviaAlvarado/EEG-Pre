@@ -84,6 +84,7 @@ class KMeansWindow(wx.Frame):
 
     def kmeans(self, event):
         self.db = []
+        self.GetParent().setStatus("Aplicando K-means...", 1)
         for r in range(len(self.data)):
             t = []
             for c in range(len(self.data[r]) - 1):
@@ -95,6 +96,7 @@ class KMeansWindow(wx.Frame):
                         self.epochsC.GetValue())
         self.parent.km = self.k
         self.viewButton.Enable()
+        self.GetParent().setStatus("", 0)
 
     def openview(self, event):
         v = KMeansV(self, self.data, self.k, self.parent.windowSelec, self.GetParent().project.EEGS)
@@ -104,7 +106,7 @@ class KMeansWindow(wx.Frame):
 class KMeansV(wx.Frame):
 
     def __init__(self, p, data, k, selected, eeg):
-        wx.Frame.__init__(self, p, -1, "k-Means")
+        wx.Frame.__init__(self, p, -1, "Resultado de K-Means")
         self.SetSize(600, 600)
         self.Centre()
         self.name = []
@@ -128,7 +130,7 @@ class KMeansV(wx.Frame):
 
     def fillTabs(self):
         page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 0, self.name)
-        self.Tabs.AddPage(page, "Todos")
+        self.Tabs.AddPage(page, "Clasificación")
         page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 1, self.name)
         self.Tabs.AddPage(page, "Clusters")
 
@@ -142,7 +144,7 @@ class GridTab(wx.Panel):
         self.kmeans = k
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         self.table = wx.grid.Grid(self)
-        color = [(239, 229, 196), (222, 239, 196), (196, 239, 198),
+        color = [(200, 200, 196), (150, 90, 196), (196, 239, 198),
                  (196, 239, 236), (196, 203, 239), (229, 196, 239), (239, 196, 196), (247, 230, 230)]
         label = ["EM", "FM", "Area bajo la curva", "Voltaje máximo", "Voltaje mínimo"]
         if type == 0:

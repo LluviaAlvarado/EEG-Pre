@@ -6,6 +6,7 @@ from BPFWindow import *
 from WindowDialog import WindowCustomWave
 from Utils import exportEEGS, eeg_copy
 
+
 class frequencyBand:
     def __init__(self, name, lowFrequency, hiFrequency):
         self.name = name
@@ -161,7 +162,9 @@ class PreBPFW(wx.Frame):
         return name, lowF, higF, flag
 
     def export(self, event):
+        self.GetParent().setStatus("Exportando...", 1)
         exportEEGS(self.GetParent().project, self.eegs)
+        self.GetParent().setStatus("", 0)
 
     def applyFilter(self, event):
         self.GetParent().setStatus("Filtrando...", 1)

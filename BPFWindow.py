@@ -17,7 +17,7 @@ class BFPWindow(wx.Frame):
         # EEG tabs
         self.navigationTabs = aui.AuiNotebook(self, size=(self.Size[0], self.Size[1]),
                                               style=aui.AUI_NB_DEFAULT_STYLE ^ (
-                                                          aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
+                                                      aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                                     | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
         self.fillnavigationTabs(prev)
@@ -31,11 +31,11 @@ class BFPWindow(wx.Frame):
         # setting the cursor to loading
         self.SetStatus("", 0)
         self.Centre()
-        self.navigationTabs.GetCurrentPage().fillEEGTabs(prev)
+        self.navigationTabs.GetCurrentPage().fillEEGTabs(False)
         self.Show()
 
     def loadingNew(self, event):
-        # set loading status when eeg is changed
+        # se loading status when eeg is changed
         self.SetStatus("Loading EEG...", 0)
         self.navigationTabs.GetCurrentPage().eegTabs.DeleteAllPages()
 
@@ -47,7 +47,7 @@ class BFPWindow(wx.Frame):
 
     def addP(self):
         n = self.navigationTabs.GetCurrentPage().name
-        eegs = self.project.EEGS
+        eegs = self.GetParent().eegs
         for eeg in eegs:
             if n in eeg.name:
                 self.navigationTabs.GetCurrentPage().addTab(eeg, False)
@@ -92,7 +92,7 @@ class tab(wx.Panel):
                                        style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                              | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
-        #self.fillEEGTabs(prev)
+        # self.fillEEGTabs(prev)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
         frameSizer.Add(self.eegTabs, 0, wx.EXPAND, 3)

@@ -1,13 +1,10 @@
 # Imports
-import numpy as np
 import wx.grid
 
-from WindowEditor import *
-from WindowDialog import *
+from Utils import exportCSV
 from WindowCharacterization import *
-
-
-# Esta clase tiene cosas que debo arreglar ya porque esta feo lo que hice
+from WindowDialog import *
+from WindowEditor import *
 
 
 class WindowAttributes(wx.Frame):
@@ -16,15 +13,13 @@ class WindowAttributes(wx.Frame):
     """
 
     def __init__(self, parent, eegs, p, actions):
-        wx.Frame.__init__(self, parent, -1, "Caracterizar")
+        wx.Frame.__init__(self, parent, -1, "Caracterizar Ventanas")
         self.SetSize(1000, 600)
         self.Centre()
         self.parent = p
         self.project = parent.project
-        self.parent.windowDB = []
-        self.parent.windowSelec = []
         self.eegs = eegs
-
+        self.actions = []
         # Variables a considerar
         self.amountHF = 1  # la cantidad de salidas que quieren del fft
         self.setofData = []  # La matriz que contiene el se de datos final
@@ -70,8 +65,8 @@ class WindowAttributes(wx.Frame):
         selButton = wx.Button(leftPnl, label="Etiquetar seleccion")
         selButton.Bind(wx.EVT_BUTTON, self.etiquetar)
 
-        coppyButton = wx.Button(leftPnl, label="Copy")
-        coppyButton.Bind(wx.EVT_BUTTON, self.Copy)
+        exportButton = wx.Button(leftPnl, label="Exportar como (.CSV)")
+        exportButton.Bind(wx.EVT_BUTTON, self.Export)
 
         leftSizer.Add(opcATLabel, 0, wx.EXPAND | wx.ALL, 5)
 
@@ -82,16 +77,15 @@ class WindowAttributes(wx.Frame):
         leftSizer.Add(checkSizerAT, 0, wx.EXPAND | wx.ALL, 5)
 
         leftSizer.Add(opcCHLabel, 0, wx.EXPAND | wx.ALL, 5)
-
         checkSizerCH.Add(self.opcCHList, 0, wx.EXPAND | wx.ALL, 5)
         checkSizerCH.Add(opcSizerCH, 0, wx.EXPAND | wx.ALL, 5)
         opcSizerCH.Add(btnCH1, 0, wx.EXPAND | wx.ALL, 0)
         opcSizerCH.Add(btnCH2, 0, wx.EXPAND | wx.ALL, 0)
         leftSizer.Add(checkSizerCH, 0, wx.EXPAND | wx.ALL, 5)
         leftSizer.Add(applyButton, 0, wx.EXPAND | wx.ALL, 20)
-        leftSizer.Add(coppyButton, 0, wx.EXPAND | wx.ALL, 20)
+        leftSizer.Add(exportButton, 0, wx.EXPAND | wx.ALL, 20)
 
-        leftSizer.AddSpacer(130)
+        leftSizer.AddSpacer(60)
         leftSizer.Add(expLabel, 0, wx.EXPAND | wx.BOTTOM, 20)
         leftSizer.Add(selButton, 0, wx.EXPAND | wx.BOTTOM, 20)
         leftPnl.SetSizer(leftSizer)
@@ -104,16 +98,37 @@ class WindowAttributes(wx.Frame):
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 3)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 3)
         self.SetSizer(baseContainer)
+        if self.parent.windowDB is not None:
+            self.ReFill(p)
+        else:
+            self.parent.windowDB = []
+            self.parent.windowSelec = []
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
-    def Copy(self, event):
-        self.dataObj = wx.TextDataObject()
-        self.dataObj.SetText("Dood")
-        if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(self.dataObj)
-            wx.TheClipboard.Close()
-        else:
-            wx.MessageBox("Unable to open the clipboard", "Error")
+    def GetTableData(self):
+        Row = self.table.table.NumberRows
+        Col = self.table.table.NumberCols
+        Clip = []
+        for r in range(Row):
+            re = ""
+            for c in range(Col):
+                re += str(self.table.table.GetCellValue(r, c)) + ", "
+            re = re[:-2]
+            Clip.append(re)
+        return Clip
+
+    def Export(self, event):
+        data = self.GetTableData()
+        f = "Name,"
+        for fe in self.table.columLabes:
+            f += fe + ","
+        names = []
+        for eeg in self.eegs:
+            names.append(eeg.name + ",")
+        exportCSV(self, data, names, f)
+
+    def ReFill(self, p):
+        self.table.refill(p.windowDB, p.windowSelec)
 
     def allAT(self, event):
         a = []
@@ -181,7 +196,7 @@ class WindowAttributes(wx.Frame):
 
     def confFFT(self, event, opc):
         if opc == 1 or opc == 0:
-            dlg = wx.TextEntryDialog(self, 'Numero de salidas: ', 'Configuración FFT')
+            dlg = wx.TextEntryDialog(self, 'Cantidad de espectros a calcular: ', 'Configuración')
             dlg.SetValue(str(self.amountHF))
             if dlg.ShowModal() == wx.ID_OK:
                 l = dlg.GetValue()
@@ -221,7 +236,7 @@ class WindowAttributes(wx.Frame):
         selectedAT = self.opcATList.GetCheckedItems()
         selectedCH = self.opcCHList.GetCheckedItems()
         selecCH = self.opcCHList.GetCheckedStrings()
-        self.parent.actions = [selectedAT, selectedCH, selecCH]
+        self.actions = [selectedAT, selectedCH, selecCH]
         for opc in selectedAT:
             if opc == 0:
                 self.applyMag(selectedCH)
@@ -261,6 +276,69 @@ class GridTab(wx.Panel):
         self.table.AlwaysShowScrollbars(True, False)
         self.baseContainer.Add(self.table, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(self.baseContainer)
+        self.table.Bind(wx.EVT_KEY_DOWN, self.OnKey)
+
+    def refill(self, data, coln):
+        self.table.DeleteCols(0, self.table.NumberCols)
+        self.Refresh()
+        self.columLabes = coln
+        self.table.AppendCols(len(coln) + 1)
+        i = 0
+        for label in coln:
+            self.table.SetColLabelValue(i, label)
+            i += 1
+        self.table.SetColLabelValue(i, "Etiqueta")
+        row = len(data)
+        col = len(data[0])
+        for i in range(row):
+            for j in range(col):
+                self.table.SetCellValue(i, j, str(data[i][j]))
+                self.table.SetReadOnly(i, j, True)
+        self.table.AutoSizeColumns()
+
+    def OnKey(self, event):
+        # If Ctrl+C is pressed
+        if event.ControlDown() and event.GetKeyCode() == 67:
+            top_left = self.table.GetSelectionBlockTopLeft()[0]
+            bottom_right = self.table.GetSelectionBlockBottomRight()[0]
+            clip = self.printSelectedCells(top_left, bottom_right)
+            self.Copy(clip)
+
+    def Copy(self, text):
+        self.dataObj = wx.TextDataObject()
+        self.dataObj.SetText(text)
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(self.dataObj)
+            wx.TheClipboard.Close()
+        else:
+            wx.MessageBox("Unable to open the clipboard", "Error")
+
+    def printSelectedCells(self, top_left, bottom_right):
+        cells = []
+        rows_start = top_left[0]
+        rows_end = bottom_right[0]
+        cols_start = top_left[1]
+        cols_end = bottom_right[1]
+        len = cols_end - cols_start
+        rows = range(rows_start, rows_end + 1)
+        cols = range(cols_start, cols_end + 1)
+
+        cells.extend([(row, col)
+                      for row in rows
+                      for col in cols])
+
+        ClippytheClip = ""
+        i = 0
+        for cell in cells:
+            i += 1
+            row, col = cell
+            ClippytheClip += str(self.table.GetCellValue(row, col))
+            if i > len:
+                i = 0
+                ClippytheClip += "\n"
+            else:
+                ClippytheClip += "\t"
+        return ClippytheClip
 
     def setValues(self, project, selectedAT, selectedCh, amountHF):
         self.project = project
@@ -282,24 +360,39 @@ class GridTab(wx.Panel):
         l = len(self.selecdCH)
         num_of_col = num_of_col * l
         if 0 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (self.hf * l)
-            self.tam[0] = self.hf
+            num_of_col = num_of_col - (1 * l) + (self.hf * 2)
+            self.tam[0] = self.hf * 2
         if 1 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (self.hf * l)
-            self.tam[1] = self.hf
+            num_of_col = num_of_col - (1 * l) + (self.hf * 2)
+            self.tam[1] = self.hf * 2
+        if 3 in self.selecdAT:
+            num_of_col = num_of_col - (1 * l) + 2
+            self.tam[3] = 2
+        if 4 in self.selecdAT:
+            num_of_col = num_of_col - (1 * l) + 2
+            self.tam[4] = 2
         self.table.AppendRows(len(self.eegs))
         self.table.AppendCols(num_of_col + 1)
-
-        labes = ["EM", "EF", "Area_bajo_la_curva", "Voltaje_máximo", "Voltaje_mínimo"]
+        labes = [["EM_", "F_EM_"], ["EF_", "F_EF_"], "Area_bajo_la_curva", ["Voltaje_máximo", "Ms_VMax"],
+                 ["Voltaje_mínimo", "Ms_VMin"]]
         self.columLabes = []
-        for i in self.selecdCH:
-            for y in self.selecdAT:
-                if y in self.selecdAT:
-                    for x in range(self.tam[y]):
-                        if self.tam[y] > 1:
-                            self.columLabes.append(str(i) + "_" + labes[y] + str(x + 1))
-                        else:
-                            self.columLabes.append(str(i) + "_" + labes[y])
+        for y in self.selecdAT:
+            if y == 2:
+                for i in self.selecdCH:
+                    self.columLabes.append(str(i) + "_" + labes[y])
+            if y in self.selecdAT:
+                u = 0
+                cont = 1
+                for x in range(self.tam[y]):
+                    if u == 2:
+                        u = 0
+                        cont += 1
+                    if self.tam[y] > 1:
+                        add = ""
+                        if y == 0 or y == 1:
+                            add = str(cont)
+                        self.columLabes.append(labes[y][u] + add)
+                        u += 1
         i = 0
         for eeg in self.eegs:
             self.table.SetRowLabelValue(i, eeg.name)
@@ -313,27 +406,36 @@ class GridTab(wx.Panel):
         self.table.AutoSizeColumns()
 
     def fillTable(self):
-        wMF = self.project.windowMagFase
+        wM = self.project.windowMag
+        wF = self.project.windowFase
         wAUC = self.project.windowAUC
         wMV = self.project.windowMinMaxVolt
-        info = [wMF, wMF, wAUC, wMV, wMV]
+        info = [wM, wF, wAUC, wMV, wMV]
         dataEEG = []
         for eeg in range(len(self.eegs)):
             data = []
-            for i in range(len(self.selecdCH)):
-                for y in self.selecdAT:
-                    if y in self.selecdAT:
+            for y in self.selecdAT:
+                if y == 2:
+                    for i in range(len(self.selecdCH)):
                         for x in range(self.tam[y]):
-                            if y == 0:
-                                data.append(info[y][eeg][x + (i * self.tam[y])][0])
-                            elif y == 1:
-                                data.append(info[y][eeg][x + (i * self.tam[y])][1])
-                            elif y == 3:
-                                data.append(info[y][eeg][x + i][1])
-                            elif y == 4:
-                                data.append(info[y][eeg][x + i][0])
-                            else:
-                                data.append(info[y][eeg][x + i])
+                            data.append(info[y][eeg][x + i])
+                if y in self.selecdAT:
+                    u = 0
+                    num = 0
+                    for x in range(self.tam[y]):
+                        if u == 2:
+                            u = 0
+                            num += 1
+                        if y == 0:
+                            data.append(info[y][eeg][u][num])
+                            u += 1
+                        elif y == 1:
+                            data.append(info[y][eeg][u][num])
+                            u += 1
+                        elif y == 3:
+                            data.append(info[y][eeg][0][1][x])
+                        elif y == 4:
+                            data.append(info[y][eeg][0][0][x])
             dataEEG.append(data)
         for row in range(len(self.eegs)):
             for col in range(self.table.NumberCols - 1):

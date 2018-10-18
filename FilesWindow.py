@@ -1,9 +1,8 @@
 # Imports
-import datetime
 # local imports
 from FileReaderWriter import *
-from WindowEditor import *
 from Utils import exportEEGS
+from WindowEditor import *
 
 
 class FilesWindow(wx.Frame):
@@ -80,7 +79,9 @@ class FilesWindow(wx.Frame):
         self.Destroy()
 
     def export(self, event):
+        self.GetParent().setStatus("Exportando...", 1)
         exportEEGS(self.GetParent().project, self.GetParent().project.EEGS)
+        self.GetParent().setStatus("", 0)
 
     def loadFiles(self, event):
         if self.filePicker.ShowModal() == wx.ID_CANCEL:
@@ -185,8 +186,6 @@ class FilesWindow(wx.Frame):
 
     def updateList(self, filePaths):
         # setting cursor to wait to inform user
-        currentDT = datetime.datetime.now()
-        self.GetParent().log.append_txt(currentDT.strftime("%H:%M:%S") + " " + "Cargando Archivos...\n")
         myCursor = wx.Cursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
         self.GetParent().setStatus("Cargando Archivos...", 1)
@@ -231,9 +230,6 @@ class FilesWindow(wx.Frame):
             self.windowButton.Enable()
             self.saveButton.Enable()
             self.GetParent().setStatus("", 0)
-            currentDT = datetime.datetime.now()
-            self.GetParent().log.append_txt(currentDT.strftime("%H:%M:%S") + " " + "Archivos cargados...\n")
-            self.GetParent().log.process = False
 
     def checkProjectEEGs(self, errorFiles):
         EEGS = self.GetParent().project.EEGS

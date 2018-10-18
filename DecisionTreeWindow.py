@@ -1,15 +1,12 @@
 # Imports
-import os
-
+from shutil import copyfile
 import pydotplus as pydotplus
 import wx.lib.agw.buttonpanel
 import wx.lib.scrolledpanel
 import wx.lib.scrolledpanel as scrolled
 
-# Local Imports
-from shutil import copyfile
-from WindowEditor import *
 from DecisionTree import *
+from WindowEditor import *
 
 wildcard = "Portable Network Graphics (*.png)|*.png"
 
@@ -32,12 +29,10 @@ class DecisionTreeWindow(wx.Frame):
         self.H2 = wx.BoxSizer(wx.HORIZONTAL)
         titleLabel = wx.StaticText(self.pnl, label="Nombre del árbol: ")
         titleTex = wx.TextCtrl(self.pnl, value="")
-
-        mlLabel = wx.StaticText(self.pnl, label="Limite maximo de niveles:")
+        mlLabel = wx.StaticText(self.pnl, label="Límite máximo de niveles:")
         self.mlC = wx.SpinCtrl(self.pnl, value="100", style=wx.SP_ARROW_KEYS, min=1, max=1000, initial=100)
-        mmLabel = wx.StaticText(self.pnl, label="Mín de muestras requeridas por hoja:")
-        self.mmC = wx.SpinCtrl(self.pnl, value="1", style=wx.SP_ARROW_KEYS, min=1, max=100, initial=1)
-
+        mmLabel = wx.StaticText(self.pnl, label="Número de folds (Cross validation):")
+        self.mmC = wx.SpinCtrl(self.pnl, value="3", style=wx.SP_ARROW_KEYS, min=1, max=100, initial=3)
         hbox = wx.BoxSizer()
         hbox.Add(titleLabel, proportion=0, flag=wx.RIGHT, border=5)
         hbox.Add(titleTex, proportion=1, flag=wx.EXPAND)
@@ -48,7 +43,6 @@ class DecisionTreeWindow(wx.Frame):
         self.H2.Add(mmLabel, -1, wx.EXPAND | wx.ALL, 5)
         self.H2.Add(self.mmC, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.H2, -1, wx.EXPAND | wx.ALL, 5)
-
         applyButton = wx.Button(self.pnl, label="Aplicar")
         applyButton.Bind(wx.EVT_BUTTON, self.dtree)
         self.baseSizer.Add(applyButton, -1, wx.EXPAND | wx.ALL, 5)
@@ -62,13 +56,13 @@ class DecisionTreeWindow(wx.Frame):
 
     def ReDo(self, actions, eegs):
         pass
-        # dtree = DecisionTree(self.db, self.target, self.labels, actions[0], actions[1])
-        # tv = treeView(self, dtree)
 
     def dtree(self, event):
+        self.GetParent().setStatus("Generando Árbol...", 1)
         self.pbutton.actions = [self.mlC.GetValue(), self.mmC.GetValue()]
         dtree = DecisionTree(self.db, self.target, self.labels, self.mlC.GetValue(), self.mmC.GetValue())
         tv = treeView(self, dtree)
+        self.GetParent().setStatus("", 0)
         tv.Show()
 
     def getData(self):
@@ -85,7 +79,7 @@ class DecisionTreeWindow(wx.Frame):
 class treeView(wx.Frame):
 
     def __init__(self, parent, dtree):
-        wx.Frame.__init__(self, parent, -1, "Arbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
+        wx.Frame.__init__(self, parent, -1, "Árbol de decisión", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Centre()
         self.Maximize()
         basePanel = wx.Panel(self, size=(300, 1000), style=wx.TAB_TRAVERSAL)
@@ -104,28 +98,28 @@ class treeView(wx.Frame):
         self.bitmap = wx.StaticBitmap(self.imgPanel, -1, self.png, (10, 5), (self.png.GetWidth(), self.png.GetHeight()))
 
         opcPanel = wx.Panel(basePanel, size=(300, 1000), style=wx.TAB_TRAVERSAL)
+        b1 = wx.StaticText(opcPanel, 0, " ", style=wx.ALIGN_CENTER, pos=(2, 7), size=(200, 46))
+        b1.SetBackgroundColour((0, 0, 0))
+        b2 = wx.StaticText(opcPanel, 0, " ", style=wx.ALIGN_CENTER, pos=(3, 8), size=(198, 44))
+
         opcSizer = wx.BoxSizer(wx.VERTICAL)
-        infoLabel = wx.StaticText(opcPanel, label="Opciones: ")
-        test = wx.StaticText(opcPanel, label=dtree.ATe)
+        infoLabel = wx.StaticText(opcPanel, label="Datos: ")
         train = wx.StaticText(opcPanel, label=dtree.ATr)
-
+        opc = wx.StaticText(opcPanel, label="Opciones: ")
         zoomL = wx.StaticText(opcPanel, label="Zoom: ")
-
-        applyButton = wx.Button(opcPanel, label="Salvar como .PNG")
+        applyButton = wx.Button(opcPanel, label="Guardar como (.PNG)")
         applyButton.Bind(wx.EVT_BUTTON, self.OnSave)
         self.sp = wx.Slider(opcPanel, value=0, minValue=0, maxValue=1000)
         self.sp.Bind(wx.EVT_COMMAND_SCROLL_CHANGED, self.zoom)
-
         opcPanel.SetSizer(opcSizer)
         opcSizer.Add(infoLabel)
-        opcSizer.Add(train, border=5)
-        opcSizer.Add(test, border=5)
-        opcSizer.AddSpacer(10)
+        opcSizer.Add(train, border=15)
+        opcSizer.AddSpacer(30)
+        opcSizer.Add(opc, border=10)
         opcSizer.Add(zoomL, border=10)
         opcSizer.Add(self.sp, border=10)
         opcSizer.AddSpacer(20)
         opcSizer.Add(applyButton, border=10)
-
         self.imgPanel.SetSizer(self.imgSizer)
         self.imgSizer.Add(self.bitmap)
 

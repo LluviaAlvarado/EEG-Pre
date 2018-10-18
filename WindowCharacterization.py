@@ -15,14 +15,14 @@ class WindowCharacterization:
             msmin = 0
             for i in ch:
                 mx = np.amax(eeg.channels[i].readings)
-                mn = np.amin(eeg.channels[i].ch.readings)
+                mn = np.amin(eeg.channels[i].readings)
                 if mx > max:
                     max = mx
-                    imax = np.argmax(ch.readings)
+                    imax = np.argmax(eeg.channels[i].readings)
                     msmax = sampleToMS(imax, eeg.frequency, eeg.duration)
                 if mn < min:
                     min = mn
-                    imin = np.argmin(ch.readings)
+                    imin = np.argmin(eeg.channels[i].readings)
                     msmin = sampleToMS(imin, eeg.frequency, eeg.duration)
             MV.append([[min, msmin], [max, msmax]])
             MVE.append(MV)
@@ -38,10 +38,10 @@ class WindowCharacterization:
                 frFas.append(0)
             for i in ch:
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
+                real = fft.real
+                imag = fft.imag
                 for v in range(len(fft)):
                     # getting the fase for each value of fft
-                    real = fft.real
-                    imag = fft.imag
                     fase = np.arctan((imag[v]**2 / real[v]**2))
                     for j in range(n):
                         if abs(fase) > abs(Fase[j]):
@@ -60,10 +60,10 @@ class WindowCharacterization:
                 frMag.append(0)
             for i in ch:
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
+                real = fft.real
+                imag = fft.imag
                 for v in range(len(fft)):
                     # getting the magnitude for each value of fft
-                    real = fft.real
-                    imag = fft.imag
                     magnitude = round(np.sqrt(real[v]**2 + imag[v]**2), 2)
                     for j in range(n):
                         if magnitude > Mag[j]:

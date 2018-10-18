@@ -1,15 +1,14 @@
-import wx
-from FilesWindow import FilesWindow
+from copy import deepcopy
+
 from ArtifactEliminationWindow import ArtifactEliminationWindow
 from BandpassFilter import PreBPFW
-from WindowAttributes import WindowAttributes
-from KMeansWindow import KMeansWindow
 from DecisionTreeWindow import DecisionTreeWindow
-from WindowDialog import ModuleHint
-from SilhouetteWindow import SilhouetteWindow
+from FilesWindow import FilesWindow
+from KMeansWindow import KMeansWindow
 from RandIndexWindow import RandIndexWindow
+from SilhouetteWindow import SilhouetteWindow
 from Utils import eegs_copy
-from copy import deepcopy
+from WindowAttributes import WindowAttributes
 
 
 class Module:
@@ -22,13 +21,16 @@ class Module:
     5 = D Tree
     6 = Silhouette
     7 = Randindex'''
-    def __init__(self, w, p=None, eegs=[], ch=[], db=None, sel=None):
+
+    def __init__(self, w, p=None, eegs=[], ch=[], db=None, sel=None, act=None, km=None):
         self.eegs = eegs
         self.parent = p
         self.children = ch
         self.window = w
         self.windowDB = db
         self.windowSelec = sel
+        self.actions = act
+        self.km = km
 
 
 class ModuleButton:
@@ -41,7 +43,7 @@ class ModuleButton:
         self.parentWindow = parent
         self.children = []
         self.setEEGS(eegs)
-        self.actions = []
+        self.actions = None
         self.windowDB = None
         self.windowSelec = None
         self.hint = None
@@ -119,9 +121,10 @@ class ModuleButton:
         elif self.module == 5:
             self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self)
         elif self.module == 6:
-            self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
+            self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB,
+                                           self.parent.parent.windowSelec, self.parent.parent)
         elif self.module == 7:
-            self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
+            self.window = RandIndexWindow(self.GetParent(), self.parent.parent, self.parent.parent.windowDB)
         else:
             pass
         self.window.Show()
@@ -159,9 +162,10 @@ class ModuleButton:
             elif self.module == 5:
                 self.window = DecisionTreeWindow(self.GetParent(), self.parent.windowDB, self.parent.windowSelec, self)
             elif self.module == 6:
-                self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB, self.parent.parent.windowSelec, self.parent.parent)
+                self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB,
+                                               self.parent.parent.windowSelec, self.parent.parent)
             elif self.module == 7:
-                self.window = RandIndexWindow(self.GetParent(),  self.parent.parent, self.parent.parent.windowDB)
+                self.window = RandIndexWindow(self.GetParent(), self.parent.parent, self.parent.parent.windowDB)
             else:
                 pass
         self.window.ReDo(self.actions, eegs)
@@ -191,7 +195,7 @@ class ModuleTree:
     def searchTree(self, r, id):
         if len(r.children) > 0:
             for c in r.children:
-                 return self.searchTree(c, id)
+                return self.searchTree(c, id)
         if r.ID == id:
             return r
 
@@ -216,7 +220,7 @@ class ModuleTree:
         chr = []
         for c in r.children:
             self.convertTree(c, chr)
-        ch.append(Module(r.module, r.parent, r.eegs, chr, r.windowDB, r.windowSelec))
+        ch.append(Module(r.module, r.parent, r.eegs, chr, r.windowDB, r.windowSelec, r.actions, r.km))
 
     def SaveTree(self):
         ch = []
@@ -226,11 +230,11 @@ class ModuleTree:
         return tree
 
     def createTree(self, r, ch):
+        button = ModuleButton(self.idCount, self.parent, r.window, r.eegs, r.parent)
+        self.idCount += 1
         chr = []
         for c in r.children:
             self.createTree(c, chr)
-        button = ModuleButton(self.idCount, self.parent, r.module, r.eegs, r.parent)
-        self.idCount += 1
         button.windowDB = r.windowDB
         button.windowSelec = r.windowSelec
         button.children = chr

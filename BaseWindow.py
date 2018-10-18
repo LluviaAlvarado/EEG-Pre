@@ -4,7 +4,6 @@ import os
 from copy import deepcopy
 
 from ConsoleW import *
-from CorrelationWindow import CorrelationWindow
 from HintWindow import *
 from ModuleManager import *
 from Project import *
@@ -22,7 +21,7 @@ class BaseWindow(wx.Frame):
         self.project = Project()
         self.pnl = wx.Panel(self, size=self.Size, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
-        collap = wx.Panel(self.pnl, size=(230, self.Size[1]), style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        collap = wx.Panel(self.pnl, size=(260, self.Size[1]), style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
         self.hintPnl = HintPanel(collap)
         self.logPnl = ConsolePanel(collap)
 
@@ -144,8 +143,7 @@ class BaseWindow(wx.Frame):
         # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(-1, "&Ayuda")
-        # TODO quitar correlacion
-        corrItem = helpMenu.Append(-1, "&Correlación")
+
         # Make the menu bar and add the two menus to it. The '&' defines
         # that the next letter is the "mnemonic" for the menu item. On the
         # platforms that support it those letters are underlined and can be
@@ -164,10 +162,6 @@ class BaseWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnLoad, loadSessionItem)
         self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
-        self.Bind(wx.EVT_MENU, self.correlacionar, corrItem)
-
-    def correlacionar(self, e):
-        CorrelationWindow(self).Show()
 
     def setStatus(self, st, mouse):
         self.SetStatusText(st)
@@ -205,22 +199,74 @@ class BaseWindow(wx.Frame):
             name = str(path).split("\\")
             name = name[len(name) - 1].split(".")[0]
             self.project.name = name
-            f = gzip.open(path, 'wb')
-            _pickle.dump(len(self.project.EEGS), f, protocol=4)
+            outfile = gzip.open(path, 'wb')
+            _pickle.dump(len(self.project.EEGS), outfile, protocol=4)
             for i in range(len(self.project.EEGS)):
-                _pickle.dump(self.project.EEGS[i], f, protocol=4)
+                _pickle.dump(self.project.EEGS[i], outfile, protocol=4)
             self.project.EEGS = []
             t = self.moduleManager.GetTree()
-            _pickle.dump(t, f, protocol=4)
+            self.treeSave(t, outfile)
             self.project.moduleTree = []
-            _pickle.dump(self.project, f, protocol=4)
-            f.close()
+            _pickle.dump(self.project, outfile, protocol=4)
+            outfile.close()
             self.setStatus("", 0)
             self.setAux(self.project)
             return True
         elif result == wx.ID_CANCEL:
             self.setAux(self.project)
             return False
+
+    def treeSave(self, module, file):
+        # Root no tiene datos solo un hijo
+        # salvar hijo
+        self.saveChildren(module.children, file)
+        module.children = []
+        # salvar root
+        _pickle.dump(module, file, protocol=4)
+
+    def treeLoad(self, file):
+        children = self.loadChildren(file)
+        module = _pickle.load(file)
+        module.children = children
+        return module
+
+    def loadChildren(self, file):
+        children = []
+        nChildren = _pickle.load(file)
+        if nChildren > 0:
+            for i in range(nChildren):
+                chil = self.loadChildren(file)
+                eegs = self.loadEEGs(file)
+                childrenR = _pickle.load(file)
+                childrenR.eegs = eegs
+                childrenR.children = chil
+                children.append(childrenR)
+        return children
+
+    def loadEEGs(self, file):
+        num = _pickle.load(file)
+        eegs = []
+        for i in range(num):
+            eegs.append(_pickle.load(file))
+        return eegs
+
+    def saveChildren(self, child_list, file):
+        # Listado de hijos
+        _pickle.dump(len(child_list), file, protocol=4)
+        for ch in child_list:
+            # Salvar Children
+            self.saveChildren(ch.children, file)
+            ch.children = []
+            # Salvar EEGs
+            self.saveEEGS(file, ch.eegs)
+            ch.eegs = []
+            ch.parent = []
+            _pickle.dump(ch, file, protocol=4)
+
+    def saveEEGS(self, file, eegs):
+        _pickle.dump(len(eegs), file, protocol=4)
+        for i in range(len(eegs)):
+            _pickle.dump(eegs[i], file, protocol=4)
 
     def OnLoad(self, event):
         """Load project session"""
@@ -238,31 +284,31 @@ class BaseWindow(wx.Frame):
                     dl.ShowModal()
                     if dl.opc == 1:
                         self.OnSave(0)
+                    elif dl.opc == 2:
+                        path = dlg.GetPath()
+                        self.loadProcess(path)
                     elif dl.opc == 3:
                         return
             else:
                 self.setStatus("Cargando...", 1)
                 path = dlg.GetPath()
-                f = gzip.open(path, 'rb')
-                lent = _pickle.load(f)
-                EEGS = []
-                for i in range(lent):
-                    EEGS.append(_pickle.load(f))
-                self.project = _pickle.load(f)
-                self.project.EEGS = EEGS
-                f.close()
-                self.setAux(self.project)
-            self.setStatus("Cargando...", 1)
-            path = dlg.GetPath()
-            f = gzip.open(path, 'rb')
-            EEg = _pickle.load(f)
-            EEG2 = _pickle.load(f)
-            f.close()
-        # load the tree view
-        self.moduleManager.CreateTree(self.project.modularTree)
-        # self.setAux(self.project)
+                self.loadProcess(path)
         dlg.Destroy()
         self.setStatus("", 0)
+
+    def loadProcess(self, path):
+        f = gzip.open(path, 'rb')
+        leneeg = _pickle.load(f)
+        EEGs = []
+        for i in range(leneeg):
+            EEGs.append(_pickle.load(f))
+        module = self.treeLoad(f)
+        self.project = _pickle.load(f)
+        self.project.EEGS = EEGs
+        self.moduleManager.modules.root.children = []
+        self.moduleManager.CreateTree(module.children[0])
+        self.moduleManager.project = self.project
+        f.close()
 
 
 def log_task(panel):
@@ -277,12 +323,5 @@ def log_task(panel):
         tam -= 2
         panel.logconsole.Remove(tam - 1, tam)
         panel.append_txt(load[o])
-        #  else:
-        #      text = ""
-        #      if panel.message != "":
-        #          currentDT = datetime.datetime.now()
-        #          text = currentDT.strftime("%H:%M:%S") + " " + panel.message
-        #      panel.append_txt(text)
-        #      panel.message = ""
         time.sleep(.01)
         o += 1

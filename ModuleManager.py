@@ -1,9 +1,9 @@
-import threading
-import time
-import wx
-from ModuleTree import ModuleTree, ModuleButton
-from WindowDialog import ModuleHint
+import datetime
 from os import getcwd
+
+import wx
+
+from ModuleTree import ModuleTree, ModuleButton
 
 '''This class manages the module tree from the main menu'''
 
@@ -12,6 +12,7 @@ class ModuleManager(wx.Panel):
 
     def __init__(self, parent, project, log):
         wx.Panel.__init__(self, parent, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN)
+        self.lastText = ""
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.treeView = wx.TreeCtrl(self, size=self.GetParent().GetSize(), style=wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
         self.modules = ModuleTree(self, project.EEGS)
@@ -54,6 +55,11 @@ class ModuleManager(wx.Panel):
 
     def setStatus(self, text, mouse):
         self.GetParent().GetParent().setStatus(text, mouse)
+        if text == "":
+            text = self.lastText + " (Finalizado)."
+        currentDT = datetime.datetime.now()
+        self.log.append_txt(currentDT.strftime("%H:%M:%S") + " " + text + "\n")
+        self.lastText = text
 
     def OpenModule(self, e):
         self.HidePossible()
@@ -65,7 +71,8 @@ class ModuleManager(wx.Panel):
 
     def ModuleSelected(self, e):
         idm = self.treeView.GetItemData(e.GetItem()).ID
-        self.GetParent().GetParent().hintPnl.changeModule(idm)
+        m = self.treeView.GetItemData(e.GetItem()).module
+        self.GetParent().GetParent().hintPnl.changeModule(m)
         for m in self.pModules:
             if m.ID == idm:
                 self.treeView.SetItemImage(e.GetItem(), self.getImage(m.module, False))
@@ -167,7 +174,7 @@ class ModuleManager(wx.Panel):
         return self.modules.SaveTree()
 
     def addLoaded(self, r, ri):
-        image = self.getImage(r.module, True)
+        image = self.getImage(r.module, False)
         idx = self.treeView.AppendItem(ri, "", image)
         self.treeView.SetItemData(idx, r)
         for ch in r.children:
@@ -177,7 +184,7 @@ class ModuleManager(wx.Panel):
     def CreateTree(self, tree):
         self.modules.LoadTree(tree)
         self.treeView.DeleteAllItems()
-        self.addLoaded(self.modules.root, self.treeView.RootItem)
+        self.addLoaded(self.modules.root.children[0], self.treeView.RootItem)
 
     def closeWindows(self):
         self.HidePossible()

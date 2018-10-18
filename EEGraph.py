@@ -1,6 +1,6 @@
 # imports
-from TransparentPanel import *
 from GraphPanel import *
+from TransparentPanel import *
 
 
 class EEGraph(wx.Panel):
@@ -13,7 +13,7 @@ class EEGraph(wx.Panel):
         w = w - (w / 5)
         self.v = v
         if v:
-            h = parent.Size[1] + 80
+            h = parent.Size[1] + 70
             w = parent.Size[0]
 
         h = h - 187

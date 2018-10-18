@@ -1,9 +1,12 @@
 import csv
+import os
+from copy import copy
 from os import listdir, getcwd, remove
 from os.path import isfile, join
+
 import wx
+
 from FileReaderWriter import FileReaderWriter
-from copy import copy, deepcopy
 
 
 # changes the value for printable purposes
@@ -24,6 +27,7 @@ def sampleToMS(s, frequency, duration):
 def frequencyToSample(fr, frequency, duration):
     # bit reversal to get the actual sample
     return int('{:32b}'.format(fr)[::-1], 2)
+
 
 def msToReading(ms, frequency, duration):
     # ms is te sample to convert to sample/reading
@@ -54,7 +58,7 @@ def readEOGSCSV(path):
 
 def exportEEGS(project, eegs):
     pathPicker = wx.DirDialog(None, "Exportar en:", getcwd(),
-                             wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+                              wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
     if pathPicker.ShowModal() != wx.ID_CANCEL:
         writer = FileReaderWriter()
         windows = []
@@ -69,6 +73,22 @@ def exportEEGS(project, eegs):
             writeWindowFiles(project, windows, pathPicker.GetPath())
 
 
+def exportCSV(self, data, names, features):
+    dlg = wx.FileDialog(self, "Guardar como", os.getcwd(), "", "(*.csv)|*.csv", \
+                        wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+    result = dlg.ShowModal()
+    path = dlg.GetPath()
+    dlg.Destroy()
+    if result == wx.ID_OK:
+        with open(path, 'w') as f:
+            f.write("%s\n" % features)
+            i = 0
+            for item in data:
+                item = names[i] + item
+                f.write("%s\n" % item)
+                i += 1
+
+
 def writeWindowFiles(project, windows, path):
     file = path + "\\" + project.name + "_windows.csv"
     txt = path + "\\" + project.name + "_windows.txt"
@@ -76,8 +96,8 @@ def writeWindowFiles(project, windows, path):
         # it already exists
         f = project.name + "_windows.csv"
         msg = wx.MessageDialog(None, "El archivo '" + f + "' ya existe. "
-                            "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
-                            style=wx.YES_NO | wx.CENTRE)
+                                                          "\n¿Desea reemplazar el archivo?", caption="¡Alerta!",
+                               style=wx.YES_NO | wx.CENTRE)
         if msg.ShowModal() == wx.ID_NO:
             return  # we don't to anything
         else:

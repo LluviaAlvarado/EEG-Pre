@@ -1,12 +1,13 @@
-#imports
-from Utils import msToReading, sampleToMS, ReadEOGS
-import numpy as np
-from scipy.stats.stats import pearsonr
+# imports
 import os
+from math import ceil
+
+import numpy as np
 import peakutils
 import pywt
-from math import ceil
+from scipy.stats.stats import pearsonr
 from FileReaderWriter import FileReaderWriter
+from Utils import msToReading, sampleToMS, ReadEOGS
 
 
 def autoRemoveEOG(icas):
@@ -86,6 +87,7 @@ def autoRemoveEOG(icas):
             newC.append(c)
         ica.components = newC
 
+
 def autoRemoveECG(icas, f, d):
     path = os.getcwd() + "\\src\\ECG.edf"
     ecg = FileReaderWriter().read_EDF(path)
@@ -146,18 +148,19 @@ def autoRemoveECG(icas, f, d):
                     F = []
                     for i in range(len(peaks) - 1):
                         t = float(sampleToMS(peaks[i + 1], f, d) - sampleToMS(peaks[i], f, d))
-                        F.append(1 / (t/1000))
+                        F.append(1 / (t / 1000))
                     # median frequency of peaks
                     m = np.median(F)
                     # if it is between min and max of heart rate
                     F = np.array(F)
-                    N = np.where(np.logical_and(F >= m*0.75, F <= m*1.25))
+                    N = np.where(np.logical_and(F >= m * 0.75, F <= m * 1.25))
                     if (2 / 3) <= m <= 3:
                         if len(N[0]) >= int(0.7 * m * ica.duration):
                             # this is an ECG component
                             c = np.array([0.0] * len(c))
             newC.append(c)
         ica.components = newC
+
 
 def autoRemoveBlink(icas, frequency, duration):
     for ica in icas:
@@ -204,12 +207,13 @@ def autoRemoveBlink(icas, frequency, duration):
             # returning Ca4 to original shape
             ca = []
             for i in range(len(Ca4)):
-                if i % (pad+1) == 0:
+                if i % (pad + 1) == 0:
                     ca.append(Ca4[i])
             # applying reverse wavelet
             component = pywt.upcoef('a', ca, 'Haar', level=4)
             newC.append(component)
         ica.components = newC
+
 
 def autoRemoveMuscular(icas):
     for ica in icas:

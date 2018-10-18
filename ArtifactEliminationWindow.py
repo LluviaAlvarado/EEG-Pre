@@ -1,13 +1,15 @@
 # local imports
-from FilesWindow import *
+import threading
+
+from wx.adv import NotificationMessage
+
+from ArtifactElimination import *
 from BPFWindow import *
-from WindowDialog import *
 from ComponentViewer import *
 from FastICA import *
-import threading
-from wx.adv import NotificationMessage
-from ArtifactElimination import *
+from FilesWindow import *
 from Utils import exportEEGS, eeg_copy
+from WindowDialog import *
 
 
 class ArtifactEliminationWindow(wx.Frame):
