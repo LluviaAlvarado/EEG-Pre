@@ -107,7 +107,6 @@ class KMeansV(wx.Frame):
 
     def __init__(self, p, data, k, selected, eeg):
         wx.Frame.__init__(self, p, -1, "Resultado de K-Means")
-        self.SetSize(600, 600)
         self.Centre()
         self.name = []
         for i in eeg:
@@ -116,9 +115,9 @@ class KMeansV(wx.Frame):
         self.selceted = selected
         self.kmeans = k
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
-        Pnl = wx.Panel(self, size=(600, 600))
+        Pnl = wx.Panel(self, size=(2000,2000))
         pnlSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.Tabs = aui.AuiNotebook(Pnl, size=(Pnl.Size),
+        self.Tabs = aui.AuiNotebook(Pnl, size=(2500, 2500),
                                     style=aui.AUI_NB_DEFAULT_STYLE ^ (
                                             aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                           | aui.AUI_NB_WINDOWLIST_BUTTON)

@@ -89,7 +89,7 @@ class WindowAttributes(wx.Frame):
         leftSizer.Add(expLabel, 0, wx.EXPAND | wx.BOTTOM, 20)
         leftSizer.Add(selButton, 0, wx.EXPAND | wx.BOTTOM, 20)
         leftPnl.SetSizer(leftSizer)
-        rightPnl = wx.Panel(self, size=(700, 600))
+        rightPnl = wx.Panel(self, size=(2500,2500))
         # table of sets
         self.table = GridTab(rightPnl, eegs)
         rightSizer = wx.BoxSizer(wx.VERTICAL)
