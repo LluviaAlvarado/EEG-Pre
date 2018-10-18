@@ -205,6 +205,8 @@ class ModuleTree:
 
     def DeleteModule(self, p):
         # there's no readjustment it just deletes the module and its children
+        if p.parent != None:
+            p.parent.children.remove(p)
         del p
 
     def forward(self, ch):

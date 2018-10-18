@@ -10,6 +10,7 @@ class BFPWindow(wx.Frame):
     def __init__(self, parent, prev=False):
         wx.Frame.__init__(self, parent, -1, "Visualizar EEGs", style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER))
         self.Maximize(True)
+        self.prev = prev
         self.SetMinSize((self.Size[0], self.Size[1]))
         self.project = parent.GetParent().project
         # frame will contain the base container of window editor and eeg tabs
@@ -31,7 +32,7 @@ class BFPWindow(wx.Frame):
         # setting the cursor to loading
         self.SetStatus("", 0)
         self.Centre()
-        self.navigationTabs.GetCurrentPage().fillEEGTabs(False)
+        self.navigationTabs.GetCurrentPage().fillEEGTabs(prev)
         self.Show()
 
     def loadingNew(self, event):
@@ -50,7 +51,7 @@ class BFPWindow(wx.Frame):
         eegs = self.GetParent().eegs
         for eeg in eegs:
             if n in eeg.name:
-                self.navigationTabs.GetCurrentPage().addTab(eeg, False)
+                self.navigationTabs.GetCurrentPage().addTab(eeg, self.prev)
 
     def SetStatus(self, st, mouse):
         self.SetStatusText(st)

@@ -188,7 +188,7 @@ class PreBPFW(wx.Frame):
                 for ch in channels:
                     fourier = np.fft.rfft(ch.readings, len(ch.readings))
                     for i in range(len(fourier)):
-                        if i < band.lowFrequency or i > band.hiFrequency:
+                        if band.lowFrequency <= i <= band.hiFrequency:
                             fourier[i] = 0.0
                     # adding new filtered channel
                     filtered = np.fft.irfft(fourier)
@@ -229,7 +229,7 @@ class PreBPFW(wx.Frame):
                 for ch in channels:
                     fourier = np.fft.rfft(ch.readings, len(ch.readings))
                     for i in range(len(fourier)):
-                        if i < band.lowFrequency or i > band.hiFrequency:
+                        if band.lowFrequency <= i <= band.hiFrequency:
                             fourier[i] = 0.0
                     # adding new filtered channel
                     filtered = np.fft.irfft(fourier)
@@ -239,6 +239,7 @@ class PreBPFW(wx.Frame):
                 neweeg.name += "~" + str(band.lowFrequency) + "~" + str(band.hiFrequency)
                 new.append(neweeg)
         self.eegs.extend(new)
+        self.pbutton.eegs = self.eegs
         self.GetParent().setStatus("", 0)
         if flag:
             self.exportButton.Enable()

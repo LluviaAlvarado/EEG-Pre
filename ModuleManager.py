@@ -50,6 +50,13 @@ class ModuleManager(wx.Panel):
         self.Bind(wx.EVT_RIGHT_DOWN, self.HidePossible)
         self.Bind(wx.EVT_LEFT_DOWN, self.HidePossible)
 
+    def DeleteModule(self, idm):
+        m = self.treeView.GetItemData(idm)
+        self.treeView.Delete(idm)
+        self.modules.DeleteModule(m)
+        currentDT = datetime.datetime.now()
+        self.log.append_txt(currentDT.strftime("%H:%M:%S") + " " + "Módulo Eliminado..." + "\n")
+
     def ForwardChanges(self, r):
         self.modules.ForwardChanges(r)
 
@@ -72,15 +79,13 @@ class ModuleManager(wx.Panel):
     def ModuleSelected(self, e):
         idm = self.treeView.GetItemData(e.GetItem()).ID
         m = self.treeView.GetItemData(e.GetItem()).module
-        self.GetParent().GetParent().hintPnl.changeModule(m)
+        self.GetParent().GetParent().hintPnl.changeModule(m, e.GetItem())
         for m in self.pModules:
             if m.ID == idm:
                 self.treeView.SetItemImage(e.GetItem(), self.getImage(m.module, False))
                 self.AddModule(idm)
                 return
         self.HidePossible()
-        # self.log.AddToLog("Modulo Archivo seleccionado.\n")
-        # TODO poner informacion en la ventana del log
 
     def getItem(self, module):
         return self.searchTree(self.treeView.RootItem, module)

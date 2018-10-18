@@ -24,6 +24,7 @@ class ArtifactEliminationWindow(wx.Frame):
         self.SetSize(250, 250)
         self.Centre()
         self.pbutton = p
+        self.extended = False
         self.eegs = eegs
         self.viewer = None
         self.icas = []
@@ -130,6 +131,12 @@ class ArtifactEliminationWindow(wx.Frame):
     def FastICA(self):
         # to remove eye blink and muscular artifacts we
         # will use fastICA then wavelets
+
+        self.extended = False
+        if self.eegs[0].duration < 20:
+            # ica needs at least 20s of data
+            self.eegs = self.GetParent().project.EEGS
+            self.extended = True
         eegs = self.eegs
         self.icas = []
         for eeg in eegs:
@@ -159,6 +166,9 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def EliminateComponents(self):
         self.GetParent().setStatus("Eliminando Artefactos...", 1)
+        if self.extended:
+            for i in range(len(self.eegs)):
+                self.eegs[i] = self.eegs[i].concatenateWindows()
         eegs = self.eegs
         self.pbutton.eegs = eegs
         eliminateArtifacts(eegs, self.icas)

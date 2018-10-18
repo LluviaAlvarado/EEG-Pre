@@ -21,7 +21,11 @@ def sampleToMS(s, frequency, duration):
     # s is te sample to convert to ms
     # frequency is the sample frequency of the project and duration of the project
     nSamp = frequency * duration
-    return ((duration * 1000) * s) / nSamp
+    try:
+        ms = ((duration * 1000) * s) / nSamp
+    except:
+        ms = s
+    return ms
 
 
 def frequencyToSample(fr, frequency, duration):
