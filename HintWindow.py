@@ -19,6 +19,7 @@ class HintPanel(wx.Panel):
         self.delete = wx.Button(self, label="Eliminar")
         self.delete.Disable()
         self.delete.Bind(wx.EVT_BUTTON, self.DeleteModule)
+        sizer.AddSpacer(20)
         sizer.Add(self.delete, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(sizer)
 

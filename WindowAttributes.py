@@ -25,8 +25,11 @@ class WindowAttributes(wx.Frame):
         self.setofData = []  # La matriz que contiene el se de datos final
         self.opcAttributes = ["Espectro de magnitud", "Espectro de fase", "Area bajo la curva", "Voltaje máximo",
                               "Voltaje mínimo"]
-        self.opcChannels = self.project.chLabels
 
+        self.opcCh = list(eegs[0].selectedCh)
+        self.opcChannels = []
+        for i in self.opcCh:
+            self.opcChannels.append(eegs[0].channels[i].label)
         self.classRecord = []
         # Create visual components
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
@@ -98,7 +101,7 @@ class WindowAttributes(wx.Frame):
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 3)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 3)
         self.SetSizer(baseContainer)
-        if self.parent.windowDB is not None:
+        if self.parent.windowDB is not None or self.parent.windowDB is not [] :
             self.ReFill(p)
         else:
             self.parent.windowDB = []

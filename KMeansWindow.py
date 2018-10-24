@@ -1,5 +1,6 @@
 # Imports
 import matplotlib
+import random
 
 matplotlib.use('WXAgg')
 import wx.lib.agw.buttonpanel
@@ -116,6 +117,13 @@ class KMeansV(wx.Frame):
         self.kmeans = k
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         Pnl = wx.Panel(self, size=(2000,2000))
+        self.color = []
+        numofColors = len(self.kmeans.clusters)
+        for i in range(numofColors):
+            g = random.randint(90, 207)
+            r = random.randint(90, 255)
+            b = random.randint(90, 255)
+            self.color.append((r, g, b))
         pnlSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.Tabs = aui.AuiNotebook(Pnl, size=(2500, 2500),
                                     style=aui.AUI_NB_DEFAULT_STYLE ^ (
@@ -128,23 +136,22 @@ class KMeansV(wx.Frame):
         self.SetSizer(baseContainer)
 
     def fillTabs(self):
-        page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 0, self.name)
+        page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 0, self.name, self.color)
         self.Tabs.AddPage(page, "Clasificación")
-        page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 1, self.name)
+        page = GridTab(self.Tabs, self.data, self.kmeans, self.selceted, 1, self.name, self.color)
         self.Tabs.AddPage(page, "Clusters")
 
 
 class GridTab(wx.Panel):
 
-    def __init__(self, p, data, k, selected, type, eeg):
+    def __init__(self, p, data, k, selected, type, eeg, color):
         wx.Panel.__init__(self, p, style=wx.TAB_TRAVERSAL | wx.BORDER_SUNKEN, size=(p.Size))
         self.data = data
+        self.color = color
         self.selceted = selected
         self.kmeans = k
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
         self.table = wx.grid.Grid(self)
-        color = [(200, 200, 196), (150, 90, 196), (196, 239, 198),
-                 (196, 239, 236), (196, 203, 239), (229, 196, 239), (239, 196, 196), (247, 230, 230)]
         label = ["EM", "FM", "Area bajo la curva", "Voltaje máximo", "Voltaje mínimo"]
         if type == 0:
             self.table.CreateGrid(len(data), len(data[0]))
