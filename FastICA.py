@@ -8,7 +8,7 @@ class FastICA():
        it may do this automatically or the user can select the components
        to remove'''
 
-    def __init__(self, signals, t, auto):
+    def __init__(self, signals, t):
         self.signals = signals
         self.components = []
         self.amUnits = []

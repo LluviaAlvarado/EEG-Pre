@@ -107,7 +107,10 @@ def writeWindowFiles(project, windows, path):
         else:
             # deleting the prev file and txt
             remove(file)
-            remove(txt)
+            try:
+                remove(txt)
+            except:
+                pass
     # writing windowFiles
     FileReaderWriter().writeWindowFiles(windows, file, txt, project.windowLength, project.windowTBE)
 

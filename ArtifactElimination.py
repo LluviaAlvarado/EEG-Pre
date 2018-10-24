@@ -88,7 +88,7 @@ def autoRemoveEOG(icas):
         ica.components = newC
 
 
-def autoRemoveECG(icas, f, d):
+def autoRemoveECG(icas):
     path = os.getcwd() + "\\src\\ECG.edf"
     ecg = FileReaderWriter().read_EDF(path)
     duration = ecg.duration
@@ -99,7 +99,7 @@ def autoRemoveECG(icas, f, d):
         diff = icas[0].duration - duration
         if diff < 0:
             # getting just the amount of time
-            ecg = ecg.additionalData[0].readings[0:int(ecg.frequency * icas[0].duration)]
+            ecg = ecg[0:int(frequency * icas[0].duration)]
         else:
             # getting just the amount of time and padding samples
             sampAdd = diff * frequency
@@ -134,6 +134,8 @@ def autoRemoveECG(icas, f, d):
             new = ecg[0:int(len(ecg) - sDiff)]
             ecg = new
     for ica in icas:
+        f = ica.frequency
+        d = ica.duration
         ecg_template = ecg
         # checking correlation
         newC = []
@@ -162,8 +164,10 @@ def autoRemoveECG(icas, f, d):
         ica.components = newC
 
 
-def autoRemoveBlink(icas, frequency, duration):
+def autoRemoveBlink(icas):
     for ica in icas:
+        frequency = ica.frequency
+        duration = ica.duration
         newC = []
         for c in ica.components:
             # we need to get up to Ca4 to get to theta band

@@ -80,9 +80,9 @@ class ArtifactEliminationWindow(wx.Frame):
         # saving the current state of EEGs
         if len(self.eegs) > 0:
             tmp = deepcopy(self.eegs[0])
-        for eeg in self.eegs:
-            save = eeg_copy(eeg, tmp)
-            eeg.setSaveState(save)
+            for eeg in self.eegs:
+                save = eeg_copy(eeg, tmp)
+                eeg.setSaveState(save)
         self.FastICA()
         self.viewButton.Enable()
         self.exportButton.Enable()
@@ -120,13 +120,15 @@ class ArtifactEliminationWindow(wx.Frame):
         # first we apply FastICA to get IC
         if len(self.icas) == 0:
             self.FastICA()
-        autoRemoveEOG(self.icas)
+        if len(self.icas[0].components) > 0:
+            autoRemoveEOG(self.icas)
 
     def removeECG(self):
         # first we apply FastICA to get IC
         if len(self.icas) == 0:
             self.FastICA()
-        autoRemoveECG(self.icas, self.GetParent().project.frequency, self.GetParent().project.duration)
+        if len(self.icas[0].components) > 0:
+            autoRemoveECG(self.icas)
 
     def FastICA(self):
         # to remove eye blink and muscular artifacts we
@@ -146,7 +148,7 @@ class ArtifactEliminationWindow(wx.Frame):
             for extra in eeg.additionalData:
                 matrix.append(extra.readings)
             # fast ICA uses transposed matrix
-            fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration, False)
+            fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration)
             self.icas.append(fastICA)
         processes = [threading.Thread(target=ica.separateComponents) for ica in self.icas]
         for p in processes:
@@ -157,12 +159,14 @@ class ArtifactEliminationWindow(wx.Frame):
     def removeBlink(self):
         if len(self.icas) == 0:
             self.FastICA()
-        autoRemoveBlink(self.icas, self.GetParent().project.frequency, self.GetParent().project.duration)
+        if len(self.icas[0].components) > 0:
+            autoRemoveBlink(self.icas)
 
     def removeMuscular(self):
         if len(self.icas) == 0:
             self.FastICA()
-        autoRemoveMuscular(self.icas)
+        if len(self.icas[0].components) > 0:
+            autoRemoveMuscular(self.icas)
 
     def EliminateComponents(self):
         self.GetParent().setStatus("Eliminando Artefactos...", 1)
