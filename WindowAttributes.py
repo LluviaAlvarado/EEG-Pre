@@ -12,24 +12,27 @@ class WindowAttributes(wx.Frame):
     window that contains opciones para caratersar
     """
 
-    def __init__(self, parent, eegs, p, actions):
+    def __init__(self, parent, eegs, p):
         wx.Frame.__init__(self, parent, -1, "Caracterizar Ventanas")
         self.SetSize(1000, 600)
         self.Centre()
         self.parent = p
         self.project = parent.project
         self.eegs = eegs
-        self.actions = []
+        self.actions = p.actions
         # Variables a considerar
         self.amountHF = 1  # la cantidad de salidas que quieren del fft
         self.setofData = []  # La matriz que contiene el se de datos final
         self.opcAttributes = ["Espectro de magnitud", "Espectro de fase", "Area bajo la curva", "Voltaje máximo",
                               "Voltaje mínimo"]
 
-        self.opcCh = list(eegs[0].selectedCh)
+        self.opcCh =[]
         self.opcChannels = []
-        for i in self.opcCh:
-            self.opcChannels.append(eegs[0].channels[i].label)
+        if eegs is not None and len(eegs)>0:
+            self.opcCh = list(eegs[0].selectedCh)
+            self.opcChannels = []
+            for i in self.opcCh:
+                self.opcChannels.append(eegs[0].channels[i].label)
         self.classRecord = []
         # Create visual components
         baseContainer = wx.BoxSizer(wx.HORIZONTAL)
@@ -101,7 +104,7 @@ class WindowAttributes(wx.Frame):
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 3)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 3)
         self.SetSizer(baseContainer)
-        if self.parent.windowDB is not None or self.parent.windowDB is not [] :
+        if self.parent.windowDB is not None and len(self.parent.windowDB) > 1 :
             self.ReFill(p)
         else:
             self.parent.windowDB = []
@@ -234,6 +237,11 @@ class WindowAttributes(wx.Frame):
                 # Voltaje maximo
                 self.applyMV(selectedCH)
         self.table.setValues(self.project, selectedAT, selecCH, self.amountHF)
+        self.replaceDefault(0)
+        self.check(0)
+        self.parent.windowDB = self.setofData
+        self.parent.windowSelec = self.table.columLabes
+        self.parent.actions = self.actions
 
     def apply(self, event):
         selectedAT = self.opcATList.GetCheckedItems()
@@ -256,6 +264,7 @@ class WindowAttributes(wx.Frame):
                 # Voltaje maximo
                 self.applyMV(selectedCH)
         self.table.setValues(self.project, selectedAT, selecCH, self.amountHF)
+        self.parent.actions = self.actions
         self.GetParent().setStatus("", 0)
 
 

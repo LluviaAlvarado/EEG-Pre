@@ -113,7 +113,7 @@ class ModuleButton:
         elif self.module == 2:
             self.window = ArtifactEliminationWindow(self.GetParent(), self.eegs, self)
         elif self.module == 3:
-            self.window = WindowAttributes(self.GetParent(), self.eegs, self, self.actions)
+            self.window = WindowAttributes(self.GetParent(), self.eegs, self)
         elif self.module == 4:
             self.window = KMeansWindow(self.GetParent(), self.parent, self)
         elif self.module == 5:

@@ -189,7 +189,8 @@ class ModuleManager(wx.Panel):
     def CreateTree(self, tree):
         self.modules.LoadTree(tree)
         self.treeView.DeleteAllItems()
-        self.addLoaded(self.modules.root.children[0], self.treeView.RootItem)
+        self.modules.root = self.modules.root.children[0]
+        self.addLoaded(self.modules.root, self.treeView.RootItem)
 
     def closeWindows(self):
         self.HidePossible()

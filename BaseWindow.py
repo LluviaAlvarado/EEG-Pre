@@ -28,7 +28,7 @@ class BaseWindow(wx.Frame):
         self.moduleManager = ModuleManager(self.pnl, self.project, self.logPnl)
         self.aux = Project()
         # create the menu bar that we don't need yet
-        self.makeMenuBar()
+        self.makeMenuBar(self.logPnl)
         csizer = wx.BoxSizer(wx.VERTICAL)
 
         csizer.Add(self.hintPnl)
@@ -119,12 +119,13 @@ class BaseWindow(wx.Frame):
         else:
             return False
 
-    def makeMenuBar(self):
+    def makeMenuBar(self,log):
         """
         A menu bar is composed of menus, which are composed of menu items.
         This method builds a se of menus and binds handlers to be called
         when the menu item is selected.
         """
+        self.log = log
 
         # Make a file menu with Hello and Exit items
         fileMenu = wx.Menu()
@@ -154,6 +155,7 @@ class BaseWindow(wx.Frame):
 
         # Give the menu bar to the frame
         self.SetMenuBar(menuBar)
+        self.lastText = ""
 
         # Finally, associate a handler function with the EVT_MENU event for
         # each of the menu items. That means that when that menu item is
@@ -171,6 +173,13 @@ class BaseWindow(wx.Frame):
         elif mouse == 1:
             myCursor = wx.Cursor(wx.CURSOR_WAIT)
             self.SetCursor(myCursor)
+
+    def setlog(self, text):
+        if text == "":
+            text = self.lastText + " (Finalizado)."
+        currentDT = datetime.datetime.now()
+        self.log.append_txt(currentDT.strftime("%H:%M:%S") + " " + text + "\n")
+        self.lastText = text
 
     def OnExit(self, event):
         """Close the frame, terminating the application."""
@@ -194,6 +203,7 @@ class BaseWindow(wx.Frame):
         dlg.Destroy()
         if result == wx.ID_OK:
             self.setStatus("Guardando...", 1)
+            self.setlog("Guardando...")
             self.project.setTree(self.moduleManager.GetTree())
             # Saving the new name for the project
             name = str(path).split("\\")
@@ -210,6 +220,7 @@ class BaseWindow(wx.Frame):
             _pickle.dump(self.project, outfile, protocol=4)
             outfile.close()
             self.setStatus("", 0)
+            self.setlog("")
             self.setAux(self.project)
             return True
         elif result == wx.ID_CANCEL:
@@ -291,10 +302,12 @@ class BaseWindow(wx.Frame):
                         return
             else:
                 self.setStatus("Cargando...", 1)
+                self.setlog("Cargando...")
                 path = dlg.GetPath()
                 self.loadProcess(path)
         dlg.Destroy()
         self.setStatus("", 0)
+        self.setlog("")
 
     def loadProcess(self, path):
         f = gzip.open(path, 'rb')
@@ -310,18 +323,3 @@ class BaseWindow(wx.Frame):
         self.moduleManager.project = self.project
         f.close()
 
-
-def log_task(panel):
-    load = ["\\", "|", "/", "-"]
-    o = 0
-    while panel.process:
-        if o == 4: o = 0
-        #  if panel.process:
-        tam = 0
-        for j in range(panel.logconsole.GetNumberOfLines()):
-            tam += len(panel.logconsole.GetLineText(j)) + 2
-        tam -= 2
-        panel.logconsole.Remove(tam - 1, tam)
-        panel.append_txt(load[o])
-        time.sleep(.01)
-        o += 1
