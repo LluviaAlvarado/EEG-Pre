@@ -71,7 +71,7 @@ def exportEEGS(project, eegs):
             writer.writeFile(eeg, project.name, pathPicker.GetPath())
             if len(eeg.windows) > 0:
                 windowsExist = True
-            windows.append([eeg.name, eeg.windows])
+            windows.append([eeg.name + "_" + project.name, eeg.windows])
         # exporting csv with window information and a txt with the TBE and length in ms
         if windowsExist:
             writeWindowFiles(project, windows, pathPicker.GetPath())

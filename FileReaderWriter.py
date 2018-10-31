@@ -84,8 +84,10 @@ class FileReaderWriter:
                             u'prefilter': 'pre1', u'transducer': 'trans1'}
                 file.setSignalHeader(j, chanInfo)
                 ch = eeg.getChannel(i)
+                ch.readings = np.array(ch.readings)
                 samples.append(ch.readings)
                 j += 1
+            samples = np.array(samples)
             # needs to be in microseconds
             duration = int(eeg.duration * 100000)
             file.setDatarecordDuration(duration)

@@ -1,7 +1,7 @@
 # Imports
 # local imports
 from FileReaderWriter import *
-from Utils import exportEEGS
+from Utils import exportEEGS, eegs_copy
 from WindowEditor import *
 
 
@@ -62,10 +62,12 @@ class FilesWindow(wx.Frame):
         # button to save modified eegs
         self.saveButton = wx.Button(self.pnl, label="Exportar")
         self.saveButton.Bind(wx.EVT_BUTTON, self.export)
+        self.windowOpc = wx.CheckBox(self.pnl, label="Solo ventanas")
         if len(self.GetParent().project.EEGS) == 0:
             self.saveButton.Disable()
         self.buttonSizer.AddSpacer(50)
         self.buttonSizer.Add(self.saveButton, 0, wx.EXPAND | wx.ALL, 5)
+        self.buttonSizer.Add(self.windowOpc, 0, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
         self.filePicker = wx.FileDialog(self.pnl, message="Elige los archivos de EEG",
@@ -80,7 +82,21 @@ class FilesWindow(wx.Frame):
 
     def export(self, event):
         self.GetParent().setStatus("Exportando...", 1)
-        exportEEGS(self.GetParent().project, self.GetParent().project.EEGS)
+        #Exportar
+        choice = self.windowOpc.GetValue()
+        a = copy(self.GetParent().project.windowLength)
+        try:
+            if choice and a > 0:
+                concatenated = []
+                EEGtmp = eegs_copy(self.GetParent().project.EEGS, deepcopy(self.GetParent().project.EEGS[0]))
+                for eeg in EEGtmp:
+                    concatenated.append(eeg.concatenateWindows())
+                exportEEGS(self.GetParent().project, concatenated)
+            else:
+                exportEEGS(self.GetParent().project, self.GetParent().project.EEGS)
+        except:
+            exportEEGS(self.GetParent().project, self.GetParent().project.EEGS)
+
         self.GetParent().setStatus("", 0)
 
     def loadFiles(self, event):

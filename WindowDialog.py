@@ -110,6 +110,7 @@ class WorkingAnimation(wx.Frame):
         self.gif.Stop()
         self.Hide()
 
+
 class WindowSaveOnExit(wx.Dialog):
     def __init__(self, parent, opc):
         wx.Dialog.__init__(self, parent, title="EEG Processing:",
@@ -241,3 +242,6 @@ class EEGSelection(wx.Dialog):
     def apply(self, event):
         self.applied = True
         self.Close(True)
+
+
+
