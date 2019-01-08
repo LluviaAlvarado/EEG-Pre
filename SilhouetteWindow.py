@@ -118,14 +118,14 @@ class SilhouetteWindow(wx.Frame):
         self.ax1.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
 
         # 2nd Plot showing the actual clusters formed
-        dX = db[:, 0]
-        dY = db[:, 2]
+        dX = db[:, opc1]
+        dY = db[:, opc2]
         aX = []
         aY = []
         for a in dY:
-            aY.append(round(float(a), 2))
+            aY.append(float(a))
         for a in dX:
-            aX.append(round(float(a), 2))
+            aX.append(float(a))
 
         colors = cm.nipy_spectral(self.k.labels.astype(float) / n_clusters)
         self.ax2.scatter(aX, aY, marker='.', s=30, lw=0, alpha=0.7,
@@ -133,7 +133,7 @@ class SilhouetteWindow(wx.Frame):
 
         # Labeling the clusters
         centers = self.k.clusters
-        # Draw white circles at cluster centers
+        #Draw white circles at cluster centers
         self.ax2.scatter(centers[:, opc1], centers[:, opc2], marker='o',
                          c="white", alpha=1, s=200, edgecolor='k')
 
