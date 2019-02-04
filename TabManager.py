@@ -188,6 +188,7 @@ class windowTab(wx.Panel):
         # now we can change the TBE
         start = self._stimulus - tbe
         self._tbe = tbe
+        self.tbe.SetValue(str(self._tbe))
         self._start = int(start)
         self.start.SetValue(str(self._start))
         self.window.modify(self._tbe, self._l, self.GetParent().par.eeg)
@@ -220,6 +221,8 @@ class windowTab(wx.Panel):
                 self.updateStatic(self._l, tbe)
         # return to valid TBE to make sure
         self.tbe.SetValue(str(self._tbe))
+        # modify the other parameters on all windows
+        self.GetParent().par.GetParent().GetParent().updateDataAllWindows(self._tbe, int(self.length.GetValue()))
 
 
 '''this panel shows a thumbnail of

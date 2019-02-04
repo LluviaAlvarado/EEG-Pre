@@ -164,7 +164,7 @@ class FileReaderWriter:
             self.setError(3)
             return None
         # getting how many samples per second
-        duration = _dfFile.datarecord_duration * _dfFile.datarecords_in_file
+        duration = _dfFile.datarecord_duration
         frecuency = signals.shape[1] / duration
         # getting if the signals where prefiltered
         try:

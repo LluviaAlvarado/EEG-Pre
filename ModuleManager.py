@@ -52,7 +52,10 @@ class ModuleManager(wx.Panel):
 
     def DeleteModule(self, idm):
         m = self.treeView.GetItemData(idm)
+        parent = self.treeView.GetItemParent(idm)
         self.treeView.Delete(idm)
+        self.treeView.SetFocusedItem(parent)
+        self.GetParent().GetParent().hintPnl.changeModule(m.parent.module, parent)
         self.modules.DeleteModule(m)
         currentDT = datetime.datetime.now()
         self.log.append_txt(currentDT.strftime("%H:%M:%S") + " " + "Módulo Eliminado..." + "\n")

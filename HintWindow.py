@@ -60,6 +60,4 @@ class HintPanel(wx.Panel):
         else:
             # delete the module
             self.GetGrandParent().GetParent().moduleManager.DeleteModule(self.IDM)
-            self.delete.Disable()
-            self.tt.SetLabelText("")
-            self.it.SetLabelText("")
+
