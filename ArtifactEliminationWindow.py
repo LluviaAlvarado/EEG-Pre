@@ -16,6 +16,7 @@ class ArtifactEliminationWindow(wx.Frame):
     """
         window that contains the artifact elimination configuration and
         opens a visualisation window
+        Note: Automatic artifact elimination needs further revision, it is disabled for now.
         """
 
     def __init__(self, parent, eegs, p):
@@ -38,15 +39,15 @@ class ArtifactEliminationWindow(wx.Frame):
         self.baseSizer.Add(infoLabel, -1, wx.EXPAND | wx.ALL, 5)
         # vbox for buttons
         manualButton = wx.Button(self.pnl, label="Manualmente")
-        autoButton = wx.Button(self.pnl, label="Automáticamente")
+        # autoButton = wx.Button(self.pnl, label="Automáticamente")
         manualButton.Bind(wx.EVT_BUTTON, self.applyFastICA)
-        autoButton.Bind(wx.EVT_BUTTON, self.applyAutomatically)
+        # autoButton.Bind(wx.EVT_BUTTON, self.applyAutomatically)
         self.viewButton = wx.Button(self.pnl, label="Visualizar")
         self.viewButton.Bind(wx.EVT_BUTTON, self.openView)
         self.exportButton = wx.Button(self.pnl, label="Exportar")
         self.exportButton.Bind(wx.EVT_BUTTON, self.export)
         self.baseSizer.Add(manualButton, -1, wx.EXPAND | wx.ALL, 5)
-        self.baseSizer.Add(autoButton, -1, wx.EXPAND | wx.ALL, 5)
+        # self.baseSizer.Add(autoButton, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.viewButton, -1, wx.EXPAND | wx.ALL, 5)
         self.baseSizer.Add(self.exportButton, -1, wx.EXPAND | wx.ALL, 5)
         self.pnl.SetSizer(self.baseSizer)
@@ -89,22 +90,24 @@ class ArtifactEliminationWindow(wx.Frame):
         self.openCompView(event)
         self.GetParent().setStatus("", 0)
 
+    ''' Automatic artifact elimination needs further implementation
     def apply(self, artifactSelected):
         if 0 in artifactSelected:
             self.removeEOG()
         if 1 in artifactSelected:
-            self.removeBlink()
+            self.removeMuscular()
         if 2 in artifactSelected:
             self.removeMuscular()
+            self.removeBlink()
         if 3 in artifactSelected:
             self.removeECG()
         self.EliminateComponents()
         wx.CallAfter(self.loading.Stop)
-
+    
     def applyAutomatically(self, event):
         self.icas = []
         artifactSelected, apply = self.getSelectedA()
-        # 0 - Eye movement, 1 - blink, 2 - muscular, 3- cardiac
+        # 0 - Eye movement, 1 - muscular, 2 - muscular-blink, 3- cardiac
         if apply:
             # setting cursor to wait to inform user
             self.GetParent().setStatus("Buscando Artefactos...", 1)
@@ -130,32 +133,6 @@ class ArtifactEliminationWindow(wx.Frame):
         if len(self.icas[0].components) > 0:
             autoRemoveECG(self.icas)
 
-    def FastICA(self):
-        # to remove eye blink and muscular artifacts we
-        # will use fastICA then wavelets
-
-        self.extended = False
-        if self.eegs[0].duration < 20:
-            # ica needs at least 20s of data
-            self.eegs = self.GetParent().project.EEGS
-            self.extended = True
-        eegs = self.eegs
-        self.icas = []
-        for eeg in eegs:
-            matrix = []
-            for channel in eeg.channels:
-                matrix.append(channel.readings)
-            for extra in eeg.additionalData:
-                matrix.append(extra.readings)
-            # fast ICA uses transposed matrix
-            fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration)
-            self.icas.append(fastICA)
-        processes = [threading.Thread(target=ica.separateComponents) for ica in self.icas]
-        for p in processes:
-            p.start()
-        for p in processes:
-            p.join()
-
     def removeBlink(self):
         if len(self.icas) == 0:
             self.FastICA()
@@ -166,7 +143,34 @@ class ArtifactEliminationWindow(wx.Frame):
         if len(self.icas) == 0:
             self.FastICA()
         if len(self.icas[0].components) > 0:
-            autoRemoveMuscular(self.icas)
+            autoRemoveMuscular(self.icas)'''
+
+    def FastICA(self):
+        if len(self.eegs) > 0:
+            # to remove eye blink and muscular artifacts we
+            # will use fastICA then wavelets
+
+            self.extended = False
+            if self.eegs[0].duration < 20:
+                # ica needs at least 20s of data
+                self.eegs = self.GetParent().project.EEGS
+                self.extended = True
+            eegs = self.eegs
+            self.icas = []
+            for eeg in eegs:
+                matrix = []
+                for channel in eeg.channels:
+                    matrix.append(channel.readings)
+                for extra in eeg.additionalData:
+                    matrix.append(extra.readings)
+                # fast ICA uses transposed matrix
+                fastICA = FastICA(np.matrix.transpose(np.array(matrix)), eeg.duration, eeg.frequency)
+                self.icas.append(fastICA)
+            processes = [threading.Thread(target=ica.separateComponents) for ica in self.icas]
+            for p in processes:
+                p.start()
+            for p in processes:
+                p.join()
 
     def EliminateComponents(self):
         self.GetParent().setStatus("Eliminando Artefactos...", 1)
@@ -179,14 +183,14 @@ class ArtifactEliminationWindow(wx.Frame):
         self.GetParent().ForwardChanges(self.pbutton)
         self.GetParent().setStatus("", 0)
         NotificationMessage(title="¡Exito!", message="Se han eliminado los artefactos.").Show()
-
+    '''
     def getSelectedA(self):
         artifactSelected = []
         with WindowAutoAE(self, artifactSelected) as dlg:
             dlg.ShowModal()
             artifactSelected = dlg.artifactList.GetCheckedItems()
             use = dlg.applied
-        return artifactSelected, use
+        return artifactSelected, use'''
 
     def openCompView(self, event):
         if self.viewer is not None:

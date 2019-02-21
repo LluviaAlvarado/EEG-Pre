@@ -165,32 +165,34 @@ def autoRemoveECG(icas):
 
 
 def autoRemoveBlink(icas):
+    waveletLevel = 0
+    if len(icas) > 0:
+        # getting the level of decomposition for the wavelet transform
+        # muscular artifacts appear in the Theta 4-7Hz and Mu 8-12 bands
+        frq = icas[0].frequency
+        while frq >= 4:
+            frq = frq / 2
+            waveletLevel += 1
     for ica in icas:
         frequency = ica.frequency
         duration = ica.duration
         newC = []
         for c in ica.components:
             # we need to get up to Ca4 to get to theta band
-            Ca4 = pywt.downcoef('a', c, 'Haar', mode='symmetric', level=4)
+            Ca= pywt.downcoef('a', c, 'Haar', mode='symmetric', level=waveletLevel)
             # padding to make map to time domain
             new = []
-            pad = int((len(c) - len(Ca4)) / len(Ca4))
-            for i in range(len(Ca4)):
-                new.append(Ca4[i])
+            pad = int((len(c) - len(Ca)) / len(Ca))
+            for i in range(len(Ca)):
+                new.append(Ca[i])
                 for j in range(pad):
-                    new.append(Ca4[i])
-            Ca4 = np.array(new)
-            # computing the mean of the negative values
-            neg = Ca4[Ca4 <= 0]
-            mean = np.sum(neg) / len(neg)
+                    new.append(Ca[i])
+            Ca = np.array(new)
             # getting all negative peaks index in Ca4
-            negative = []
-            for i in range(len(Ca4)):
-                if Ca4[i] < mean:
-                    negative.append(i)
-            # deciding if we remove
+            negative = Ca[Ca <= 0]
+            maxsNP = []
             for n in negative:
-                # remove window of 400ms with eye blink
+                # checking window of 400ms with eye blink
                 centerMs = sampleToMS(n, frequency, duration)
                 s = msToReading(centerMs - 200, frequency, duration)
                 e = msToReading(centerMs + 200, frequency, duration)
@@ -202,53 +204,84 @@ def autoRemoveBlink(icas):
                 maxN = 0
                 maxI = s
                 while s < e:
-                    if Ca4[s] < maxN:
-                        maxN = Ca4[s]
+                    if Ca[s] < maxN:
+                        maxN = Ca[s]
                         maxI = s
                     s += 1
-                # the maximum negative peak is turned to 0
-                Ca4[maxI] = 0.0
-            # returning Ca4 to original shape
+                # obtaining the maximum negative peak
+                maxsNP.append([maxI, maxN])
+            # computing the mean of the maximum negative peaks
+            mean = np.sum(maxsNP[:][1]) / len(maxsNP)
+            # turning all maximum negative peaks that are above the mean to zero
+            for peak in maxsNP:
+                if peak[1] < mean:
+                    Ca[peak[0]] = 0.0
+            # returning Ca to original shape
             ca = []
-            for i in range(len(Ca4)):
+            for i in range(len(Ca)):
                 if i % (pad + 1) == 0:
-                    ca.append(Ca4[i])
+                    ca.append(Ca[i])
             # applying reverse wavelet
-            component = pywt.upcoef('a', ca, 'Haar', level=4)
+            component = pywt.upcoef('a', ca, 'Haar', level=waveletLevel)
             newC.append(component)
         ica.components = newC
 
 
 def autoRemoveMuscular(icas):
+    waveletLevel = 0
+    if len(icas) > 0:
+        # getting the level of decomposition for the wavelet transform
+        # muscular artifacts appear in the Beta band 16-31Hz
+        frq = icas[0].frequency
+        while frq >= 16:
+            frq = frq / 2
+            waveletLevel += 1
     for ica in icas:
-        ss = []
+        maxs = []
+        s1s = []
+        s2s = []
+        wavelets = []
         for c in ica.components:
             # applying soft thresholding to denoise, removing everything above 50Hz
             c = pywt.threshold(c, 50, 'less')
-            waveletC = pywt.wavedec(c, 'Haar', level=6)
-            # wavelet[0] = Ca2 wavelet[1] = Cd2 wavelet[2] = Cd1
+            # We use the Haar wavelet since it's the most similar to the muscular artifacts
+            waveletC = pywt.wavedec(c, 'Haar', level=waveletLevel)
+            wavelets.append(waveletC)
+            # wavelet[0] = Ca2 wavelet[waveletLevel-1] = Cd2 wavelet[waveletLevel] = Cd1
             # padding Cd2 to make it same length of Cd1
             new = []
-            cd2 = waveletC[1]
-            for i in range(len(waveletC[1])):
+            cd2 = waveletC[waveletLevel-1]
+            for i in range(len(waveletC[waveletLevel-1])):
                 new.append(cd2[i])
                 new.append(0.0)
-            waveletC[1] = np.array(new)
+            cd2 = np.array(new)
             # getting the wavelet power spectral density
             # elevating to power 2 the elements of Cd1
-            cd1 = np.power(waveletC[2], 2)
+            cd1 = np.power(waveletC[waveletLevel], 2)
             # elevating to power 2 the elements of Cd2
-            cd2 = np.power(waveletC[1], 2)
+            cd2 = np.power(cd2, 2)
             s1 = np.sum(cd1)
+            s1s.append(s1)
             s2 = np.sum(cd2)
+            s2s.append(s2)
             if s1 > s2:
-                ss.append(s1)
+                maxs.append(s1)
             else:
-                ss.append(s2)
+                maxs.append(s2)
+        # getting the mean of all the peaks in the IC
+        mean = np.mean(maxs)
+        newComponents = []
         for i in range(len(ica.components)):
-            if ss[i] > 0.2:
-                # this is an EMG artifact
-                ica.components[i] = np.array([0.0] * len(ica.components[i]))
+            if s1s[i] > mean:
+                # making all samples zero since it's an EMG artifact
+                wavelets[i][waveletLevel][:] = 0.0
+            if s2s[i] > mean:
+                # making all samples zero since it's an EMG artifact
+                wavelets[i][waveletLevel-1][:] = 0.0
+            # recreating the component with the inverse wavelet transform
+            component = pywt.waverec(wavelets[i], 'Haar')
+            newComponents.append(component)
+        ica.components = newComponents
 
 
 def eliminateArtifacts(eegs, icas):

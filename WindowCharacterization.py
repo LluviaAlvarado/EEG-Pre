@@ -38,8 +38,8 @@ class WindowCharacterization:
                 frFas.append(0)
             for i in ch:
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
-                real = fft.real
-                imag = fft.imag
+                real = (fft.real * 2) / len(eeg.channels[i].readings)
+                imag = (fft.imag * 2) / len(eeg.channels[i].readings)
                 for v in range(len(fft)):
                     # getting the fase for each value of fft
                     fase = np.arctan((imag[v]**2 / real[v]**2))
@@ -60,8 +60,8 @@ class WindowCharacterization:
                 frMag.append(0)
             for i in ch:
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
-                real = fft.real
-                imag = fft.imag
+                real = (fft.real * 2) / len(eeg.channels[i].readings)
+                imag = (fft.imag * 2) / len(eeg.channels[i].readings)
                 for v in range(len(fft)):
                     # getting the magnitude for each value of fft
                     magnitude = round(np.sqrt(real[v]**2 + imag[v]**2), 2)

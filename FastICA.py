@@ -8,12 +8,12 @@ class FastICA():
        it may do this automatically or the user can select the components
        to remove'''
 
-    def __init__(self, signals, t):
+    def __init__(self, signals, t, fr):
         self.signals = signals
         self.components = []
         self.amUnits = []
         self.duration = t
-        self.frequency = len(signals[0]) / t
+        self.frequency = fr
         self.selectedComponents = []
         self.icaParameters = []
 
