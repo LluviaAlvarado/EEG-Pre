@@ -58,10 +58,13 @@ class BaseWindow(wx.Frame):
                 dlg.ShowModal()
                 if dlg.opc == 1:
                     self.OnSave(0)
+                    self.logPnl.Destroy()
                     self.Destroy()
                 elif dlg.opc == 2:
+                    self.logPnl.Destroy()
                     self.Destroy()
         else:
+            self.logPnl.Destroy()
             self.Destroy()
 
     def setAux(self, p):
