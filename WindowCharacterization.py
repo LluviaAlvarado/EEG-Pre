@@ -6,25 +6,17 @@ class WindowCharacterization:
 
     def getMV(self, eegs, ch):
         MVE = []
-        # gets the max-min voltaje of eeg and ms when it happened
+        # gets the max-min voltaje of eeg and ms when it happened per channel
         for eeg in eegs:
             MV = []
-            max = 0
-            msmax = 0
-            min = 0
-            msmin = 0
             for i in ch:
-                mx = np.amax(eeg.channels[i].readings)
-                mn = np.amin(eeg.channels[i].readings)
-                if mx > max:
-                    max = mx
-                    imax = np.argmax(eeg.channels[i].readings)
-                    msmax = sampleToMS(imax, eeg.frequency, eeg.duration)
-                if mn < min:
-                    min = mn
-                    imin = np.argmin(eeg.channels[i].readings)
-                    msmin = sampleToMS(imin, eeg.frequency, eeg.duration)
-            MV.append([[min, msmin], [max, msmax]])
+                max = np.amax(eeg.channels[i].readings)
+                imax = np.argmax(eeg.channels[i].readings)
+                msmax = sampleToMS(imax, eeg.frequency, eeg.duration)
+                min = np.amin(eeg.channels[i].readings)
+                imin = np.argmin(eeg.channels[i].readings)
+                msmin = sampleToMS(imin, eeg.frequency, eeg.duration)
+                MV.append([[min, msmin], [max, msmax]])
             MVE.append(MV)
         return MVE
 

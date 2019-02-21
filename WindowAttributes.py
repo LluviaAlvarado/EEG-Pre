@@ -9,7 +9,7 @@ from WindowEditor import *
 
 class WindowAttributes(wx.Frame):
     """
-    window that contains opciones para caratersar
+    window that contains tools for window characterization
     """
 
     def __init__(self, parent, eegs, p):

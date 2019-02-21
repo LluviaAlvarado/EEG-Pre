@@ -112,7 +112,7 @@ class ComponentTab(wx.Panel):
             for i in self.ica.selectedComponents:
                 self.componentList.Check(i, check=True)
         # button to apply changes from electrode selector
-        applyChanges = wx.Button(leftPnl, label="Aplicar")
+        applyChanges = wx.Button(leftPnl, label="Seleccionar")
         applyChanges.Bind(wx.EVT_BUTTON, self.setSelected)
         labelComponent = wx.StaticText(self, -1, "  Selección de Componentes", style=wx.ALIGN_CENTER, size=(-1, -1))
         componentContainer = wx.BoxSizer(wx.VERTICAL)

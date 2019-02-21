@@ -38,7 +38,7 @@ class ArtifactEliminationWindow(wx.Frame):
         infoLabel = wx.StaticText(self.pnl, label="Opciónes:")
         self.baseSizer.Add(infoLabel, -1, wx.EXPAND | wx.ALL, 5)
         # vbox for buttons
-        manualButton = wx.Button(self.pnl, label="Manualmente")
+        manualButton = wx.Button(self.pnl, label="Componentes Independientes")
         # autoButton = wx.Button(self.pnl, label="Automáticamente")
         manualButton.Bind(wx.EVT_BUTTON, self.applyFastICA)
         # autoButton.Bind(wx.EVT_BUTTON, self.applyAutomatically)
@@ -80,10 +80,9 @@ class ArtifactEliminationWindow(wx.Frame):
         self.GetParent().setStatus("Buscando Componentes...", 1)
         # saving the current state of EEGs
         if len(self.eegs) > 0:
-            tmp = deepcopy(self.eegs[0])
+            # saving the current state of EEGs
             for eeg in self.eegs:
-                save = eeg_copy(eeg, tmp)
-                eeg.setSaveState(save)
+                eeg.SaveState()
         self.FastICA()
         self.viewButton.Enable()
         self.exportButton.Enable()
