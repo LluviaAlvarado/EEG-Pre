@@ -380,21 +380,25 @@ class GridTab(wx.Panel):
             num_of_col = num_of_col - (1 * l) + (self.hf * 2)
             self.tam[1] = self.hf * 2
         if 3 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + 2
-            self.tam[3] = 2
+            num_of_col = num_of_col - (1 * l) + (l * 2)
+            self.tam[3] = l*2
         if 4 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + 2
-            self.tam[4] = 2
+            num_of_col = num_of_col - (1 * l) + (l * 2)
+            self.tam[4] = l*2
         self.table.AppendRows(len(self.eegs))
         self.table.AppendCols(num_of_col + 1)
-        labes = [["EM_", "F_EM_"], ["EF_", "F_EF_"], "Area_bajo_la_curva", ["Voltaje_máximo", "Ms_VMax"],
-                 ["Voltaje_mínimo", "Ms_VMin"]]
+        labes = [["EM ", "F EM "], ["EF ", "F EF "], "Area bajo la curva", ["Voltaje máximo", "Ms VMax"],
+                 ["Voltaje mínimo", "Ms VMin"]]
         self.columLabes = []
         for y in self.selecdAT:
             if y == 2:
                 for i in self.selecdCH:
-                    self.columLabes.append(str(i) + "_" + labes[y])
-            if y in self.selecdAT:
+                    self.columLabes.append(str(i) + " " + labes[y])
+            if y == 3 or y == 4:
+                for i in self.selecdCH:
+                    self.columLabes.append(str(i) + " " + labes[y][0])
+                    self.columLabes.append(str(i) + " " + labes[y][1])
+            if y == 0 or y == 1:
                 u = 0
                 cont = 1
                 for x in range(self.tam[y]):
@@ -433,7 +437,14 @@ class GridTab(wx.Panel):
                     for i in range(len(self.selecdCH)):
                         for x in range(self.tam[y]):
                             data.append(info[y][eeg][x + i])
-                if y in self.selecdAT:
+                if y == 3 or y == 4:
+                    for canal in range(len(self.selecdCH)):
+                        for cont in range(2):
+                            if y == 3:
+                                data.append(info[y][eeg][canal][1][cont])
+                            elif y == 4:
+                                data.append(info[y][eeg][canal][0][cont])
+                if y == 0 or y == 1:
                     u = 0
                     num = 0
                     for x in range(self.tam[y]):
@@ -446,10 +457,6 @@ class GridTab(wx.Panel):
                         elif y == 1:
                             data.append(info[y][eeg][u][num])
                             u += 1
-                        elif y == 3:
-                            data.append(info[y][eeg][0][1][x])
-                        elif y == 4:
-                            data.append(info[y][eeg][0][0][x])
             dataEEG.append(data)
         for row in range(len(self.eegs)):
             for col in range(self.table.NumberCols - 1):
