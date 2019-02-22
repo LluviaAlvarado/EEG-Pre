@@ -23,12 +23,13 @@ class WindowCharacterization:
     def getFase(self, eegs, n, ch):
         FasE = []
         for eeg in eegs:
-            Fase = []
-            frFas = []
-            for i in range(n):
-                Fase.append(0)
-                frFas.append(0)
+            fases = []
             for i in ch:
+                Fase = []
+                frFas = []
+                for i in range(n):
+                    Fase.append(0)
+                    frFas.append(0)
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
                 real = fft.real
                 imag = fft.imag
@@ -39,18 +40,20 @@ class WindowCharacterization:
                         if abs(fase) > abs(Fase[j]):
                             Fase[j] = fase
                             frFas[j] = v
-            FasE.append([Fase, frFas])
+                fases.append([Fase, frFas])
+            FasE.append(fases)
         return FasE
 
     def getMag(self, eegs, n, ch):
         MagE = []
         for eeg in eegs:
-            Mag = []
-            frMag = []
-            for i in range(n):
-                Mag.append(0)
-                frMag.append(0)
+            magns = []
             for i in ch:
+                Mag = []
+                frMag = []
+                for i in range(n):
+                    Mag.append(0)
+                    frMag.append(0)
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
                 real = fft.real
                 imag = fft.imag
@@ -61,7 +64,8 @@ class WindowCharacterization:
                         if magnitude > Mag[j]:
                             Mag[j] = magnitude
                             frMag[j] = v
-            MagE.append([Mag, frMag])
+                magns.append([Mag, frMag])
+            MagE.append(magns)
         return MagE
 
     def getAUC(self, eegs, ch):
