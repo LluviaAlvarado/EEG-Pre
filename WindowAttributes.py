@@ -374,10 +374,10 @@ class GridTab(wx.Panel):
         l = len(self.selecdCH)
         num_of_col = num_of_col * l
         if 0 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (self.hf * 2)
+            num_of_col = num_of_col - (1 * l) + (self.hf * 2 * l)
             self.tam[0] = self.hf * 2
         if 1 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (self.hf * 2)
+            num_of_col = num_of_col - (1 * l) + (self.hf * 2 * l)
             self.tam[1] = self.hf * 2
         if 3 in self.selecdAT:
             num_of_col = num_of_col - (1 * l) + (l * 2)
@@ -399,18 +399,19 @@ class GridTab(wx.Panel):
                     self.columLabes.append(str(i) + " " + labes[y][0])
                     self.columLabes.append(str(i) + " " + labes[y][1])
             if y == 0 or y == 1:
-                u = 0
-                cont = 1
-                for x in range(self.tam[y]):
-                    if u == 2:
-                        u = 0
-                        cont += 1
-                    if self.tam[y] > 1:
-                        add = ""
-                        if y == 0 or y == 1:
-                            add = str(cont)
-                        self.columLabes.append(labes[y][u] + add)
-                        u += 1
+                for ch in self.selecdCH:
+                    u = 0
+                    cont = 1
+                    for x in range(self.tam[y]):
+                        if u == 2:
+                            u = 0
+                            cont += 1
+                        if self.tam[y] > 1:
+                            add = ""
+                            if y == 0 or y == 1:
+                                add = str(cont)
+                            self.columLabes.append(ch + " " +labes[y][u] + add)
+                            u += 1
         i = 0
         for eeg in self.eegs:
             self.table.SetRowLabelValue(i, eeg.name)
@@ -445,18 +446,19 @@ class GridTab(wx.Panel):
                             elif y == 4:
                                 data.append(info[y][eeg][canal][0][cont])
                 if y == 0 or y == 1:
-                    u = 0
-                    num = 0
-                    for x in range(self.tam[y]):
-                        if u == 2:
-                            u = 0
-                            num += 1
-                        if y == 0:
-                            data.append(info[y][eeg][u][num])
-                            u += 1
-                        elif y == 1:
-                            data.append(info[y][eeg][u][num])
-                            u += 1
+                    for canal in range(len(self.selecdCH)):
+                        u = 0
+                        num = 0
+                        for x in range(self.tam[y]):
+                            if u == 2:
+                                u = 0
+                                num += 1
+                            if y == 0:
+                                data.append(info[y][eeg][canal][u][num])
+                                u += 1
+                            elif y == 1:
+                                data.append(info[y][eeg][canal][u][num])
+                                u += 1
             dataEEG.append(data)
         for row in range(len(self.eegs)):
             for col in range(self.table.NumberCols - 1):
