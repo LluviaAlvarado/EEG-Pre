@@ -130,26 +130,29 @@ class FileReaderWriter:
             except:
                 self.setError(1)
                 return None
-
-        signals = matfile['Data']
-        duracion = matfile['duration'].item(0)
-        channels = matfile['channels'].item(0)
-        channelsName = matfile['channelsName']
-        prefilt = matfile['prefilt'].item(0)
-        if prefilt == 0:
-            prefilt = None
-        sampleRate = matfile['sampleRate'].item(0)
-        records = matfile['records'].item(0)
-        i = 0
-        chN = []
-        matrix = []
-        while i < channels:
-            chN.append(channelsName.item(i)[0][0])
-            matrix.append([])
-            i += 1
-        signa = np.zeros((channels, records))
-        for i in np.arange(channels):
-            signa[i, :] = signals[i]
+        try:
+            signals = matfile['Data']
+            duracion = matfile['duration'].item(0)
+            channels = matfile['channels'].item(0)
+            channelsName = matfile['channelsName']
+            prefilt = matfile['prefilt'].item(0)
+            if prefilt == 0:
+                prefilt = None
+            sampleRate = matfile['sampleRate'].item(0)
+            records = matfile['records'].item(0)
+            i = 0
+            chN = []
+            matrix = []
+            while i < channels:
+                chN.append(channelsName.item(i)[0][0])
+                matrix.append([])
+                i += 1
+            signa = np.zeros((channels, records))
+            for i in np.arange(channels):
+                signa[i, :] = signals[i]
+        except:
+            self.setError(1)
+            return None
         return EEGData(sampleRate, duracion, signa, prefilt, chN)
 
     def read_EDF(self, fileAddress):

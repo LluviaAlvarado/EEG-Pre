@@ -33,16 +33,16 @@ class KMeansWindow(wx.Frame):
         self.H2 = wx.BoxSizer(wx.HORIZONTAL)
         self.H3 = wx.BoxSizer(wx.HORIZONTAL)
 
-        clusLabel = wx.StaticText(self.pnl, label="Numero de Clusters:")
+        clusLabel = wx.StaticText(self.pnl, label="Número de Clusters:")
         self.clusC = wx.SpinCtrl(self.pnl, value="8", style=wx.SP_ARROW_KEYS, min=1, max=100, initial=1)
 
         typeLabel = wx.StaticText(self.pnl, label="Tipo de inicialización")
         self.tipeC = wx.ComboBox(self.pnl, value='k-means++', style=wx.CB_READONLY, choices=['k-means++', 'random'])
 
-        iterLabel = wx.StaticText(self.pnl, label="Interaciones:            ")
+        iterLabel = wx.StaticText(self.pnl, label="Iteraciones:            ")
         self.iterC = wx.SpinCtrl(self.pnl, value="10", style=wx.SP_ARROW_KEYS, min=1, max=10000, initial=1)
 
-        epochsLabel = wx.StaticText(self.pnl, label="Numero de epocas:")
+        epochsLabel = wx.StaticText(self.pnl, label="Número de epocas:")
         self.epochsC = wx.SpinCtrl(self.pnl, value="300", style=wx.SP_ARROW_KEYS, min=1, max=1000, initial=1)
 
         applyButton = wx.Button(self.pnl, label="Aplicar")
