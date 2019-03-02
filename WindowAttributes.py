@@ -444,7 +444,7 @@ class GridTab(wx.Panel):
                                 u = 0
                                 num += 1
                             if y == 0:
-                                data.append(info[y][eeg][canal][u][num])
+                                data.append(info[y][eeg][u] [canal] [num])
                                 u += 1
                             elif y == 1:
                                 data.append(info[y][eeg][canal][u][num])
