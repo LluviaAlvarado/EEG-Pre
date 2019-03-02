@@ -23,7 +23,7 @@ class WindowAttributes(wx.Frame):
         # Variables a considerar
         self.amountHF = 1  # la cantidad de salidas que quieren del fft
         self.setofData = []  # La matriz que contiene el se de datos final
-        self.opcAttributes = ["Espectro de magnitud", "Espectro de fase", "Area bajo la curva", "Voltaje máximo",
+        self.opcAttributes = ["Espectro de Magnitud y Fase", "Area bajo la curva", "Voltaje máximo",
                               "Voltaje mínimo"]
 
         self.opcCh =[]
@@ -104,7 +104,7 @@ class WindowAttributes(wx.Frame):
         baseContainer.Add(leftPnl, 0, wx.EXPAND | wx.ALL, 3)
         baseContainer.Add(rightPnl, 0, wx.EXPAND | wx.ALL, 3)
         self.SetSizer(baseContainer)
-        if self.parent.windowDB is not None and len(self.parent.windowDB) > 1 :
+        if self.parent.windowDB is not None and len(self.parent.windowDB) > 1:
             self.ReFill(p)
         else:
             self.parent.windowDB = []
@@ -192,13 +192,9 @@ class WindowAttributes(wx.Frame):
         dlg.Destroy()
         return result
 
-    def applyMag(self, selectedCH):
+    def applyMagFase(self, selectedCH):
         eegs = self.eegs
-        self.GetParent().project.windowMag = WindowCharacterization().getMag(eegs, self.amountHF, selectedCH)
-
-    def applyFase(self, selectedCH):
-        eegs = self.eegs
-        self.GetParent().project.windowFase = WindowCharacterization().getFase(eegs, self.amountHF, selectedCH)
+        self.GetParent().project.windowMag = WindowCharacterization().getMagFase(eegs, self.amountHF, selectedCH)
 
     def confFFT(self, event, opc):
         if opc == 1 or opc == 0:
@@ -227,14 +223,14 @@ class WindowAttributes(wx.Frame):
         selecCH = actions[2]
         for opc in selectedAT:
             if opc == 0:
-                self.applyMag(selectedCH)
+                self.applyMagFase(selectedCH)
             elif opc == 1:
-                self.applyFase(selectedCH)
-            elif opc == 3:
-                # Voltaje maximo
+                self.applyAUC(selectedCH)
+            elif opc == 2:
+                # Voltaje máximo
                 self.applyMV(selectedCH)
-            elif opc == 4:
-                # Voltaje maximo
+            elif opc == 3:
+                # Voltaje mínimo
                 self.applyMV(selectedCH)
         self.table.setValues(self.project, selectedAT, selecCH, self.amountHF)
         self.replaceDefault(0)
@@ -251,17 +247,15 @@ class WindowAttributes(wx.Frame):
         self.GetParent().setStatus("Calculando características...", 1)
         for opc in selectedAT:
             if opc == 0:
-                self.applyMag(selectedCH)
+                self.applyMagFase(selectedCH)
             elif opc == 1:
-                self.applyFase(selectedCH)
-            elif opc == 2:
                 # Area bajo la curva
                 self.applyAUC(selectedCH)
-            elif opc == 3:
-                # Voltaje maximo
+            elif opc == 2:
+                # Voltaje máximo
                 self.applyMV(selectedCH)
-            elif opc == 4:
-                # Voltaje maximo
+            elif opc == 3:
+                # Voltaje mínimo
                 self.applyMV(selectedCH)
         self.table.setValues(self.project, selectedAT, selecCH, self.amountHF)
         self.parent.actions = self.actions
@@ -425,11 +419,10 @@ class GridTab(wx.Panel):
         self.table.AutoSizeColumns()
 
     def fillTable(self):
-        wM = self.project.windowMag
-        wF = self.project.windowFase
+        wMF = self.project.windowMagFase
         wAUC = self.project.windowAUC
         wMV = self.project.windowMinMaxVolt
-        info = [wM, wF, wAUC, wMV, wMV]
+        info = [wMF, wAUC, wMV, wMV]
         dataEEG = []
         for eeg in range(len(self.eegs)):
             data = []

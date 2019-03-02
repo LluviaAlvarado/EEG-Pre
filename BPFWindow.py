@@ -93,7 +93,6 @@ class tab(wx.Panel):
                                        style=aui.AUI_NB_DEFAULT_STYLE ^ (aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE)
                                              | aui.AUI_NB_WINDOWLIST_BUTTON)
         # filling the tabs
-        # self.fillEEGTabs(prev)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.loadingNew)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.loadingFinished)
         frameSizer.Add(self.eegTabs, 0, wx.EXPAND, 3)

@@ -20,53 +20,33 @@ class WindowCharacterization:
             MVE.append(MV)
         return MVE
 
-    def getFase(self, eegs, n, ch):
-        FasE = []
+    def getMagFase(self, eegs, n, ch):
+        MagFase = []
         for eeg in eegs:
-            fases = []
+            Mag = []
+            frequency = []
+            Fase = []
+            for i in range(n):
+                Mag.append(0)
+                frequency.append(0)
+                Fase.append(0)
             for i in ch:
-                Fase = []
-                frFas = []
-                for k in range(n):
-                    Fase.append(0)
-                    frFas.append(0)
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
-                real = fft.real
-                imag = fft.imag
-                for v in range(len(fft)):
-                    # getting the fase for each value of fft
-                    fase = np.arctan((imag[v]**2 / real[v]**2))
-                    for j in range(n):
-                        if abs(fase) > abs(Fase[j]):
-                            Fase[j] = fase
-                            frFas[j] = v
-                fases.append([Fase, frFas])
-            FasE.append(fases)
-        return FasE
-
-    def getMag(self, eegs, n, ch):
-        MagE = []
-        for eeg in eegs:
-            magns = []
-            for i in ch:
-                Mag = []
-                frMag = []
-                for k in range(n):
-                    Mag.append(0)
-                    frMag.append(0)
-                fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
-                real = fft.real
-                imag = fft.imag
+                # normalizing
+                real = (fft.real * 2) / len(eeg.channels[i].readings)
+                imag = (fft.imag * 2) / len(eeg.channels[i].readings)
                 for v in range(len(fft)):
                     # getting the magnitude for each value of fft
                     magnitude = round(np.sqrt(real[v]**2 + imag[v]**2), 2)
+                    # getting the fase for each value of fft
+                    fase = np.arctan((imag[v] ** 2 / real[v] ** 2))
                     for j in range(n):
                         if magnitude > Mag[j]:
                             Mag[j] = magnitude
-                            frMag[j] = v
-                magns.append([Mag, frMag])
-            MagE.append(magns)
-        return MagE
+                            frequency[j] = v
+                            Fase[j] = fase
+            MagFase.append([Mag, frequency, Fase])
+        return MagFase
 
     def getAUC(self, eegs, ch):
         AUCE =[]

@@ -59,6 +59,7 @@ class ArtifactEliminationWindow(wx.Frame):
 
     def ReDo(self, actions, eegs):
         self.eegs = eegs
+        '''
         # this redo's the automatic elimination after forward
         if len(actions) > 0 and len(self.eegs) > 0:
             # setting cursor to wait to inform user
@@ -68,7 +69,7 @@ class ArtifactEliminationWindow(wx.Frame):
             # saving the current state of EEGs
             for eeg in self.eegs:
                 eeg.SaveState()
-            threading.Thread(target=self.apply, args=[actions]).start()
+            threading.Thread(target=self.apply, args=[actions]).start()'''
 
     def export(self, event):
         # setting cursor to wait to inform user

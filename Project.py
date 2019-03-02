@@ -17,8 +17,7 @@ class Project:
         # [1] the path of the csv
         self.windowCSV = None
         self.windowAUC = None
-        self.windowMag = None
-        self.windowFase = None
+        self.windowMagFase = None
         self.windowMinMaxVolt = None
         self.windowDB = None
         self.windowSelec = None
