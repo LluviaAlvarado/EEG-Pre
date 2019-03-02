@@ -30,7 +30,7 @@ class WindowCharacterization:
                 mag = []
                 frequency = []
                 fases = []
-                for i in range(n):
+                for j in range(n):
                     mag.append(0)
                     frequency.append(0)
                     fases.append(0)
