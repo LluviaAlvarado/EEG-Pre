@@ -31,7 +31,7 @@ class WindowCharacterization:
                 frequency = []
                 fases = []
                 for i in range(n):
-                    Mag.append(0)
+                    mag.append(0)
                     frequency.append(0)
                     fases.append(0)
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
