@@ -24,13 +24,16 @@ class WindowCharacterization:
         MagFase = []
         for eeg in eegs:
             Mag = []
-            frequency = []
+            Frequency = []
             Fase = []
-            for i in range(n):
-                Mag.append(0)
-                frequency.append(0)
-                Fase.append(0)
             for i in ch:
+                mag = []
+                frequency = []
+                fases = []
+                for i in range(n):
+                    Mag.append(0)
+                    frequency.append(0)
+                    fases.append(0)
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
                 # normalizing
                 real = (fft.real * 2) / len(eeg.channels[i].readings)
@@ -41,11 +44,14 @@ class WindowCharacterization:
                     # getting the fase for each value of fft
                     fase = np.arctan((imag[v] ** 2 / real[v] ** 2))
                     for j in range(n):
-                        if magnitude > Mag[j]:
-                            Mag[j] = magnitude
+                        if magnitude > mag[j]:
+                            mag[j] = magnitude
                             frequency[j] = v
-                            Fase[j] = fase
-            MagFase.append([Mag, frequency, Fase])
+                            fases[j] = fase
+                Mag.append(mag)
+                Frequency.append(frequency)
+                Fase.append(fases)
+            MagFase.append([Mag, Frequency, Fase])
         return MagFase
 
     def getAUC(self, eegs, ch):
