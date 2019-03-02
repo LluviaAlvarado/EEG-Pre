@@ -194,10 +194,10 @@ class WindowAttributes(wx.Frame):
 
     def applyMagFase(self, selectedCH):
         eegs = self.eegs
-        self.GetParent().project.windowMag = WindowCharacterization().getMagFase(eegs, self.amountHF, selectedCH)
+        self.GetParent().project.windowMagFase = WindowCharacterization().getMagFase(eegs, self.amountHF, selectedCH)
 
     def confFFT(self, event, opc):
-        if opc == 1 or opc == 0:
+        if opc == 0:
             dlg = wx.TextEntryDialog(self, 'Cantidad de espectros a calcular: ', 'Configuración')
             dlg.SetValue(str(self.amountHF))
             if dlg.ShowModal() == wx.ID_OK:
@@ -361,43 +361,40 @@ class GridTab(wx.Panel):
         self.table.DeleteRows(0, self.table.NumberRows)
         self.table.DeleteCols(0, self.table.NumberCols)
         self.Refresh()
-        self.tam = [0, 0, 0, 0, 0]
+        self.tam = [0, 0, 0, 0]
         for i in self.selecdAT:
             self.tam[i] = 1
         num_of_col = len(self.selecdAT)
         l = len(self.selecdCH)
         num_of_col = num_of_col * l
         if 0 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (self.hf * 2 * l)
-            self.tam[0] = self.hf * 2
-        if 1 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (self.hf * 2 * l)
-            self.tam[1] = self.hf * 2
+            num_of_col = num_of_col - l + (self.hf * 3 * l)
+            self.tam[0] = self.hf * 3
+        if 2 in self.selecdAT:
+            num_of_col = num_of_col - l + (l * 2)
+            self.tam[2] = l*2
         if 3 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (l * 2)
+            num_of_col = num_of_col - l + (l * 2)
             self.tam[3] = l*2
-        if 4 in self.selecdAT:
-            num_of_col = num_of_col - (1 * l) + (l * 2)
-            self.tam[4] = l*2
         self.table.AppendRows(len(self.eegs))
         self.table.AppendCols(num_of_col + 1)
-        labes = [["EM ", "F EM "], ["EF ", "F EF "], "Area bajo la curva", ["Voltaje máximo", "Ms VMax"],
+        labes = [["EM ", "F EM ", "EF "], "Area bajo la curva", ["Voltaje máximo", "Ms VMax"],
                  ["Voltaje mínimo", "Ms VMin"]]
         self.columLabes = []
         for y in self.selecdAT:
-            if y == 2:
+            if y == 1:
                 for i in self.selecdCH:
                     self.columLabes.append(str(i) + " " + labes[y])
-            if y == 3 or y == 4:
+            if y == 2 or y == 3:
                 for i in self.selecdCH:
                     self.columLabes.append(str(i) + " " + labes[y][0])
                     self.columLabes.append(str(i) + " " + labes[y][1])
-            if y == 0 or y == 1:
+            if y == 0:
                 for ch in self.selecdCH:
                     u = 0
                     cont = 1
                     for x in range(self.tam[y]):
-                        if u == 2:
+                        if u == 3:
                             u = 0
                             cont += 1
                         if self.tam[y] > 1:
@@ -427,23 +424,23 @@ class GridTab(wx.Panel):
         for eeg in range(len(self.eegs)):
             data = []
             for y in self.selecdAT:
-                if y == 2:
+                if y == 1:
                     for i in range(len(self.selecdCH)):
                         for x in range(self.tam[y]):
                             data.append(info[y][eeg][x + i])
-                if y == 3 or y == 4:
+                if y == 2 or y == 3:
                     for canal in range(len(self.selecdCH)):
                         for cont in range(2):
-                            if y == 3:
+                            if y == 2:
                                 data.append(info[y][eeg][canal][1][cont])
-                            elif y == 4:
+                            elif y == 3:
                                 data.append(info[y][eeg][canal][0][cont])
-                if y == 0 or y == 1:
+                if y == 0:
                     for canal in range(len(self.selecdCH)):
                         u = 0
                         num = 0
                         for x in range(self.tam[y]):
-                            if u == 2:
+                            if u == 3:
                                 u = 0
                                 num += 1
                             if y == 0:
