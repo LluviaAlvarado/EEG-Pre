@@ -43,11 +43,20 @@ class WindowCharacterization:
                     magnitude = round(np.sqrt(real[v]**2 + imag[v]**2), 2)
                     # getting the fase for each value of fft
                     fase = np.arctan((imag[v] ** 2 / real[v] ** 2))
+                    numN = 0
                     for j in range(n):
-                        if magnitude > mag[j]:
-                            mag[j] = magnitude
-                            frequency[j] = v
-                            fases[j] = fase
+                        if mag[j] != 0:
+                            numN += 1
+                    if numN < len(mag):
+                        mag[numN] = magnitude
+                        frequency[numN] = v
+                        fases[numN] = fase
+                    else:
+                        for j in range(n):
+                            if magnitude > mag[j]:
+                                mag[j] = magnitude
+                                frequency[j] = v
+                                fases[j] = fase
                 Mag.append(mag)
                 Frequency.append(frequency)
                 Fase.append(fases)
