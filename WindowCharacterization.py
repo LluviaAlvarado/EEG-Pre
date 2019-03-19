@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from Utils import sampleToMS
 
 
@@ -25,15 +26,15 @@ class WindowCharacterization:
         for eeg in eegs:
             Mag = []
             Frequency = []
-            Fase = []
+            Phase = []
             for i in ch:
                 mag = []
                 frequency = []
-                fases = []
+                phases = []
                 for j in range(n):
                     mag.append(0)
                     frequency.append(0)
-                    fases.append(0)
+                    phases.append(0)
                 fft = np.fft.rfft(eeg.channels[i].readings, len(eeg.channels[i].readings))
                 # normalizing
                 real = (fft.real * 2) / len(eeg.channels[i].readings)
@@ -41,8 +42,8 @@ class WindowCharacterization:
                 for v in range(len(fft)):
                     # getting the magnitude for each value of fft
                     magnitude = round(np.sqrt(real[v]**2 + imag[v]**2), 2)
-                    # getting the fase for each value of fft
-                    fase = np.arctan((imag[v] ** 2 / real[v] ** 2))
+                    # getting the phase for each value of fft
+                    phase = np.arctan((imag[v] / real[v]))
                     numN = 0
                     for j in range(n):
                         if mag[j] != 0:
@@ -50,17 +51,21 @@ class WindowCharacterization:
                     if numN < len(mag):
                         mag[numN] = magnitude
                         frequency[numN] = v
-                        fases[numN] = fase
+                        if math.isnan(phase):
+                            phase = 0
+                        phases[numN] = phase
                     else:
                         for j in range(n):
                             if magnitude > mag[j]:
                                 mag[j] = magnitude
                                 frequency[j] = v
-                                fases[j] = fase
+                                if math.isnan(phase):
+                                    phase = 0
+                                phases[j] = phase
                 Mag.append(mag)
                 Frequency.append(frequency)
-                Fase.append(fases)
-            MagFase.append([Mag, Frequency, Fase])
+                Phase.append(phases)
+            MagFase.append([Mag, Frequency, Phase])
         return MagFase
 
     def getAUC(self, eegs, ch):
