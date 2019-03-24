@@ -99,6 +99,8 @@ class ModuleButton:
             # k-means can add silhouette
             if not self.isChildren(6):
                 posible.append(6)
+            if not self.isChildren(7):
+                posible.append(7)
         return posible
 
     def OpenModule(self):
@@ -121,6 +123,8 @@ class ModuleButton:
         elif self.module == 6:
             self.window = SilhouetteWindow(self.GetParent(), self.parent.parent.km, self.parent.parent.windowDB,
                                            self.parent.parent.windowSelec, self.parent.parent)
+        elif self.module == 7:
+            self.window = RandIndexWindow(self.GetParent(), self.parent.parent, self.parent.parent.windowDB)
         else:
             pass
         self.window.Show()
